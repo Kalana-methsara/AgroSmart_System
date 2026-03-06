@@ -1,4 +1,4 @@
-package lk.ijse.agrosmart_systembackend.dto;
+package lk.ijse.agrosmart_systembackend.util;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

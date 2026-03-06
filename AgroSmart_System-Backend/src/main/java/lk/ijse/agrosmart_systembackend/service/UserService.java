@@ -26,8 +26,12 @@ public class UserService {
         if (userRepository.findByUsername(registerDTO.getUsername()).isPresent()){
             throw new RuntimeException("Username is already in use");
         }
+        if (userRepository.findByEmail(registerDTO.getEmail()).isPresent()){
+            throw new IllegalStateException("Email is already in use");
+        }
         User user=User.builder()
                 .username(registerDTO.getUsername())
+                .email(registerDTO.getEmail())
                 .password(passwordEncoder.encode(registerDTO.getPassword()))
                 .role(Role.valueOf(registerDTO.getRole()))
                 .build();

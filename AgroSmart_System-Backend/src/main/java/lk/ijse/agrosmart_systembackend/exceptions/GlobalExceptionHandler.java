@@ -2,7 +2,7 @@ package lk.ijse.agrosmart_systembackend.exceptions;
 
 
 import io.jsonwebtoken.ExpiredJwtException;
-import lk.ijse.agrosmart_systembackend.dto.ApiResponse;
+import lk.ijse.agrosmart_systembackend.util.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
