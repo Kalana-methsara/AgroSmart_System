@@ -100,7 +100,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Email or username</label>
                         <div class="relative">
                             <i class="fa-regular fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
-                            <input type="text" id="username" name="username" placeholder="farmer@agrosmart.com"
+                            <input type="text" id="username" name="username" placeholder="farmer@agrosmart.com or username"
                                    class="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-green-400 outline-none transition input-focus-ring text-gray-700">
                         </div>
                     </div>
@@ -144,7 +144,7 @@
                 </form>
 
                 <p class="text-center text-sm text-gray-500 mt-8">
-                    Don't have an account? <a href="#" class="text-green-700 font-semibold hover:underline">Start free trial</a>
+                    Don't have an account? <a href="./pages/registration.html" class="text-green-700 font-semibold hover:underline">Sign up</a>
                 </p>
 
             </div>
@@ -183,21 +183,26 @@
         $('#loginForm').on('submit', function(e) {
             e.preventDefault();
 
-            const data = {
-                username: $('#username').val(),
-                password: $('#loginPassword').val()
-            };
+            const usernameOrEmail = $('#username').val().trim();
+            const password = $('#loginPassword').val();
 
             // Basic validation
-            if (!data.username || !data.password) {
+            if (!usernameOrEmail || !password) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Missing Information',
-                    text: 'Please enter both username and password',
+                    text: 'Please enter both username/email and password',
                     confirmButtonColor: '#059669'
                 });
                 return;
             }
+
+            // IMPORTANT FIX: Always send as 'username' field to match backend AuthDTO
+            // Your backend only accepts 'username' field, not 'email'
+            const data = {
+                username: usernameOrEmail,  // Send whatever the user entered as 'username'
+                password: password
+            };
 
             // Disable submit button to prevent double submission
             const $submitBtn = $('#userLogIn');
@@ -210,10 +215,13 @@
                 data: JSON.stringify(data),
                 success: function(response) {
                     // Based on your backend, response structure is ApiResponse with code, message, data
-                    // The data contains AuthResponseDTO with token
+                    // The data contains AuthResponseDTO with accessToken
                     if (response.code === 200) {
-                        const token = response.data.token;
+                        const token = response.data.accessToken; // FIXED: Changed from 'token' to 'accessToken'
                         localStorage.setItem('token', token);
+
+                        // Store username/email for display purposes
+                        localStorage.setItem('userIdentifier', usernameOrEmail);
 
                         // Show success message
                         Swal.fire({
@@ -223,8 +231,6 @@
                             timer: 1500,
                             showConfirmButton: false
                         }).then(() => {
-                            // Since your backend doesn't include role in token yet,
-                            // we'll redirect to a generic dashboard
                             window.location.href = 'pages/dashboard.html';
                         });
                     } else {
@@ -241,13 +247,14 @@
                     let errorMessage = 'Login failed. Please check your credentials.';
 
                     if (xhr.responseJSON) {
-                        if (xhr.responseJSON.message) {
+                        // Handle your ApiResponse structure
+                        if (xhr.responseJSON.data) {
+                            errorMessage = xhr.responseJSON.data;
+                        } else if (xhr.responseJSON.message) {
                             errorMessage = xhr.responseJSON.message;
-                        } else if (xhr.responseJSON.error) {
-                            errorMessage = xhr.responseJSON.error;
                         }
                     } else if (xhr.status === 401) {
-                        errorMessage = 'Invalid username or password';
+                        errorMessage = 'Invalid username/email or password';
                     } else if (xhr.status === 404) {
                         errorMessage = 'Server not found. Please check your connection.';
                     } else if (xhr.status === 500) {

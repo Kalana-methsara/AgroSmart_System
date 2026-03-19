@@ -1,9 +1,9 @@
-package lk.ijse.agrosmart_systembackend.dto;
+    package lk.ijse.agrosmart_systembackend.dto;
 
-import lombok.Data;
+    import lombok.Data;
 
-@Data
-public class AuthDTO {
-    private String username;
-    private String password;
-}
+    @Data
+    public class AuthDTO {
+        private String username;
+        private String password;
+    }

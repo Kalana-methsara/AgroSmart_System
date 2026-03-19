@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgroSmart · farmer registration</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    @keyframes float {
+      0% { transform: translateY(0px) translateX(0px); }
+      50% { transform: translateY(-12px) translateX(8px); }
+      100% { transform: translateY(0px) translateX(0px); }
+    }
+    .leaf-1 { animation: float 14s ease-in-out infinite; }
+    .leaf-2 { animation: float 18s ease-in-out infinite reverse; }
+    .input-focus-ring:focus { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15); }
+    .card-hover { transition: all 0.2s ease; }
+    .card-hover:hover { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); }
+    .logo-row {
+      gap: 0.5rem;
+    }
+    .logo-icon {
+      font-size: 3.25rem;
+      line-height: 2.5rem;
+    }
+    .password-strength {
+      transition: all 0.3s ease;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 antialiased font-sans">
+
+<div class="flex min-h-screen w-full">
+
+  <!-- LEFT SIDE: maximized typography, centered, with extra large logo and custom 0.5rem gap -->
+  <div class="hidden lg:flex lg:w-2/5 relative overflow-hidden bg-gradient-to-br from-green-900 via-green-800 to-emerald-900 text-white">
+    <div class="absolute inset-0 opacity-10">
+      <svg width="100%" height="100%" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+        <path d="M120 80 Q200 20 260 100 Q320 180 250 250 Q200 310 120 280 Q40 250 70 160 Q90 100 120 80" fill="white" opacity="0.2" class="leaf-1"/>
+        <path d="M320 280 Q360 200 380 260 Q400 320 330 350 Q280 380 250 310 Q230 260 280 250 Q310 240 320 280" fill="white" opacity="0.15" class="leaf-2"/>
+      </svg>
+    </div>
+
+    <!-- centering container -->
+    <div class="relative z-10 w-full h-full flex flex-col items-center justify-center p-8">
+      <!-- inner wrapper with max-width -->
+      <div class="w-full max-w-sm mx-auto">
+        <!-- brand – extra large logo with custom 0.5rem gap (logo-row class) -->
+        <div class="flex items-center logo-row mb-10">
+          <!-- logo icon: bigger, bolder, with custom 3.25rem size -->
+          <div class="w-20 h-20 bg-yellow-400 rounded-2xl flex items-center justify-center text-green-900 shadow-lg">
+            <i class="fa-solid fa-leaf logo-icon"></i>
+          </div>
+          <div>
+            <h1 class="text-5xl font-light tracking-tight"><span class="font-bold">Agro</span>Smart</h1>
+            <p class="text-green-200 text-base">precision farming suite</p>
+          </div>
+          <span class="bg-white/20 text-white text-sm px-3 py-1 rounded-full ml-3 backdrop-blur-sm">v2.4</span>
+        </div>
+
+        <!-- value propositions for registration -->
+        <div class="space-y-8">
+          <h2 class="text-4xl font-semibold leading-tight">Join the <span class="text-yellow-300">farming</span> revolution</h2>
+          <div class="space-y-3 text-green-100 text-base">
+            <p class="flex items-center gap-3"><i class="fa-solid fa-check-circle text-yellow-300"></i> AI-powered crop insights</p>
+            <p class="flex items-center gap-3"><i class="fa-solid fa-check-circle text-yellow-300"></i> Real-time weather alerts</p>
+            <p class="flex items-center gap-3"><i class="fa-solid fa-check-circle text-yellow-300"></i> Soil health monitoring</p>
+            <p class="flex items-center gap-3"><i class="fa-solid fa-check-circle text-yellow-300"></i> Expert community support</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- right side: registration form -->
+  <div class="w-full lg:w-3/5 flex items-center justify-center p-5 bg-white lg:bg-gray-50">
+    <div class="w-full max-w-md">
+
+      <!-- mobile brand (visible only on mobile) -->
+      <div class="lg:hidden flex items-center gap-2 mb-5">
+        <div class="w-9 h-9 bg-green-800 rounded-lg flex items-center justify-center text-white"><i class="fa-solid fa-leaf text-base"></i></div>
+        <span class="text-xl font-semibold text-gray-800">AgroSmart</span>
+        <span class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full ml-2">farmer registration</span>
+      </div>
+
+      <!-- main form card - MEDIUM PADDING -->
+      <div class="bg-white p-7 rounded-2xl shadow-xl card-hover border border-gray-100">
+
+        <!-- smaller centered logo inside card - MEDIUM SIZE -->
+        <div class="flex flex-col items-center mb-4">
+          <div class="w-14 h-14 bg-green-800 rounded-xl flex items-center justify-center text-white text-2xl shadow-md mb-2">
+            <i class="fa-solid fa-leaf"></i>
+          </div>
+          <h1 class="text-xl font-light tracking-tight text-gray-800">
+            <span class="font-bold">Agro</span>Smart
+          </h1>
+          <p class="text-xs text-gray-500 mt-0.5">create account</p>
+        </div>
+
+        <!-- welcome heading - MEDIUM MARGIN -->
+        <div class="mb-5">
+          <h2 class="text-xl font-bold text-gray-800">Start your journey</h2>
+          <p class="text-gray-500 text-xs mt-1">Join thousands of farmers using smart agriculture.</p>
+        </div>
+
+        <form class="space-y-4" id="registerForm">
+          <!-- Username (matches backend username field) - MEDIUM PADDING -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Username</label>
+            <div class="relative">
+              <i class="fa-regular fa-user absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base"></i>
+              <input type="text" id="username" name="username" placeholder="john_farmer"
+                     class="w-full pl-10 pr-3 py-3 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-green-400 outline-none transition input-focus-ring text-gray-700">
+            </div>
+          </div>
+
+          <!-- Email - MEDIUM PADDING -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
+            <div class="relative">
+              <i class="fa-regular fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base"></i>
+              <input type="email" id="email" name="email" placeholder="farmer@agrosmart.com"
+                     class="w-full pl-10 pr-3 py-3 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-green-400 outline-none transition input-focus-ring text-gray-700">
+            </div>
+          </div>
+
+          <!-- Password with strength indicator - MEDIUM PADDING -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+            <div class="relative">
+              <i class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base"></i>
+              <input type="password" id="registerPassword" name="password" placeholder="Create a strong password"
+                     class="w-full pl-10 pr-10 py-3 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-green-400 outline-none transition input-focus-ring text-gray-700">
+              <button type="button" class="togglePassword absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <i class="fa-regular fa-eye-slash text-base"></i>
+              </button>
+            </div>
+            <!-- Password strength indicator - MEDIUM -->
+            <div class="mt-2">
+              <div class="flex gap-1 h-1.5">
+                <div class="strength-bar flex-1 rounded-full bg-gray-200"></div>
+                <div class="strength-bar flex-1 rounded-full bg-gray-200"></div>
+                <div class="strength-bar flex-1 rounded-full bg-gray-200"></div>
+                <div class="strength-bar flex-1 rounded-full bg-gray-200"></div>
+              </div>
+              <p class="text-xs text-gray-500 mt-1" id="passwordStrengthText">Use at least 8 characters</p>
+            </div>
+          </div>
+
+          <!-- Confirm Password - MEDIUM PADDING -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Confirm password</label>
+            <div class="relative">
+              <i class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base"></i>
+              <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter your password"
+                     class="w-full pl-10 pr-10 py-3 text-sm rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-green-400 outline-none transition input-focus-ring text-gray-700">
+              <button type="button" class="toggleConfirmPassword absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <i class="fa-regular fa-eye-slash text-base"></i>
+              </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-1" id="passwordMatchText"></p>
+          </div>
+
+          <!-- Hidden role field - always USER -->
+          <input type="hidden" id="role" name="role" value="USER">
+
+          <!-- Terms and Conditions - MEDIUM -->
+          <div class="flex items-start gap-2 text-sm">
+            <input type="checkbox" id="terms" class="mt-0.5 w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-200">
+            <label for="terms" class="text-gray-600">
+              I agree to the <a href="#" class="text-green-700 font-semibold hover:underline">Terms</a> and
+              <a href="#" class="text-green-700 font-semibold hover:underline">Privacy</a>
+            </label>
+          </div>
+
+          <!-- Newsletter (optional) - MEDIUM -->
+          <div class="flex items-center gap-2 text-sm">
+            <input type="checkbox" id="newsletter" class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-200" checked>
+            <label for="newsletter" class="text-gray-600">Send me farming tips and updates (optional)</label>
+          </div>
+
+          <button type="submit" id="registerBtn" class="w-full bg-gradient-to-r from-green-700 to-green-600 hover:from-green-800 hover:to-green-700 text-white py-3 rounded-xl font-semibold shadow-md shadow-green-200 transition-all flex items-center justify-center gap-2 text-base">
+            <i class="fa-solid fa-user-plus"></i> Create account
+          </button>
+
+          <!-- Divider - MEDIUM -->
+          <div class="relative my-4">
+            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+            <div class="relative flex justify-center text-xs"><span class="px-2 bg-white text-gray-500">or sign up with</span></div>
+          </div>
+
+          <!-- Social buttons - MEDIUM -->
+          <div class="grid grid-cols-2 gap-3">
+            <button type="button" class="flex items-center justify-center gap-2 py-2.5 text-sm border border-gray-200 rounded-xl hover:bg-gray-50 transition text-gray-700"><i class="fa-brands fa-google text-red-500"></i> Google</button>
+            <button type="button" class="flex items-center justify-center gap-2 py-2.5 text-sm border border-gray-200 rounded-xl hover:bg-gray-50 transition text-gray-700"><i class="fa-brands fa-apple text-gray-900"></i> Apple</button>
+          </div>
+        </form>
+
+        <p class="text-center text-sm text-gray-500 mt-5">
+          Already have an account? <a href="../index.html" class="text-green-700 font-semibold hover:underline">Sign in</a>
+        </p>
+
+      </div>
+
+      <!-- Footer links - MEDIUM -->
+      <div class="flex justify-center gap-5 mt-4 text-xs text-gray-400">
+        <a href="#" class="hover:text-gray-600">Terms</a>
+        <a href="#" class="hover:text-gray-600">Privacy</a>
+        <a href="#" class="hover:text-gray-600">Contact</a>
+        <span class="text-gray-300">© 2026</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script>
+  $(document).ready(function() {
+    // Toggle password visibility
+    $('.togglePassword').click(function() {
+      const passwordInput = $('#registerPassword');
+      const icon = $(this).find('i');
+
+      if (passwordInput.attr('type') === 'password') {
+        passwordInput.attr('type', 'text');
+        icon.removeClass('fa-eye-slash').addClass('fa-eye');
+      } else {
+        passwordInput.attr('type', 'password');
+        icon.removeClass('fa-eye').addClass('fa-eye-slash');
+      }
+    });
+
+    // Toggle confirm password visibility
+    $('.toggleConfirmPassword').click(function() {
+      const passwordInput = $('#confirmPassword');
+      const icon = $(this).find('i');
+
+      if (passwordInput.attr('type') === 'password') {
+        passwordInput.attr('type', 'text');
+        icon.removeClass('fa-eye-slash').addClass('fa-eye');
+      } else {
+        passwordInput.attr('type', 'password');
+        icon.removeClass('fa-eye').addClass('fa-eye-slash');
+      }
+    });
+
+    // Password strength checker
+    $('#registerPassword').on('input', function() {
+      const password = $(this).val();
+      const strengthBars = $('.strength-bar');
+      const strengthText = $('#passwordStrengthText');
+
+      let strength = 0;
+
+      // Check length
+      if (password.length >= 8) strength++;
+      // Check for numbers
+      if (/\d/.test(password)) strength++;
+      // Check for lowercase and uppercase
+      if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+      // Check for special characters
+      if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
+
+      // Update bars
+      const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500'];
+      const messages = ['Too weak', 'Weak', 'Medium', 'Strong'];
+
+      strengthBars.each(function(index) {
+        $(this).removeClass('bg-red-500 bg-orange-500 bg-yellow-500 bg-green-500 bg-gray-200');
+        if (index < strength) {
+          $(this).addClass(colors[strength - 1]);
+        } else {
+          $(this).addClass('bg-gray-200');
+        }
+      });
+
+      if (password.length === 0) {
+        strengthText.text('Use at least 8 characters with letters & numbers');
+      } else {
+        strengthText.text(messages[strength - 1] || 'Too weak');
+      }
+    });
+
+    // Check password match
+    $('#confirmPassword, #registerPassword').on('input', function() {
+      const password = $('#registerPassword').val();
+      const confirm = $('#confirmPassword').val();
+      const matchText = $('#passwordMatchText');
+
+      if (confirm.length === 0) {
+        matchText.text('');
+      } else if (password === confirm) {
+        matchText.html('<span class="text-green-600"><i class="fa-solid fa-check"></i> Passwords match</span>');
+      } else {
+        matchText.html('<span class="text-red-600"><i class="fa-solid fa-times"></i> Passwords do not match</span>');
+      }
+    });
+
+    // Handle form submission
+    $('#registerForm').on('submit', function(e) {
+      e.preventDefault();
+
+      // Get form data
+      const username = $('#username').val();
+      const email = $('#email').val();
+      const password = $('#registerPassword').val();
+      const confirmPassword = $('#confirmPassword').val();
+      const terms = $('#terms').is(':checked');
+
+      // Validation
+      if (!username) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Missing Information',
+          text: 'Please enter a username',
+          confirmButtonColor: '#059669'
+        });
+        return;
+      }
+
+      if (!email) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Missing Information',
+          text: 'Please enter your email address',
+          confirmButtonColor: '#059669'
+        });
+        return;
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Invalid Email',
+          text: 'Please enter a valid email address',
+          confirmButtonColor: '#059669'
+        });
+        return;
+      }
+
+      if (!password) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Missing Information',
+          text: 'Please create a password',
+          confirmButtonColor: '#059669'
+        });
+        return;
+      }
+
+      if (password.length < 8) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Weak Password',
+          text: 'Password must be at least 8 characters long',
+          confirmButtonColor: '#059669'
+        });
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Password Mismatch',
+          text: 'Passwords do not match',
+          confirmButtonColor: '#059669'
+        });
+        return;
+      }
+
+      if (!terms) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Terms Required',
+          text: 'Please accept the Terms of Service and Privacy Policy',
+          confirmButtonColor: '#059669'
+        });
+        return;
+      }
+
+      // Prepare data for API (matching RegisterDTO) - role is always USER
+      const data = {
+        username: username,
+        email: email,
+        password: password,
+        role: 'USER'  // Always set to USER
+      };
+
+      // Disable submit button
+      const $submitBtn = $('#registerBtn');
+      $submitBtn.prop('disabled', true).html('<i class="fa-solid fa-circle-notch fa-spin"></i> Creating account...');
+
+      // API call to register
+      $.ajax({
+        url: 'http://localhost:8080/api/v1/auth/register',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function(response) {
+          if (response.code === 201 || response.code === 200) {
+            // Show success message
+            Swal.fire({
+              icon: 'success',
+              title: 'Registration Successful!',
+              html: 'Your account has been created.<br>Please check your email to verify.',
+              confirmButtonColor: '#059669'
+            }).then(() => {
+              // Redirect to login page
+              window.location.href = '../index.html';
+            });
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Registration Failed',
+              text: response.message || 'Something went wrong',
+              confirmButtonColor: '#059669'
+            });
+            $submitBtn.prop('disabled', false).html('<i class="fa-solid fa-user-plus"></i> Create account');
+          }
+        },
+        error: function(xhr, status, error) {
+          let errorMessage = 'Registration failed. Please try again.';
+
+          if (xhr.responseJSON) {
+            if (xhr.responseJSON.message) {
+              errorMessage = xhr.responseJSON.message;
+            } else if (xhr.responseJSON.error) {
+              errorMessage = xhr.responseJSON.error;
+            }
+          } else if (xhr.status === 409) {
+            errorMessage = 'Username or email already registered';
+          } else if (xhr.status === 400) {
+            errorMessage = 'Invalid input data';
+          } else if (xhr.status === 500) {
+            errorMessage = 'Server error. Please try again later.';
+          }
+
+          Swal.fire({
+            icon: 'error',
+            title: 'Registration Failed',
+            text: errorMessage,
+            confirmButtonColor: '#059669'
+          });
+
+          $submitBtn.prop('disabled', false).html('<i class="fa-solid fa-user-plus"></i> Create account');
+        }
+      });
+    });
+
+    // Enter key support
+    $('#confirmPassword').keypress(function(e) {
+      if (e.which === 13) {
+        $('#registerForm').submit();
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,6 +1,5 @@
 package lk.ijse.agrosmart_systembackend.exceptions;
 
-
 import io.jsonwebtoken.ExpiredJwtException;
 import lk.ijse.agrosmart_systembackend.util.ApiResponse;
 import org.springframework.http.HttpStatus;
@@ -12,26 +11,33 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler(UsernameNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiResponse handleUsernameNotFoundException(UsernameNotFoundException e){
-        return new ApiResponse(404,"UserName Not Found",e.getMessage());
+
+    @ExceptionHandler({UsernameNotFoundException.class, BadCredentialsException.class})
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiResponse handleAuthenticationExceptions(Exception e){
+        e.printStackTrace();
+        return new ApiResponse(401, "Authentication Failed",
+                "Invalid username/email or password");
     }
 
-    @ExceptionHandler(BadCredentialsException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiResponse handleBadCredentialsException(BadCredentialsException e){
-        return new ApiResponse(401,"Bad Credentials",
-                "Invalid Username or Password");
-    }
     @ExceptionHandler(ExpiredJwtException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiResponse handleExpiredJwtException(ExpiredJwtException e){
-        return new ApiResponse(401,"Expired Token",e.getMessage());
+        e.printStackTrace();
+        return new ApiResponse(401, "Expired Token", e.getMessage());
     }
+
     @ExceptionHandler(RuntimeException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResponse handleRuntimeException(RuntimeException e){
-        return new ApiResponse(500,"Internal Server Error",e.getMessage());
+        e.printStackTrace();
+        return new ApiResponse(500, "Internal Server Error", e.getMessage());
+    }
+
+    @ExceptionHandler(EmailNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiResponse handleEmailNotFoundException(EmailNotFoundException e){
+        e.printStackTrace();
+        return new ApiResponse(404, "Email Not Found", e.getMessage());
     }
 }
