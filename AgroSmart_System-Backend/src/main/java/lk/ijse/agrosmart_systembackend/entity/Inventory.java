@@ -1,6 +1,9 @@
 package lk.ijse.agrosmart_systembackend.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lk.ijse.agrosmart_systembackend.entity.enums.Category;
 import lombok.*;
 
 import java.io.Serializable;
@@ -8,17 +11,21 @@ import java.time.LocalDate;
 
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Inventory implements Serializable {
     @Id
     private String inventoryId;
-    private String itemName; // උදා: Urea Fertilizer, Chili Seeds
-    private String category; // SEED, FERTILIZER, PESTICIDE
-    private Double quantity; // දැනට ගබඩාවේ ඇති ප්‍රමාණය
+    @NotBlank
+    private String itemName;
+    private Category category; // SEED, FERTILIZER, PESTICIDE
+    @NotNull
+    private Double quantity;
+    @NotBlank
     private String unit;     // kg, L, Packets
-//    private String supplierDetails;
+    // private String supplierDetails;
     private LocalDate lastUpdated;
 }
