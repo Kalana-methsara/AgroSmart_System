@@ -1,9 +1,9 @@
 package lk.ijse.agrosmart_systembackend.controller;
 
+import lk.ijse.agrosmart_systembackend.service.UserService;
 import lk.ijse.agrosmart_systembackend.util.ApiResponse;
 import lk.ijse.agrosmart_systembackend.dto.AuthDTO;
 import lk.ijse.agrosmart_systembackend.dto.RegisterDTO;
-import lk.ijse.agrosmart_systembackend.service.UserService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
