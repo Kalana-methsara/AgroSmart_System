@@ -1,10 +1,7 @@
 package lk.ijse.agrosmart_systembackend.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -13,7 +10,8 @@ import java.util.List;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
+@Getter
+@Setter
 @Builder
 public class Log {
     @Id
@@ -31,4 +29,6 @@ public class Log {
     private Crop crop;
     @OneToMany(mappedBy = "log", cascade = CascadeType.ALL)
     private List<StaffLog> staffLog = new ArrayList<>();
+    @OneToMany(mappedBy = "log", cascade = CascadeType.ALL)
+    private List<LogInventory> inventoryDetails = new ArrayList<>();
 }

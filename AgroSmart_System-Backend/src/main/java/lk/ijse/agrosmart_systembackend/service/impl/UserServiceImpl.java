@@ -4,7 +4,7 @@ import lk.ijse.agrosmart_systembackend.dto.AuthDTO;
 import lk.ijse.agrosmart_systembackend.dto.AuthResponseDTO;
 import lk.ijse.agrosmart_systembackend.dto.RegisterDTO;
 import lk.ijse.agrosmart_systembackend.entity.PasswordResetToken;
-import lk.ijse.agrosmart_systembackend.entity.Role;
+import lk.ijse.agrosmart_systembackend.entity.enums.Role;
 import lk.ijse.agrosmart_systembackend.entity.User;
 import lk.ijse.agrosmart_systembackend.repository.PasswordResetTokenRepository;
 import lk.ijse.agrosmart_systembackend.repository.UserRepository;

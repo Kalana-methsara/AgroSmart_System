@@ -1,10 +1,9 @@
 package lk.ijse.agrosmart_systembackend.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lk.ijse.agrosmart_systembackend.entity.enums.Gender;
+import lk.ijse.agrosmart_systembackend.entity.enums.Role;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -13,7 +12,8 @@ import java.util.List;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
+@Getter
+@Setter
 @Builder
 public class Staff implements Serializable {
     @Id

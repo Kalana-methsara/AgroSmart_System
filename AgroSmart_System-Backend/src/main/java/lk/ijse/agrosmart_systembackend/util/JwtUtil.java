@@ -3,7 +3,7 @@ package lk.ijse.agrosmart_systembackend.util;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import lk.ijse.agrosmart_systembackend.entity.Role;
+import lk.ijse.agrosmart_systembackend.entity.enums.Role;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
