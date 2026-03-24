@@ -1,9 +1,6 @@
 package lk.ijse.agrosmart_systembackend.entity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +18,7 @@ public class Vehicle implements Serializable {
     @Id
     private String vehicleId;
     private String category;
+    @Column(unique = true)
     private String numberPlate;
     private String fuelType;
     private String status;

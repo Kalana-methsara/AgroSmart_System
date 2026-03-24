@@ -29,6 +29,6 @@ public class Log {
     @ManyToOne
     @JoinColumn(name = "crop_id", nullable = false)
     private Crop crop;
-    @OneToMany(mappedBy = "logEntity", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "log", cascade = CascadeType.ALL)
     private List<StaffLog> staffLog = new ArrayList<>();
 }

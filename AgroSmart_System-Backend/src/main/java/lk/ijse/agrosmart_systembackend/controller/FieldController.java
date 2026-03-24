@@ -21,7 +21,6 @@ public class FieldController {
     // SAVE
     @PostMapping
     public ResponseEntity<ApiResponse> saveField(@RequestBody FieldDTO fieldDTO) {
-        System.out.println("saveField");
         return new ResponseEntity<>(
                 new ApiResponse(201, "Field Saved Successfully", fieldService.saveField(fieldDTO)),
                 HttpStatus.CREATED
