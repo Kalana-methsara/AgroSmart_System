@@ -17,7 +17,7 @@ public class StaffLog {
     private String staffLogId;
     @ManyToOne
     @JoinColumn(name = "staff_id" ,referencedColumnName = "staffId")
-    private Staff staffEntity;
+    private Staff staff;
     @ManyToOne
     @JoinColumn(name = "log_id", referencedColumnName = "logId")
     private Log log;

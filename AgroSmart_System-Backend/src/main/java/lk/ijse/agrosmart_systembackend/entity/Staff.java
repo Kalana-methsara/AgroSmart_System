@@ -33,6 +33,6 @@ public class Staff implements Serializable {
     private Vehicle vehicleId;
     @OneToMany(mappedBy = "staff", cascade = CascadeType.ALL)
     private List<FieldStaff> fieldStaff = new ArrayList<>();
-    @OneToMany(mappedBy = "staffEntity", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "staff", cascade = CascadeType.ALL)
     private List<StaffLog> staffLog = new ArrayList<>();
 }

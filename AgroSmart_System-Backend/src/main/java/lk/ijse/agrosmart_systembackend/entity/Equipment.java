@@ -17,10 +17,10 @@ public class Equipment implements Serializable {
     private String category;
     private String type;
     private String status;
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne()
     @JoinColumn(name = "field_id")
     private Field field;
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne()
     @JoinColumn(name = "staff_id")
     private Staff staff;
 }
