@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -26,10 +27,19 @@ public class LogDTO implements Serializable {
     private String temperature;
     @Size(max = 10485760, message = "Image size exceeds maximum allowed length")
     private String observedImg;
-    @NotEmpty(message = "Fields list cannot be empty")
+    @NotEmpty(message = "Field ID cannot be empty")
     private String fieldId;
-    @NotEmpty(message = "Crops list cannot be empty")
+    @NotEmpty(message = "Crop ID cannot be empty")
     private String cropId;
     private List<String> staff;
-    private List<String> inventory;
+
+    private List<InventoryItem> inventory;
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Data
+    public static class InventoryItem {
+        private String inventoryId;
+        private Double usedQuantity;
+    }
 }
