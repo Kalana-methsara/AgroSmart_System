@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vehicle Management</title>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma;
+      margin: 0;
+      background: #f8fafc;
+    }
+
+    h2 {
+      margin: 20px;
+    }
+
+    #vehicleForm {
+      background: #fff;
+      padding: 20px;
+      margin: 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 8px 12px;
+      margin-right: 5px;
+      cursor: pointer;
+    }
+
+    table {
+      width: 95%;
+      margin: 20px;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    tr:hover {
+      background: #f1f5f9;
+    }
+
+    .selected {
+      background: #dbeafe;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>Vehicle Management</h2>
+
+<div id="vehicleForm">
+<!--  <input type="text" id="vehicleId">-->
+
+<!--  <label>Category</label>-->
+<!--  <input type="text" id="category">-->
+
+<!--  <label>Number Plate</label>-->
+<!--  <input type="text" id="numberPlate">-->
+
+<!--  <label>Fuel Type</label>-->
+<!--  <input type="text" id="fuelType">-->
+
+<!--  <label>Status</label>-->
+<!--  <input type="text" id="status">-->
+
+<!--  <label>Remarks</label>-->
+<!--  <input type="text" id="remarks">-->
+
+<!--  <br>-->
+
+<!--  <button id="saveBtn">Save</button>-->
+<!--  <button id="updateBtn" style="display:none;">Update</button>-->
+<!--  <button id="deleteBtn" style="display:none;">Delete</button>-->
+<!--  <button id="resetBtn">Clear</button>-->
+  <label>Vehicle ID</label>
+
+
+</div>
+
+<table id="vehicleTable">
+  <thead>
+  <tr>
+    <th>ID</th>
+    <th>Category</th>
+    <th>Number Plate</th>
+    <th>Fuel</th>
+    <th>Status</th>
+    <th>Remarks</th>
+  </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+
+  // let selectedRow = null;
+  //
+  // // SAVE
+  // $("#saveBtn").click(function(){
+  //
+  //   const data = getFormData();
+  //
+  //   if(!validate(data)) return;
+  //
+  //   $.ajax({
+  //     url: "http://localhost:8080/api/v1/vehicle",
+  //     method: "POST",
+  //     contentType: "application/json",
+  //     data: JSON.stringify(data),
+  //     success: function(res){
+  //       alert(res.message);
+  //       loadVehicles();
+  //       resetForm();
+  //     },
+  //     error: function(){
+  //       alert("Save Error");
+  //     }
+  //   });
+  // });
+  //
+  // // UPDATE
+  // $("#updateBtn").click(function(){
+  //
+  //   const data = getFormData();
+  //
+  //   if(!validate(data)) return;
+  //
+  //   $.ajax({
+  //     url: "http://localhost:8080/api/v1/vehicle",
+  //     method: "PUT",
+  //     contentType: "application/json",
+  //     data: JSON.stringify(data),
+  //     success: function(res){
+  //       alert(res.message);
+  //       loadVehicles();
+  //       resetForm();
+  //     },
+  //     error: function(){
+  //       alert("Update Error");
+  //     }
+  //   });
+  // });
+  //
+  // // DELETE
+  // $("#deleteBtn").click(function(){
+  //
+  //   const id = $("#vehicleId").val();
+  //
+  //   $.ajax({
+  //     url: "http://localhost:8080/api/v1/vehicle/" + id,
+  //     method: "DELETE",
+  //     success: function(res){
+  //       alert(res.message);
+  //       loadVehicles();
+  //       resetForm();
+  //     },
+  //     error: function(){
+  //       alert("Delete Error");
+  //     }
+  //   });
+  // });
+  //
+  // // LOAD
+  function loadVehicles(){
+
+    const token = localStorage.getItem("token"); // get token from login
+
+    $.ajax({
+      url: "http://localhost:8080/api/v1/vehicle/all",
+      method: "GET",
+      headers: {
+        "Authorization": "Bearer " + token   // ✅ IMPORTANT
+      },
+      success: function(res){
+
+        let rows = "";
+
+        if(res.code === 200){   // FIX: your login uses "code", not "status"
+          res.data.forEach(v => {
+            rows += `<tr>
+            <td>${v.vehicleId}</td>
+            <td>${v.category}</td>
+            <td>${v.numberPlate}</td>
+            <td>${v.fuelType}</td>
+            <td>${v.status}</td>
+            <td>${v.remarks}</td>
+          </tr>`;
+          });
+        }
+
+        $("#vehicleTable tbody").html(rows);
+
+      },
+      error: function(xhr){
+        console.log("Error:", xhr);
+
+        if(xhr.status === 401){
+          alert("Unauthorized! Please login again.");
+          window.location.href = "../login.html"; // redirect to login
+        } else {
+          alert("Failed to load vehicles");
+        }
+      }
+    });
+  }
+
+  // // SELECT ROW
+  // function selectRow(row){
+  //
+  //   $("#vehicleTable tr").removeClass("selected");
+  //   $(row).addClass("selected");
+  //
+  //   const td = $(row).find("td");
+  //
+  //   $("#vehicleId").val(td.eq(0).text());
+  //   $("#category").val(td.eq(1).text());
+  //   $("#numberPlate").val(td.eq(2).text());
+  //   $("#fuelType").val(td.eq(3).text());
+  //   $("#status").val(td.eq(4).text());
+  //   $("#remarks").val(td.eq(5).text());
+  //
+  //   $("#saveBtn").hide();
+  //   $("#updateBtn").show();
+  //   $("#deleteBtn").show();
+  // }
+
+  // RESET
+  // function resetForm(){
+  //   $("input").val("");
+  //   $("#saveBtn").show();
+  //   $("#updateBtn").hide();
+  //   $("#deleteBtn").hide();
+  // }
+  //
+  // // // VALIDATION
+  // function validate(data){
+  //
+  //   const platePattern = /^[A-Z0-9-]{1,15}$/;
+  //
+  //   if(!data.vehicleId || !data.category || !data.numberPlate || !data.fuelType){
+  //     alert("Fill required fields");
+  //     return false;
+  //   }
+  //
+  //   if(!platePattern.test(data.numberPlate)){
+  //     alert("Invalid Number Plate");
+  //     return false;
+  //   }
+  //
+  //   return true;
+  // }
+  //
+  // // GET DATA
+  // function getFormData(){
+  //   return {
+  //     vehicleId: $("#vehicleId").val(),
+  //     category: $("#category").val(),
+  //     numberPlate: $("#numberPlate").val(),
+  //     fuelType: $("#fuelType").val(),
+  //     status: $("#status").val(),
+  //     remarks: $("#remarks").val()
+  //   };
+  // }
+  //
+  // $("#resetBtn").click(resetForm);
+
+  $(document).ready(loadVehicles);
+
+</script>
+
+</body>
+</html>
