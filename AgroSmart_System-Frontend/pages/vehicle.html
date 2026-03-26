@@ -2,287 +2,372 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Vehicle Management</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>AgroSmart · Precision Inventory & Farm Command</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma;
-      margin: 0;
-      background: #f8fafc;
-    }
-
-    h2 {
-      margin: 20px;
-    }
-
-    #vehicleForm {
-      background: #fff;
-      padding: 20px;
-      margin: 20px;
-      border-radius: 10px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-    }
-
-    input {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      margin-bottom: 10px;
-    }
-
-    button {
-      padding: 8px 12px;
-      margin-right: 5px;
-      cursor: pointer;
-    }
-
-    table {
-      width: 95%;
-      margin: 20px;
-      border-collapse: collapse;
-      background: white;
-    }
-
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-    }
-
-    tr:hover {
-      background: #f1f5f9;
-    }
-
-    .selected {
-      background: #dbeafe;
-    }
+    * { transition: all 0.2s ease; }
+    .sidebar-item { transition: all 0.2s; border-radius: 12px; margin: 4px 8px; padding: 10px 16px; }
+    .sidebar-item:hover:not(.active) { background-color: rgba(34, 197, 94, 0.12); color: #15803d; transform: translateX(4px); }
+    .sidebar-item.active { background: linear-gradient(95deg, #166534, #22c55e); color: white; box-shadow: 0 6px 12px -6px rgba(34,197,94,0.3); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #bbf7d0; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4ade80; }
+    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 20px 25px -12px rgba(0,0,0,0.08); transition: all 0.25s; }
+    .stat-card { background: white; border-radius: 1.5rem; transition: all 0.2s; border: 1px solid #eef2ff; }
+    .stat-card:hover { border-color: #86efac; box-shadow: 0 8px 20px rgba(34,197,94,0.08); }
+    .inventory-table-row:hover { background-color: #fefce8; transition: 0.1s; }
+    .blur-loading { backdrop-filter: blur(3px); background-color: rgba(255,255,245,0.85); }
+    .status-badge { font-weight: 500; letter-spacing: -0.2px; }
+    input:focus, select:focus { ring: none; outline: none; border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
+    button:active { transform: scale(0.97); }
   </style>
 </head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans antialiased">
 
-<body>
+  <main class="flex-1 overflow-y-auto bg-gray-50/40 relative">
 
-<h2>Vehicle Management</h2>
+    <!-- INVENTORY SECTION (ACTIVE) -->
+    <div id="inventory-section" class="section-content p-6 md:p-8">
+      <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+        <div><h1 class="text-2xl font-extrabold text-gray-800"><i class="fa-solid fa-clipboard-list text-green-600 mr-2"></i>Inventory Core</h1><p class="text-sm text-gray-500">Manage seeds, fertilizers & equipment</p></div>
+        <button id="addItemBtn" class="bg-green-700 hover:bg-green-800 text-white px-6 py-2.5 rounded-xl font-bold shadow-md flex items-center gap-2 transition-all"><i class="fa-solid fa-plus-circle"></i> Add New Stock</button>
+      </div>
 
-<div id="vehicleForm">
-<!--  <input type="text" id="vehicleId">-->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-5 border-b border-gray-100 flex flex-wrap justify-between items-center gap-3">
+          <h3 class="font-bold text-gray-700"><i class="fa-solid fa-warehouse mr-2 text-green-600"></i>Stock ledger</h3>
+          <div class="relative"><i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" id="inventorySearch" placeholder="Search by name..." class="pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm w-64 focus:border-green-400"></div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead class="bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
+            <tr><th class="px-6 py-4">Item Name</th><th class="px-6 py-4">Category</th><th class="px-6 py-4">Qty</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Actions</th></tr>
+            </thead>
+            <tbody id="inventoryTableBody" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-<!--  <label>Category</label>-->
-<!--  <input type="text" id="category">-->
+  </main>
 
-<!--  <label>Number Plate</label>-->
-<!--  <input type="text" id="numberPlate">-->
+  <script>
+  const API_BASE = 'http://localhost:8080/api/v1/inventory';
+  let currentInventoryData = [];
 
-<!--  <label>Fuel Type</label>-->
-<!--  <input type="text" id="fuelType">-->
+  $(document).ready(async function() {
+  const token = localStorage.getItem('token');
+  if (!token) { window.location.replace("../index.html"); return; }
 
-<!--  <label>Status</label>-->
-<!--  <input type="text" id="status">-->
+  $('#loadingOverlay').removeClass('hidden').addClass('flex');
+  const now = new Date();
+  $('#currentDate').text(now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+  const userIdentifier = localStorage.getItem('userIdentifier') || 'rajesh.farmer@agrosmart.com';
+  const firstName = userIdentifier.split('@')[0].split('.')[0];
+  const displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+  $('#welcomeName, #userDisplayName').text(displayName);
+  $('#userInitials').text(displayName.charAt(0).toUpperCase());
+  $('#profileName').text(displayName);
+  $('#profileEmail').text(userIdentifier);
 
-<!--  <label>Remarks</label>-->
-<!--  <input type="text" id="remarks">-->
+  // Mock data for non-inventory sections
+  const fieldsData = [{ name: "North Field", crop: "Wheat", acres: 85, health: 92, irrigation: "2 days ago", nextTask: "Fertilize" },{ name: "South Field", crop: "Corn", acres: 110, health: 78, irrigation: "Yesterday", nextTask: "Irrigate" },{ name: "East Field", crop: "Soybeans", acres: 50, health: 88, irrigation: "3 days ago", nextTask: "Pest control" }];
+  const cropsData = [{ name: "Wheat", stage: "Flowering", health: "Excellent", estYield: "5.2 t/ha" },{ name: "Corn", stage: "Silking", health: "Good", estYield: "8.1 t/ha" },{ name: "Soybeans", stage: "Pod development", health: "Good", estYield: "3.4 t/ha" }];
+  let tasks = [{ name: "Irrigate North Field", time: "10:00 AM", priority: "High", done: false },{ name: "Check soil sensors", time: "2:00 PM", priority: "Medium", done: false },{ name: "Order fertilizer", time: "5:00 PM", priority: "Low", done: false }];
+  function renderTasks(){ let html = ''; tasks.forEach((t,idx)=>{ html += `<div class="flex items-center justify-between p-3 ${t.priority==='High'?'bg-yellow-50':t.priority==='Medium'?'bg-green-50':'bg-blue-50'} rounded-lg"><div class="flex items-center space-x-3"><input type="checkbox" class="task-check w-5 h-5 rounded" data-idx="${idx}" ${t.done?'checked':''}><div><p class="font-medium text-gray-800">${t.name}</p><p class="text-xs text-gray-500">Due: ${t.time}</p></div></div><span class="text-xs px-2 py-1 rounded-full ${t.priority==='High'?'bg-yellow-100 text-yellow-700':t.priority==='Medium'?'bg-green-100 text-green-700':'bg-blue-100 text-blue-700'}">${t.priority}</span></div>`; }); $('#tasksListContainer').html(html); $('#allTasksPanel').html(html + '<p class="text-center text-gray-400 mt-4">Stay productive!</p>'); $('.task-check').change(function(){ let idx=$(this).data('idx'); tasks[idx].done=$(this).is(':checked'); renderTasks(); Swal.fire({title:'Great!',text:'Task updated',icon:'success',toast:true,timer:1500,showConfirmButton:false}); }); }
+  renderTasks();
+  function renderFields() { let html=''; fieldsData.forEach(f=>{ html+=`<div class="bg-white rounded-xl shadow-md p-6"><div class="flex justify-between"><div><h3 class="font-bold">${f.name}</h3><p class="text-sm text-gray-500">${f.crop} · ${f.acres} acres</p></div><span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Active</span></div><div class="mt-3"><div class="flex justify-between text-sm"><span>Soil Health</span><span class="font-semibold">${f.health}%</span></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-green-600 h-2 rounded-full" style="width: ${f.health}%"></div></div><div class="flex justify-between text-sm mt-2"><span>Last Irrigation</span><span>${f.irrigation}</span></div></div></div>`; }); $('#dynamicFieldsGrid').html(html); }
+  renderFields();
+  function renderCrops() { let html=''; cropsData.forEach(c=>{ html+=`<div class="bg-white rounded-xl shadow p-5 flex justify-between"><div><h3 class="font-bold text-xl">${c.name}</h3><p class="text-gray-500">Stage: ${c.stage}</p><p class="text-sm text-green-600">Health: ${c.health}</p></div><div class="text-right"><p class="text-2xl font-bold">${c.estYield}</p><p class="text-xs text-gray-400">Est. yield</p></div></div>`; }); $('#cropsGrid').html(html); }
+  renderCrops();
+  const aiMessages = ["🌾 Optimal time to irrigate North Field based on soil moisture", "🐛 Possible pest activity detected in South Field", "📈 Harvest forecast: 15% above average"];
+  function refreshAiInsights(){ let html=''; aiMessages.slice(0,3).forEach(m=>{ html+=`<div class="flex items-start space-x-3"><i class="fa-solid fa-lightbulb text-yellow-300 mt-1"></i><p class="text-sm text-green-100">${m}</p></div>`; }); $('#aiInsightsContainer').html(html); }
+  refreshAiInsights();
+  const forecast = [['Mon','sun',25],['Tue','cloud-sun',23],['Wed','cloud-rain',19],['Thu','cloud-sun',22],['Fri','sun',26]];
+  function updateForecast(){ let fc=''; forecast.forEach(f=>{ let iconClass=f[1]==='sun'?'fa-solid fa-sun text-yellow-500':f[1]==='cloud-sun'?'fa-solid fa-cloud-sun text-gray-500':'fa-solid fa-cloud-rain text-blue-500'; fc+=`<div class="text-center"><p class="text-xs">${f[0]}</p><i class="${iconClass} my-2 text-xl"></i><p class="text-sm font-semibold">${f[2]}°</p></div>`; }); $('#forecastContainer').html(fc); }
+  updateForecast();
+  if(typeof Chart !== 'undefined'){ new Chart(document.getElementById('yieldChart'), { type: 'line', data: { labels: ['Jan','Feb','Mar','Apr','May','Jun'], datasets: [{ label: 'Yield (kg/acre)', data: [320, 345, 380, 410, 470, 520], borderColor: '#22c55e', tension: 0.3 }] }, options: { responsive: true } }); }
 
-<!--  <br>-->
-
-<!--  <button id="saveBtn">Save</button>-->
-<!--  <button id="updateBtn" style="display:none;">Update</button>-->
-<!--  <button id="deleteBtn" style="display:none;">Delete</button>-->
-<!--  <button id="resetBtn">Clear</button>-->
-  <label>Vehicle ID</label>
-
-
-</div>
-
-<table id="vehicleTable">
-  <thead>
-  <tr>
-    <th>ID</th>
-    <th>Category</th>
-    <th>Number Plate</th>
-    <th>Fuel</th>
-    <th>Status</th>
-    <th>Remarks</th>
-  </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<script>
-
-  // let selectedRow = null;
-  //
-  // // SAVE
-  // $("#saveBtn").click(function(){
-  //
-  //   const data = getFormData();
-  //
-  //   if(!validate(data)) return;
-  //
-  //   $.ajax({
-  //     url: "http://localhost:8080/api/v1/vehicle",
-  //     method: "POST",
-  //     contentType: "application/json",
-  //     data: JSON.stringify(data),
-  //     success: function(res){
-  //       alert(res.message);
-  //       loadVehicles();
-  //       resetForm();
-  //     },
-  //     error: function(){
-  //       alert("Save Error");
-  //     }
-  //   });
-  // });
-  //
-  // // UPDATE
-  // $("#updateBtn").click(function(){
-  //
-  //   const data = getFormData();
-  //
-  //   if(!validate(data)) return;
-  //
-  //   $.ajax({
-  //     url: "http://localhost:8080/api/v1/vehicle",
-  //     method: "PUT",
-  //     contentType: "application/json",
-  //     data: JSON.stringify(data),
-  //     success: function(res){
-  //       alert(res.message);
-  //       loadVehicles();
-  //       resetForm();
-  //     },
-  //     error: function(){
-  //       alert("Update Error");
-  //     }
-  //   });
-  // });
-  //
-  // // DELETE
-  // $("#deleteBtn").click(function(){
-  //
-  //   const id = $("#vehicleId").val();
-  //
-  //   $.ajax({
-  //     url: "http://localhost:8080/api/v1/vehicle/" + id,
-  //     method: "DELETE",
-  //     success: function(res){
-  //       alert(res.message);
-  //       loadVehicles();
-  //       resetForm();
-  //     },
-  //     error: function(){
-  //       alert("Delete Error");
-  //     }
-  //   });
-  // });
-  //
-  // // LOAD
-  function loadVehicles(){
-
-    const token = localStorage.getItem("token"); // get token from login
-
-    $.ajax({
-      url: "http://localhost:8080/api/v1/vehicle/all",
-      method: "GET",
-      headers: {
-        "Authorization": "Bearer " + token   // ✅ IMPORTANT
-      },
-      success: function(res){
-
-        let rows = "";
-
-        if(res.code === 200){   // FIX: your login uses "code", not "status"
-          res.data.forEach(v => {
-            rows += `<tr>
-            <td>${v.vehicleId}</td>
-            <td>${v.category}</td>
-            <td>${v.numberPlate}</td>
-            <td>${v.fuelType}</td>
-            <td>${v.status}</td>
-            <td>${v.remarks}</td>
-          </tr>`;
-          });
-        }
-
-        $("#vehicleTable tbody").html(rows);
-
-      },
-      error: function(xhr){
-        console.log("Error:", xhr);
-
-        if(xhr.status === 401){
-          alert("Unauthorized! Please login again.");
-          window.location.href = "../login.html"; // redirect to login
-        } else {
-          alert("Failed to load vehicles");
-        }
-      }
-    });
+  // INVENTORY CRUD Functions (Backend integration)
+  async function fetchInventory() {
+  try {
+  const res = await fetch(`${API_BASE}/all`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+  const apiRes = await res.json();
+  if (apiRes.code === 200 && Array.isArray(apiRes.data)) {
+  currentInventoryData = apiRes.data;
+  renderInventoryTable(currentInventoryData);
+  } else {
+  console.warn("Unexpected inventory format", apiRes);
+  renderInventoryTable([]);
+  }
+  } catch (err) { console.error(err); renderInventoryTable([]); Swal.fire('Error','Could not load inventory','error'); }
   }
 
-  // // SELECT ROW
-  // function selectRow(row){
-  //
-  //   $("#vehicleTable tr").removeClass("selected");
-  //   $(row).addClass("selected");
-  //
-  //   const td = $(row).find("td");
-  //
-  //   $("#vehicleId").val(td.eq(0).text());
-  //   $("#category").val(td.eq(1).text());
-  //   $("#numberPlate").val(td.eq(2).text());
-  //   $("#fuelType").val(td.eq(3).text());
-  //   $("#status").val(td.eq(4).text());
-  //   $("#remarks").val(td.eq(5).text());
-  //
-  //   $("#saveBtn").hide();
-  //   $("#updateBtn").show();
-  //   $("#deleteBtn").show();
-  // }
+  function renderInventoryTable(items) {
+  const tbody = $('#inventoryTableBody');
+  if (!items || items.length === 0) {
+  tbody.html('<tr><td colspan="5" class="text-center py-8 text-gray-400"><i class="fa-solid fa-database"></i> No inventory items found. Add one!</td></tr>');
+  return;
+  }
+  let rows = '';
+  items.forEach(item => {
+  const id = item.id || item.inventoryId;
+  const name = item.name || item.itemName || 'Unnamed';
+  const category = item.category || 'General';
+  const quantity = item.quantity || 0;
+  const status = (quantity < 20) ? 'Low Stock' : (quantity > 200 ? 'High Stock' : 'In Stock');
+  const statusClass = status === 'Low Stock' ? 'bg-red-100 text-red-700' : (status === 'High Stock' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700');
+  rows += `<tr>
+    <td class="px-6 py-4 font-medium text-gray-900">${escapeHtml(name)}</td>
+    <td class="px-6 py-4 text-gray-500">${escapeHtml(category)}</td>
+    <td class="px-6 py-4 text-gray-500">${quantity} ${item.unit || 'units'}</td>
+    <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass}">${status}</span></td>
+    <td class="px-6 py-4 text-right space-x-2">
+      <button class="text-blue-600 hover:text-blue-800 edit-inv-btn" data-id="${id}"><i class="fa-regular fa-pen-to-square"></i> Edit</button>
+      <button class="text-red-600 hover:text-red-800 delete-inv-btn ml-2" data-id="${id}"><i class="fa-regular fa-trash-can"></i> Del</button>
+    </td>
+  </tr>`;
+  });
+  tbody.html(rows);
+  $('.edit-inv-btn').click(async function() { const id = $(this).data('id'); await openEditModal(id); });
+  $('.delete-inv-btn').click(async function() { const id = $(this).data('id'); await deleteInventoryItem(id); });
+  }
 
-  // RESET
-  // function resetForm(){
-  //   $("input").val("");
-  //   $("#saveBtn").show();
-  //   $("#updateBtn").hide();
-  //   $("#deleteBtn").hide();
-  // }
-  //
-  // // // VALIDATION
-  // function validate(data){
-  //
-  //   const platePattern = /^[A-Z0-9-]{1,15}$/;
-  //
-  //   if(!data.vehicleId || !data.category || !data.numberPlate || !data.fuelType){
-  //     alert("Fill required fields");
-  //     return false;
-  //   }
-  //
-  //   if(!platePattern.test(data.numberPlate)){
-  //     alert("Invalid Number Plate");
-  //     return false;
-  //   }
-  //
-  //   return true;
-  // }
-  //
-  // // GET DATA
-  // function getFormData(){
-  //   return {
-  //     vehicleId: $("#vehicleId").val(),
-  //     category: $("#category").val(),
-  //     numberPlate: $("#numberPlate").val(),
-  //     fuelType: $("#fuelType").val(),
-  //     status: $("#status").val(),
-  //     remarks: $("#remarks").val()
-  //   };
-  // }
-  //
-  // $("#resetBtn").click(resetForm);
+  function escapeHtml(str) { if(!str) return ''; return String(str).replace(/[&<>]/g, function(m){ if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m;}); }
 
-  $(document).ready(loadVehicles);
+  async function deleteInventoryItem(id) {
+  const confirm = await Swal.fire({ title: 'Delete Item?', text: "This action cannot be undone.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' });
+  if (!confirm.isConfirmed) return;
+  try {
+  const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+  const data = await res.json();
+  if (data.code === 200) { Swal.fire('Deleted!','Item removed','success'); fetchInventory(); }
+  else throw new Error(data.message);
+  } catch(e) { Swal.fire('Error','Could not delete','error'); }
+  }
 
-</script>
+  async function openEditModal(id) {
+  const item = currentInventoryData.find(i => (i.id || i.inventoryId) === id);
+  if (!item) return;
 
+  const { value: updatedItem } = await Swal.fire({
+  title: '',
+  html: `
+  <style>
+    .swal2-html-container { margin: 0; text-align: left; }
+    .modal-container { font-family: 'Segoe UI', sans-serif; padding: 10px; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .header-title { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: bold; }
+    .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+    .form-group label { font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #444; }
+    .inventory-input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+    .row { display: flex; gap: 15px; }
+    .row .form-group { flex: 1; }
+  </style>
+
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>Edit Inventory Item</h3>
+    </div>
+
+    <div class="form-group">
+      <label>Item Name *</label>
+      <input id="swal-name" class="inventory-input" value="${escapeHtml(item.name || item.itemName)}">
+    </div>
+
+    <div class="form-group">
+      <label>Category</label>
+      <select id="swal-category" class="inventory-input">
+        <option value="Equipment" ${item.category === 'Equipment' ? 'selected' : ''}>Equipment</option>
+        <option value="Seeds" ${item.category === 'Seeds' ? 'selected' : ''}>Seeds</option>
+        <option value="Fertilizer" ${item.category === 'Fertilizer' ? 'selected' : ''}>Fertilizer</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <div class="form-group">
+        <label>Quantity *</label>
+        <input id="swal-quantity" type="number" class="inventory-input" value="${item.quantity}">
+      </div>
+      <div class="form-group">
+        <label>Unit</label>
+        <input id="swal-unit" class="inventory-input" value="${item.unit || ''}">
+      </div>
+    </div>
+  </div>`,
+
+  showCancelButton: true,
+  confirmButtonText: 'Update Item',
+  confirmButtonColor: '#2563EB', // Blue for update
+  cancelButtonColor: '#aaa',
+  focusConfirm: false,
+
+  preConfirm: () => {
+  const name = document.getElementById('swal-name').value;
+  const quantity = document.getElementById('swal-quantity').value;
+
+  if (!name || !quantity) {
+  Swal.showValidationMessage('Item Name and Quantity are required');
+  return false;
+  }
+
+  return {
+  ...item,
+  name: name,
+  category: document.getElementById('swal-category').value,
+  quantity: parseFloat(quantity),
+  unit: document.getElementById('swal-unit').value || 'units'
+  };
+  }
+  });
+
+  if (updatedItem) {
+  try {
+  const res = await fetch(API_BASE, {
+  method: 'PUT',
+  headers: {
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${localStorage.getItem('token')}`
+  },
+  body: JSON.stringify(updatedItem)
+  });
+
+  const result = await res.json();
+
+  if (res.ok || result.code === 200) {
+  Swal.fire('Updated!', 'Inventory updated successfully', 'success');
+  fetchInventory();
+  } else {
+  throw new Error(result.message || 'Update failed');
+  }
+  } catch (e) {
+  Swal.fire('Error', e.message || 'Could not update', 'error');
+  }
+  }
+  }
+
+  async function addNewInventory() {
+  const { value: newItem } = await Swal.fire({
+  title: '', // Left blank because your custom HTML has a header
+  html: `
+  <style>
+    .swal2-html-container { margin: 0; text-align: left; }
+    .modal-container { font-family: 'Segoe UI', sans-serif; padding: 10px; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .header-title { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: bold; }
+    .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+    .form-group label { font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #444; }
+    .inventory-input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+    .row { display: flex; gap: 15px; }
+    .row .form-group { flex: 1; }
+    .info-alert { background-color: #e0f7fa; color: #006064; padding: 10px; border-radius: 8px; font-size: 12px; margin-top: 10px; }
+  </style>
+
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>Add Inventory Item</div>
+  </div>
+
+  <div class="form-group">
+    <label>Item Name *</label>
+    <input id="swal-name" class="inventory-input" placeholder="e.g., Urea Fertilizer">
+  </div>
+
+  <div class="form-group">
+    <label>Category</label>
+    <select id="swal-category" class="inventory-input">
+      <option value="Equipment">Equipment</option>
+      <option value="Seeds">Seeds</option>
+      <option value="Fertilizer">Fertilizer</option>
+    </select>
+  </div>
+
+  <div class="row">
+    <div class="form-group">
+      <label>Quantity *</label>
+      <input id="swal-quantity" type="number" class="inventory-input" value="0">
+    </div>
+    <div class="form-group">
+      <label>Unit</label>
+      <input id="swal-unit" class="inventory-input" placeholder="kg, liters, pieces">
+    </div>
+  </div>
+
+
+  </div>`,
+  showCancelButton: true,
+  confirmButtonText: 'Save Item',
+  confirmButtonColor: '#16A34A', // Matches your Forest Green
+  cancelButtonColor: '#aaa',
+  focusConfirm: false,
+  preConfirm: () => {
+  const name = document.getElementById('swal-name').value;
+  const quantity = document.getElementById('swal-quantity').value;
+
+  if (!name || !quantity) {
+  Swal.showValidationMessage('Item Name and Quantity are required');
+  return false;
+  }
+
+  return {
+  name: name,
+  category: document.getElementById('swal-category').value,
+  quantity: parseFloat(quantity),
+  unit: document.getElementById('swal-unit').value || 'units',
+  unit_price: parseFloat(document.getElementById('swal-price').value) || 0,
+  expiry_date: document.getElementById('swal-expiry').value
+  };
+  }
+  });
+
+  if (newItem) {
+  try {
+  const res = await fetch(API_BASE, {
+  method: 'POST',
+  headers: {
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${localStorage.getItem('token')}`
+  },
+  body: JSON.stringify(newItem)
+  });
+
+  const result = await res.json();
+  if (res.ok || result.code === 201) {
+  Swal.fire('Created!', 'New item added', 'success');
+  fetchInventory();
+  } else {
+  throw new Error(result.message || 'Failed to save');
+  }
+  } catch (e) {
+  Swal.fire('Error', e.message || 'Could not save', 'error');
+  }
+  }
+  }
+  // Navigation with inventory fetch when needed
+  $('.sidebar-item[data-section]').click(function(e){ e.preventDefault(); let section=$(this).data('section'); $('.sidebar-item').removeClass('active'); $(this).addClass('active'); $('.section-content').addClass('hidden'); $(`#${section}-section`).removeClass('hidden'); $('#currentSection').text($(this).find('span').text().trim()); if(section === 'inventory') fetchInventory(); if(section === 'weather') $('#weatherDetailed').html(`<p><i class="fa-solid fa-temperature-high"></i> Current: ${$('#currentTemp').text()}, sunny. Humidity ${$('#humidity').text()}. Next days: mild rain expected.</p>`); if(section === 'tasks') renderTasks(); if(section === 'notifications') $('#notificationsList').html(`<div class="p-4 border-b"><p class="font-semibold">⚠️ Irrigation Reminder</p><p class="text-sm text-gray-500">North field moisture low</p></div><div class="p-4"><p class="font-semibold">🌦️ Weather Alert</p><p class="text-sm text-gray-500">Heavy rain expected Thursday</p></div>`); });
+  $('[data-section-mobile]').click(function(e){ e.preventDefault(); let section=$(this).data('section-mobile'); $(`.sidebar-item[data-section="${section}"]`).click(); $('#mobileMenu').addClass('hidden'); });
+  $('#userMenuButton').click(e=>{ e.stopPropagation(); $('#userDropdown').toggleClass('hidden'); });
+  $(document).click(e=>{ if(!$(e.target).closest('#userMenu').length) $('#userDropdown').addClass('hidden'); });
+  $('#mobileMenuBtn').click(()=>$('#mobileMenu').removeClass('hidden'));
+  $('#closeMobileMenu').click(()=>$('#mobileMenu').addClass('hidden'));
+  function logoutAction(){ Swal.fire({ title:'Logout', text:'Are you sure?', icon:'question', showCancelButton:true, confirmButtonColor:'#059669' }).then(res=>{ if(res.isConfirmed){ localStorage.clear(); window.location.href='../index.html'; } }); }
+  $('#logoutBtn, #dropdownLogout, #mobileLogout').click(logoutAction);
+  $('#desktopNotifications, #mobileNotifications').click(()=>{ Swal.fire({ title:'Notifications', html:`<div><div class="p-2"><b>Irrigation Alert</b><br>North Field needs watering</div><div class="p-2 mt-2"><b>Weather Update</b><br>Rain expected tomorrow</div></div>`, confirmButtonColor:'#059669' }); });
+  $('#quickAddField').click(()=> Swal.fire('Feature','Field addition coming soon','info'));
+  $('#quickPlantCrop').click(()=> Swal.fire('AI recommendation','Plant Wheat this season','success'));
+  $('#viewAllTasksBtn').click(()=>{ $('[data-section="tasks"]').click(); });
+  $('#editProfileMock').click(()=> Swal.fire('Edit Profile','Update your farm details.','info'));
+  $('#addItemBtn').click(()=> addNewInventory());
+  setInterval(()=>{ let soil = Math.floor(70+Math.random()*15); $('.bg-blue-100').closest('.card-hover').find('h4').first().text(soil+'%'); refreshAiInsights(); }, 45000);
+  setTimeout(()=>{ $('#loadingOverlay').addClass('hidden'); }, 500);
+  fetchInventory(); // initial fetch in background but only when inventory section is first visited? but keep warm.
+  });
+  </script>
 </body>
 </html>

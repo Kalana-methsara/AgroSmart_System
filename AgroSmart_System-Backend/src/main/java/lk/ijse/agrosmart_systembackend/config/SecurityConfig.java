@@ -112,7 +112,7 @@ public class SecurityConfig {
         return daoAuthenticationProvider;
     }
 
-    // ✅ ADD THIS CORS CONFIG
+    // ADD THIS CORS CONFIG
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
@@ -122,7 +122,7 @@ public class SecurityConfig {
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
 
-        config.setAllowCredentials(true); // ✅ VERY IMPORTANT (for Authorization header)
+        config.setAllowCredentials(true); //  VERY IMPORTANT (for Authorization header)
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
