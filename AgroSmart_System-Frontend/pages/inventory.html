@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vehicle Management</title>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        body { font-family: Arial; background: #f4f4f4; padding: 20px; }
+        .box { background: white; padding: 20px; border-radius: 10px; width: 80%; margin: auto; }
+        input, select { width: 100%; padding: 8px; margin: 5px 0 10px; }
+        button { padding: 8px 15px; margin: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+    </style>
+</head>
+
+<body>
+
+<!--<div class="box">-->
+
+    <h2>Vehicle Management</h2>
+
+    <!-- FORM -->
+    <input type="text" id="vehicleId" placeholder="Vehicle ID (Leave empty for new)">
+
+    <input type="text" id="category" placeholder="Category (Car / Truck)">
+
+    <input type="text" id="numberPlate" placeholder="Number Plate (EX: WP-1234)">
+
+    <select id="fuelType">
+        <option value="">Select Fuel Type</option>
+        <option>Diesel</option>
+        <option>Petrol</option>
+        <option>Electric</option>
+    </select>
+
+    <select id="status">
+        <option>Available</option>
+        <option>In Use</option>
+        <option>Maintenance</option>
+    </select>
+
+    <input type="text" id="remarks" placeholder="Remarks">
+
+    <button onclick="saveVehicle()">Save / Update</button>
+    <button onclick="clearForm()">Clear</button>
+
+    <hr>
+
+    <!-- TABLE -->
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Category</th>
+            <th>Number Plate</th>
+            <th>Fuel</th>
+            <th>Status</th>
+            <th>Remarks</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+
+</div>
+
+<script>
+
+    const API = "http://localhost:8080/api/v1/inventory";
+    const token = localStorage.getItem("token");
+    console.log(token);
+
+    // LOAD VEHICLES
+    function loadVehicles() {
+        fetch(API + "/all", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token   // ✅ REQUIRED if security ON
+            }
+        })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error("403 or CORS issue");
+                }
+                return res.json();
+            })
+            .then(res => {
+                let rows = "";
+                res.data.forEach(v => {
+                    rows += `
+            <tr>
+                <td>${v.vehicleId}</td>
+                <td>${v.category}</td>
+                <td>${v.numberPlate}</td>
+                <td>${v.fuelType}</td>
+                <td>${v.status}</td>
+                <td>${v.remarks || ""}</td>
+                <td>
+                    <button onclick="editVehicle('${v.vehicleId}')">Edit</button>
+                    <button onclick="deleteVehicle('${v.vehicleId}')">Delete</button>
+                </td>
+            </tr>`;
+                });
+                document.getElementById("tableBody").innerHTML = rows;
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire("Error", "Cannot load vehicles (CORS / Auth issue)", "error");
+            });
+    }
+    // SAVE / UPDATE
+    function saveVehicle() {
+
+        let vehicleId = document.getElementById("vehicleId").value.trim();
+        let category = document.getElementById("category").value.trim();
+        let numberPlate = document.getElementById("numberPlate").value.trim().toUpperCase();
+        let fuelType = document.getElementById("fuelType").value;
+
+        // ✅ VALIDATION (IMPORTANT)
+        if (!category) {
+            Swal.fire("Category required");
+            return;
+        }
+
+        if (!numberPlate.match(/^[A-Z0-9-]{1,15}$/)) {
+            Swal.fire("Invalid Number Plate (ONLY CAPS, numbers, dash)");
+            return;
+        }
+
+        if (!fuelType) {
+            Swal.fire("Select Fuel Type");
+            return;
+        }
+
+        let data = {
+            vehicleId: vehicleId || null,
+            category: category,
+            numberPlate: numberPlate,
+            fuelType: fuelType,
+            status: document.getElementById("status").value,
+            remarks: document.getElementById("remarks").value
+        };
+console.log("local storege tocken : -------->" + localStorage.getItem("token"));
+        fetch(API, {
+            method: vehicleId ? "PUT" : "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem("token")
+
+            },
+
+            body: JSON.stringify(data),
+            credentials: "include"
+        })
+            .then(res => {
+                if (!res.ok) throw new Error("Error saving vehicle");
+                return res.json();
+            })
+            .then(() => {
+                Swal.fire("Success!");
+                clearForm();
+                loadVehicles();
+            })
+            .catch(err => {
+                Swal.fire("Error!", err.message, "error");
+            });
+    }
+
+    // EDIT
+    function editVehicle(id) {
+        fetch(API + "/all")
+            .then(res => res.json())
+            .then(res => {
+                let v = res.data.find(x => x.vehicleId === id);
+
+                document.getElementById("vehicleId").value = v.vehicleId;
+                document.getElementById("category").value = v.category;
+                document.getElementById("numberPlate").value = v.numberPlate;
+                document.getElementById("fuelType").value = v.fuelType;
+                document.getElementById("status").value = v.status;
+                document.getElementById("remarks").value = v.remarks;
+            });
+    }
+
+    // DELETE
+    function deleteVehicle(id) {
+        fetch(API + "/" + id, { method: "DELETE" })
+            .then(() => {
+                Swal.fire("Deleted!");
+                loadVehicles();
+            });
+    }
+
+    // CLEAR
+    function clearForm() {
+        document.getElementById("vehicleId").value = "";
+        document.getElementById("category").value = "";
+        document.getElementById("numberPlate").value = "";
+        document.getElementById("remarks").value = "";
+    }
+
+    // INIT
+    loadVehicles();
+
+</script>
+
+</body>
+</html>

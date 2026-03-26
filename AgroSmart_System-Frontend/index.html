@@ -217,7 +217,7 @@
                     // Based on your backend, response structure is ApiResponse with code, message, data
                     // The data contains AuthResponseDTO with accessToken
                     if (response.code === 200) {
-                        const token = response.data.accessToken; // FIXED: Changed from 'token' to 'accessToken'
+                        const token = response.data.accessToken;// FIXED: Changed from 'token' to 'accessToken'
                         localStorage.setItem('token', token);
 
                         // Store username/email for display purposes
