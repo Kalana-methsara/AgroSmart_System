@@ -538,7 +538,40 @@
         $('#addEquipmentBtn').click(() => openEquipmentModal());
 
         // Navigation with inventory fetch when needed
-        $('.sidebar-item[data-section]').click(function(e){ e.preventDefault(); let section=$(this).data('section'); $('.sidebar-item').removeClass('active'); $(this).addClass('active'); $('.section-content').addClass('hidden'); $(`#${section}-section`).removeClass('hidden'); $('#currentSection').text($(this).find('span').text().trim()); if(section === 'inventory') fetchInventory(); if(section === 'weather') $('#weatherDetailed').html(`<p><i class="fa-solid fa-temperature-high"></i> Current: ${$('#currentTemp').text()}, sunny. Humidity ${$('#humidity').text()}. Next days: mild rain expected.</p>`); if(section === 'tasks') renderTasks(); if(section === 'notifications') $('#notificationsList').html(`<div class="p-4 border-b"><p class="font-semibold">⚠️ Irrigation Reminder</p><p class="text-sm text-gray-500">North field moisture low</p></div><div class="p-4"><p class="font-semibold">🌦️ Weather Alert</p><p class="text-sm text-gray-500">Heavy rain expected Thursday</p></div>`); });
+        $('.sidebar-item[data-section]').click(function(e){
+            e.preventDefault();
+            let section=$(this).data('section');
+
+            $('.sidebar-item').removeClass('active');
+            $(this).addClass('active');
+
+            $('.section-content').addClass('hidden');
+            $(`#${section}-section`).removeClass('hidden');
+
+            $('#currentSection').text($(this).find('span').text().trim());
+
+            if(section === 'inventory') fetchInventory();
+            if(section === 'equipment') fetchEquipment(); // 🔥 FIX
+
+            if(section === 'weather') {
+                $('#weatherDetailed').html(`<p><i class="fa-solid fa-temperature-high"></i> Current: ${$('#currentTemp').text()}, sunny. Humidity ${$('#humidity').text()}. Next days: mild rain expected.</p>`);
+            }
+
+            if(section === 'tasks') renderTasks();
+
+            if(section === 'notifications') {
+                $('#notificationsList').html(`
+            <div class="p-4 border-b">
+                <p class="font-semibold">⚠️ Irrigation Reminder</p>
+                <p class="text-sm text-gray-500">North field moisture low</p>
+            </div>
+            <div class="p-4">
+                <p class="font-semibold">🌦️ Weather Alert</p>
+                <p class="text-sm text-gray-500">Heavy rain expected Thursday</p>
+            </div>
+        `);
+            }
+        });
         $('[data-section-mobile]').click(function(e){ e.preventDefault(); let section=$(this).data('section-mobile'); $(`.sidebar-item[data-section="${section}"]`).click(); $('#mobileMenu').addClass('hidden'); });
         $('#userMenuButton').click(e=>{ e.stopPropagation(); $('#userDropdown').toggleClass('hidden'); });
         $(document).click(e=>{ if(!$(e.target).closest('#userMenu').length) $('#userDropdown').addClass('hidden'); });
