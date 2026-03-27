@@ -11,14 +11,13 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background: radial-gradient(circle at 10% 20%, #f8faf0, #eef2e6); }
         .glass-premium { background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(16px); border: 1px solid rgba(34, 197, 94, 0.3); box-shadow: 0 20px 35px -12px rgba(0,0,0,0.08); }
         .stat-premium { transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1); background: white; border: 1px solid #e9edc9; }
         .stat-premium:hover { transform: translateY(-5px) scale(1.01); border-color: #2b7a4b; box-shadow: 0 20px 25px -12px rgba(34,197,94,0.25); background: #fefce8; }
         .forecast-card-pro { transition: all 0.25s ease; background: rgba(255,255,240,0.9); backdrop-filter: blur(4px); }
         .forecast-card-pro:hover { transform: translateY(-6px); box-shadow: 0 20px 30px -12px rgba(0,0,0,0.2); border-color: #16a34a; }
         .animate-pulse-slow { animation: pulseSoft 2.8s infinite; }
-        @keyframes pulseSoft { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
+        /*@keyframes pulseSoft { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }*/
         .sowing-badge { background: linear-gradient(135deg, #1e6f3f, #2b8c4a); }
         .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: #e4e7db; border-radius: 12px; }
@@ -48,14 +47,14 @@
         }
     </script>
 </head>
-<body class="antialiased text-slate-800 custom-scroll">
+<body class="antialiased text-slate-800">
 
-<div class="max-w-7xl mx-auto px-4 md:px-6 py-5 md:py-8">
+<div class="max-w-7xl mx-auto py-5 md:py-8" >
 
     <!-- main insight row: current weather + advanced crop advisory -->
-    <div class="grid lg:grid-cols-3 gap-6 mb-10">
-        <div class="lg:col-span-2 glass-premium rounded-3xl p-6 shadow-2xl">
-            <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-5">
+    <div class="grid lg:grid-cols-3 gap-6 mb-6" >
+        <div class="lg:col-span-2 glass-premium rounded-3xl p-6 shadow-2xl" >
+            <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-5" >
                 <div class="flex-1">
                     <label class="text-[11px] font-bold text-farm-600 uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-map"></i> AGRICULTURAL ZONE</label>
                     <select id="locationSelect" class="text-2xl md:text-3xl font-extrabold bg-transparent border-0 focus:ring-0 cursor-pointer text-slate-800 hover:text-farm-700 transition">
