@@ -63,4 +63,37 @@ public class CropController {
                 HttpStatus.OK
         );
     }
+    // Predict Yield Endpoint
+    @GetMapping("/{cropId}/predict-yield")
+    public ResponseEntity<ApiResponse> predictYield(
+            @PathVariable String cropId,
+            @RequestParam double landSize) {
+
+        double yield = cropService.predictYield(cropId, landSize);
+        return ResponseEntity.ok(new ApiResponse(200, "Yield prediction calculated", yield + " kg"));
+    }
+
+    // Upcoming Tasks Endpoint
+    @GetMapping("/{cropId}/tasks")
+    public ResponseEntity<ApiResponse> getTasks(
+            @PathVariable String cropId,
+            @RequestParam String startDate) { // Use format YYYY-MM-DD
+
+        List<String> tasks = cropService.getUpcomingTasks(cropId, startDate);
+        return ResponseEntity.ok(new ApiResponse(200, "Task schedule generated", tasks));
+    }
+
+    // Weather Alert Endpoint
+    @GetMapping("/{cropId}/weather-alert")
+    public ResponseEntity<ApiResponse> getWeatherAlert(
+            @PathVariable String cropId,
+            @RequestParam String location) {
+
+        String alertMessage = cropService.generateWeatherAlert(cropId, location);
+
+        return new ResponseEntity<>(
+                new ApiResponse(200, "Weather alert generated successfully", alertMessage),
+                HttpStatus.OK
+        );
+    }
 }

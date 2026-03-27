@@ -1,7 +1,6 @@
 package lk.ijse.agrosmart_systembackend.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.io.Serializable;
@@ -31,4 +30,26 @@ public class CropDTO implements Serializable {
     private String season;
 
     private String cropImg;
+
+    @Positive(message = "Growth duration must be a positive number")
+    private Integer growthDurationDays;
+
+    @PositiveOrZero(message = "Fertilizer start day cannot be negative")
+    private Integer fertilizerStartDay;
+
+    @Positive(message = "Fertilizer interval must be at least 1 day")
+    private Integer fertilizerIntervalDays;
+
+    @Min(value = 1, message = "Water index must be at least 1")
+    @Max(value = 10, message = "Water index cannot exceed 10")
+    private Integer waterRequirementIndex;
+
+    private Double minTemp;
+    private Double maxTemp;
+
+    @PositiveOrZero(message = "Expected yield cannot be negative")
+    private Double expectedYieldPerUnit;
+
+    @PositiveOrZero(message = "Market price cannot be negative")
+    private Double currentMarketPrice;
 }

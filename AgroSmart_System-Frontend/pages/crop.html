@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>AgroSmart · Crop Management Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        @keyframes slideIn {
+            from { transform: translateX(-10px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes pulseGreen {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        .animate-slide-in { animation: slideIn 0.3s ease-out; }
+        .sidebar-item { transition: all 0.2s; }
+        .sidebar-item:hover:not(.active) { background-color: rgba(34, 197, 94, 0.1); color: #166534; }
+        .sidebar-item.active { background-color: #166534; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .weather-glow { background: linear-gradient(145deg, #fbbf24, #f59e0b); box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.2); }
+        .mobile-menu { transition: transform 0.3s ease-in-out; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        .crop-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .crop-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.2);
+        }
+        .filter-active {
+            background-color: #166534 !important;
+            color: white !important;
+        }
+        .water-drops i {
+            color: #3b82f6;
+        }
+        .temp-badge {
+            background: linear-gradient(135deg, #f59e0b, #dc2626);
+        }
+        .crop-img-placeholder {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased">
+
+<!-- Loading -->
+<div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+    <div class="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center">
+        <div class="w-20 h-20 border-4 border-green-200 border-t-green-600 rounded-full animate-spin mb-4"></div>
+        <p class="text-gray-700 font-medium">Loading AgroSmart...</p>
+    </div>
+</div>
+
+<!-- Main Content -->
+<main class="min-h-screen p-6 md:p-10">
+    <!-- Crops Library -->
+    <div class="mb-10">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">Crops Library</h2>
+
+        <!-- Filters -->
+        <div class="mb-6 flex flex-wrap gap-3 items-center justify-between">
+            <div class="flex flex-wrap gap-2">
+                <button class="filter-btn px-4 py-2 rounded-lg bg-green-600 text-white" data-filter="all">All Crops</button>
+                <button class="filter-btn px-4 py-2 rounded-lg bg-gray-200" data-filter="Beverage">☕ Beverage</button>
+                <button class="filter-btn px-4 py-2 rounded-lg bg-gray-200" data-filter="Spice">🌶️ Spice</button>
+                <button class="filter-btn px-4 py-2 rounded-lg bg-gray-200" data-filter="Cereal">🌾 Cereal</button>
+                <button class="filter-btn px-4 py-2 rounded-lg bg-gray-200" data-filter="Oil Seed">🥥 Oil Seed</button>
+            </div>
+
+            <input type="text" id="cropSearch" placeholder="Search..."
+                   class="px-4 py-2 border rounded-lg w-64">
+        </div>
+
+        <!-- Grid -->
+        <div id="cropsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </div>
+
+
+
+</main>
+<script>const CROP_API = 'http://localhost:8080/api/v1/crop';
+
+let currentCropData = [];
+let currentFilter = "all";
+let currentSearch = "";
+let myCrops = JSON.parse(localStorage.getItem('myCrops') || '[]');
+
+// ✅ FETCH CROPS FROM BACKEND
+async function fetchCrops() {
+    try {
+        const res = await fetch(`${CROP_API}/all`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        const apiRes = await res.json();
+
+        if (apiRes.code === 200) {
+            currentCropData = apiRes.data;
+            renderCrops();
+        } else {
+            renderCrops([]);
+        }
+
+    } catch (err) {
+        console.error(err);
+        Swal.fire('Error', 'Could not load crops', 'error');
+    }
+}
+
+// ✅ RENDER CROPS
+function renderCrops() {
+    let filtered = currentCropData.filter(crop => {
+        if (currentFilter !== "all" && crop.category !== currentFilter) return false;
+
+        if (currentSearch &&
+            !crop.commonName.toLowerCase().includes(currentSearch.toLowerCase()) &&
+            !crop.scientificName.toLowerCase().includes(currentSearch.toLowerCase())
+        ) return false;
+
+        return true;
+    });
+
+    const container = $('#cropsGrid');
+
+    if (filtered.length === 0) {
+        container.html(`
+            <div class="col-span-full text-center py-12 text-gray-400">
+                <i class="fa-solid fa-leaf text-4xl mb-2"></i>
+                <p>No crops found</p>
+            </div>
+        `);
+        return;
+    }
+
+    let html = '';
+
+    filtered.forEach(crop => {
+        const isAdded = myCrops.some(c => c.cropId === crop.cropId);
+
+        html += `
+        <div class="crop-card bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="h-32 bg-green-100 flex items-center justify-center text-5xl">
+                🌱
+            </div>
+
+            <div class="p-5">
+                <h3 class="text-lg font-bold">${crop.commonName}</h3>
+                <p class="text-sm text-gray-500 italic">${crop.scientificName}</p>
+
+                <div class="mt-3 text-sm space-y-1">
+                    <div>🌡 ${crop.minTemp}°C - ${crop.maxTemp}°C</div>
+                    <div>💧 Water: ${crop.waterRequirementIndex}</div>
+                    <div>📈 Yield: ${crop.expectedYieldPerUnit}</div>
+                </div>
+
+                <div class="flex justify-between items-center mt-4">
+                    <span class="font-bold text-green-600">
+                        ₹${crop.currentMarketPrice}
+                    </span>
+
+                    <button class="add-btn px-3 py-1 rounded-lg ${
+            isAdded ? 'bg-gray-300' : 'bg-green-600 text-white'
+        }"
+                    data='${JSON.stringify(crop)}'
+                    ${isAdded ? 'disabled' : ''}>
+                        ${isAdded ? 'Added' : 'Plant'}
+                    </button>
+                </div>
+            </div>
+        </div>
+        `;
+    });
+
+    container.html(html);
+
+    // ADD BUTTON EVENT
+    $('.add-btn').click(function () {
+        const crop = JSON.parse($(this).attr('data'));
+        addToMyCrops(crop);
+    });
+}
+
+$('.filter-btn').click(function () {
+    $('.filter-btn').removeClass('bg-green-600 text-white').addClass('bg-gray-200');
+    $(this).addClass('bg-green-600 text-white');
+
+    currentFilter = $(this).data('filter');
+    renderCrops();
+});
+
+$('#cropSearch').on('input', function () {
+    currentSearch = $(this).val();
+    renderCrops();
+});
+$(document).ready(function () {
+    fetchCrops();
+});
+function renderCropTable(items) {
+    const tbody = $('#cropTableBody');
+
+    if (!items || items.length === 0) {
+        tbody.html('<tr><td colspan="6" class="text-center py-8 text-gray-400">No crops found.</td></tr>');
+        return;
+    }
+
+    let rows = '';
+
+    items.forEach(item => {
+        rows += `
+        <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 text-sm text-gray-500">${item.cropId}</td>
+            <td class="px-6 py-4 font-medium">${item.commonName}</td>
+            <td class="px-6 py-4">${item.scientificName}</td>
+            <td class="px-6 py-4">${item.category}</td>
+            <td class="px-6 py-4">₹${item.currentMarketPrice}</td>
+            <td class="px-6 py-4 text-right space-x-2">
+                <button class="text-blue-600 edit-crop-btn" data-id="${item.cropId}">
+                    <i class="fa-regular fa-pen-to-square"></i>
+                </button>
+                <button class="text-red-600 delete-crop-btn" data-id="${item.cropId}">
+                    <i class="fa-regular fa-trash-can"></i>
+                </button>
+            </td>
+        </tr>`;
+    });
+
+    tbody.html(rows);
+}
+$(document).on('click', '.delete-crop-btn', function () {
+    deleteCrop($(this).data('id'));
+});
+
+async function deleteCrop(id) {
+    const result = await Swal.fire({
+        title: 'Delete Crop?',
+        text: "This cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const res = await fetch(`${CROP_API}/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (res.ok) {
+                Swal.fire('Deleted!', 'Crop removed', 'success');
+                fetchCrops();
+            } else {
+                throw new Error(await res.text());
+            }
+
+        } catch (e) {
+            Swal.fire('Error', e.message, 'error');
+        }
+    }
+}
+$(document).on('click', '.edit-crop-btn', function () {
+    openCropModal($(this).data('id'));
+});
+
+async function openCropModal(id = null) {
+    const isEdit = id !== null;
+
+    const crop = isEdit
+        ? currentCropData.find(c => c.cropId === id)
+        : {
+            cropId: '',
+            commonName: '',
+            scientificName: '',
+            category: '',
+            currentMarketPrice: ''
+        };
+
+    const { value: formData } = await Swal.fire({
+        title: '',
+        html: `
+        <div class="modal-container">
+            <h3>${isEdit ? 'Edit Crop' : 'Add Crop'}</h3>
+
+            ${isEdit ? `<input class="input" value="${crop.cropId}" disabled>` : ''}
+
+            <input id="crop-name" class="input" placeholder="Common Name" value="${crop.commonName || ''}">
+            <input id="crop-scientific" class="input" placeholder="Scientific Name" value="${crop.scientificName || ''}">
+            <input id="crop-category" class="input" placeholder="Category" value="${crop.category || ''}">
+            <input id="crop-price" class="input" type="number" placeholder="Market Price" value="${crop.currentMarketPrice || ''}">
+        </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: isEdit ? 'Update' : 'Create',
+        preConfirm: () => {
+            const commonName = $('#crop-name').val().trim();
+            const scientificName = $('#crop-scientific').val().trim();
+            const category = $('#crop-category').val().trim();
+            const currentMarketPrice = $('#crop-price').val();
+
+            if (!commonName || !scientificName || !category) {
+                Swal.showValidationMessage('All fields required');
+                return false;
+            }
+
+            return {
+                ...(isEdit && { cropId: crop.cropId }),
+                commonName,
+                scientificName,
+                category,
+                currentMarketPrice
+            };
+        }
+    });
+
+    if (formData) {
+        try {
+            const res = await fetch(CROP_API, {
+                method: isEdit ? 'PUT' : 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (res.ok) {
+                Swal.fire('Success', `Crop ${isEdit ? 'updated' : 'created'}`, 'success');
+                fetchCrops();
+            } else {
+                throw new Error(await res.text());
+            }
+
+        } catch (e) {
+            Swal.fire('Error', e.message, 'error');
+        }
+    }
+}
+async function predictYield(cropId) {
+    const { value: landSize } = await Swal.fire({
+        title: 'Enter Land Size (acres)',
+        input: 'number'
+    });
+
+    if (!landSize) return;
+
+    const res = await fetch(`${CROP_API}/${cropId}/predict-yield?landSize=${landSize}`);
+    const data = await res.json();
+
+    Swal.fire('Yield Prediction', data.data, 'info');
+}
+async function getCropTasks(cropId) {
+    const date = new Date().toISOString().split('T')[0];
+
+    const res = await fetch(`${CROP_API}/${cropId}/tasks?startDate=${date}`);
+    const data = await res.json();
+
+    Swal.fire('Tasks', `<pre>${data.data.join('\n')}</pre>`);
+}
+async function getCropTasks(cropId) {
+    const date = new Date().toISOString().split('T')[0];
+
+    const res = await fetch(`${CROP_API}/${cropId}/tasks?startDate=${date}`);
+    const data = await res.json();
+
+    Swal.fire('Tasks', `<pre>${data.data.join('\n')}</pre>`);
+}
+async function getWeatherAlert(cropId) {
+    const location = "Colombo";
+
+    const res = await fetch(`${CROP_API}/${cropId}/weather-alert?location=${location}`);
+    const data = await res.json();
+
+    Swal.fire('Weather Alert', data.data, 'info');
+}
+$(document).ready(function () {
+    fetchCrops();
+
+    $('#addCropBtn').click(() => openCropModal());
+});
+</script>
+</body>
+</html>

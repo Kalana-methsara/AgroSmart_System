@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -33,5 +34,5 @@ public class InventoryDTO implements Serializable {
     @Size(max = 10, message = "Unit must be at most 10 characters")
     private String unit;
 
-    private LocalDate lastUpdated;
+    private LocalDateTime lastUpdated;
 }

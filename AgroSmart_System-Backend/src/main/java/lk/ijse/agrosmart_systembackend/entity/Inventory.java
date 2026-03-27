@@ -8,6 +8,7 @@ import lombok.*;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 @Entity
@@ -27,5 +28,5 @@ public class Inventory implements Serializable {
     @NotBlank
     private String unit;     // kg, L, Packets
     // private String supplierDetails;
-    private LocalDate lastUpdated;
+    private LocalDateTime lastUpdated;
 }

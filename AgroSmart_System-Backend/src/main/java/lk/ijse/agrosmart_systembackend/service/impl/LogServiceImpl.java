@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -94,7 +95,7 @@ public class LogServiceImpl implements LogService {
 
                 // Update inventory quantity
                 inventory.setQuantity(inventory.getQuantity() - inventoryItem.getUsedQuantity());
-                inventory.setLastUpdated(LocalDate.now());
+                inventory.setLastUpdated(LocalDateTime.now());
                 inventoryRepository.save(inventory);
 
                 // Create LogInventory record
@@ -184,7 +185,7 @@ public class LogServiceImpl implements LogService {
                     if (inventory != null) {
                         // Restore the quantity that was used
                         inventory.setQuantity(inventory.getQuantity() + existingLogInventory.getUsedQuantity());
-                        inventory.setLastUpdated(LocalDate.now());
+                        inventory.setLastUpdated(LocalDateTime.now());
                         inventoryRepository.save(inventory);
                     }
                 }
@@ -206,7 +207,7 @@ public class LogServiceImpl implements LogService {
 
                 // Update inventory quantity
                 inventory.setQuantity(inventory.getQuantity() - inventoryItem.getUsedQuantity());
-                inventory.setLastUpdated(LocalDate.now());
+                inventory.setLastUpdated(LocalDateTime.now());
                 inventoryRepository.save(inventory);
 
                 // Create new LogInventory record
@@ -288,7 +289,7 @@ public class LogServiceImpl implements LogService {
                 if (inventory != null) {
                     // Restore the quantity that was used
                     inventory.setQuantity(inventory.getQuantity() + logInventory.getUsedQuantity());
-                    inventory.setLastUpdated(LocalDate.now());
+                    inventory.setLastUpdated(LocalDateTime.now());
                     inventoryRepository.save(inventory);
                 }
             }

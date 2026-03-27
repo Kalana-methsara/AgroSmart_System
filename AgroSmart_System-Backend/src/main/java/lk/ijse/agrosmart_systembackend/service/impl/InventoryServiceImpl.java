@@ -11,6 +11,7 @@ import org.modelmapper.TypeToken;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,7 +32,7 @@ public class InventoryServiceImpl implements InventoryService {
             // 2. තිබේ නම් - පවතින ප්‍රමාණයට අලුත් ප්‍රමාණය එකතු කර Update කරන්න
             Inventory inventory = existingInventory.get();
             inventory.setQuantity(inventory.getQuantity() + inventoryDTO.getQuantity());
-            inventory.setLastUpdated(LocalDate.now()); // අද දිනයට Update කිරීම
+            inventory.setLastUpdated(LocalDateTime.now().now()); // අද දිනයට Update කිරීම
 
             inventoryRepository.save(inventory);
             return "Existing inventory updated with new quantity";
@@ -44,7 +45,7 @@ public class InventoryServiceImpl implements InventoryService {
                     .category(inventoryDTO.getCategory())
                     .quantity(inventoryDTO.getQuantity())
                     .unit(inventoryDTO.getUnit())
-                    .lastUpdated(LocalDate.now()) // පළමු වරට අද දිනය යෙදීම
+                    .lastUpdated(LocalDateTime.now()) // පළමු වරට අද දිනය යෙදීම
                     .build();
 
             inventoryRepository.save(inventory);

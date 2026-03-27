@@ -1,8 +1,6 @@
 package lk.ijse.agrosmart_systembackend.service.impl;
 
-import lk.ijse.agrosmart_systembackend.dto.AuthDTO;
-import lk.ijse.agrosmart_systembackend.dto.AuthResponseDTO;
-import lk.ijse.agrosmart_systembackend.dto.RegisterDTO;
+import lk.ijse.agrosmart_systembackend.dto.*;
 import lk.ijse.agrosmart_systembackend.entity.PasswordResetToken;
 import lk.ijse.agrosmart_systembackend.entity.enums.Role;
 import lk.ijse.agrosmart_systembackend.entity.User;
@@ -11,6 +9,8 @@ import lk.ijse.agrosmart_systembackend.repository.UserRepository;
 import lk.ijse.agrosmart_systembackend.service.UserService;
 import lk.ijse.agrosmart_systembackend.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -35,6 +36,9 @@ public class UserServiceImpl implements UserService {
 
     @Value("${app.reset-token-expiration}")
     private long resetTokenExpiration;
+
+    private final ModelMapper modelMapper;
+
 
     @Override
     public String saveUser(RegisterDTO registerDTO){
@@ -153,15 +157,70 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Update password
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        // Delete the used token (or mark as used)
         tokenRepository.delete(resetToken);
 
-        // Send confirmation email
         sendPasswordResetConfirmationEmail(email);
+    }
+
+    @Override
+    public List<UserDTO> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return modelMapper.map(users, new TypeToken<List<UserDTO>>() {}.getType());
+    }
+
+    @Override
+    @Transactional
+    public String updateUser(UserDTO userDTO) {
+        User user = userRepository.findByUsername(userDTO.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found with username: " + userDTO.getUsername()));
+
+        if (userDTO.getEmail() != null && !userDTO.getEmail().isBlank()) {
+            userRepository.findByEmail(userDTO.getEmail())
+                    .filter(u -> !u.getId().equals(user.getId()))
+                    .ifPresent(u -> { throw new RuntimeException("Email is already in use by another user"); });
+
+            user.setEmail(userDTO.getEmail());
+        }
+
+        if (userDTO.getPassword() != null && !userDTO.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        }
+
+        if (userDTO.getRole() != null && !userDTO.getRole().isBlank()) {
+            user.setRole(Role.valueOf(userDTO.getRole()));
+        }
+
+        userRepository.save(user);
+
+        return "User updated successfully";
+    }
+
+    @Override
+    public UserDTO getUserDetails(String identifier) {
+        User user;
+
+        if (identifier != null && identifier.contains("@")) {
+            user = userRepository.findByEmail(identifier)
+                    .orElseThrow(() -> new RuntimeException("User not found with email: " + identifier));
+        } else {
+            user = userRepository.findByUsername(identifier)
+                    .orElseThrow(() -> new RuntimeException("User not found with username: " + identifier));
+        }
+
+        return modelMapper.map(user, UserDTO.class);
+    }
+
+    @Override
+    @Transactional
+    public String deleteUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+
+        userRepository.delete(user);
+        return "User deleted successfully";
     }
 
 
