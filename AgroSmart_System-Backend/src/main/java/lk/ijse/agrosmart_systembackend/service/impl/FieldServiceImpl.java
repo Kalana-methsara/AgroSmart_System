@@ -8,63 +8,67 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional // Added for better data integrity
 public class FieldServiceImpl implements FieldService {
-    private final FieldRepository fieldRepository;
 
+    private final FieldRepository fieldRepository;
     private final ModelMapper modelMapper;
 
     @Override
-    public String saveField(FieldDTO fieldDTO){
-        if (fieldRepository.existsById(fieldDTO.getFieldId())) {
-            throw new RuntimeException("Field with ID " + fieldDTO.getFieldId() + " already exists");
-        }
+    public String saveField(FieldDTO fieldDTO) {
         if (fieldRepository.existsByFieldName(fieldDTO.getFieldName())) {
             throw new RuntimeException("Field name '" + fieldDTO.getFieldName() + "' is already in use");
         }
-        Field fields = Field.builder()
+
+        Field field = Field.builder()
                 .fieldId(generateFieldID())
                 .fieldName(fieldDTO.getFieldName())
-                .size(fieldDTO.getSize())
-                .location(fieldDTO.getLocation())
-                .fieldImg1(fieldDTO.getFieldImg1())
-                .fieldImg2(fieldDTO.getFieldImg2())
+                .locationName(fieldDTO.getLocationName())
+                .coordinates(fieldDTO.getCoordinates())
+                .area(fieldDTO.getArea())
+                .areaUnit(fieldDTO.getAreaUnit())
+                .description(fieldDTO.getDescription())
+                .image(fieldDTO.getImage())
                 .build();
-        fieldRepository.save(fields);
+
+        fieldRepository.save(field);
         return "Field saved successfully";
     }
-
     @Override
-    public String updateField(FieldDTO fieldDTO){
-        // Check if field exists before updating
+    @Transactional
+    public String updateField(FieldDTO fieldDTO) {
         Field existingField = fieldRepository.findById(fieldDTO.getFieldId())
-                .orElseThrow(() -> new RuntimeException("Field with ID " + fieldDTO.getFieldId() + " does not exist"));
+                .orElseThrow(() -> new RuntimeException("Field with ID " + fieldDTO.getFieldId() + " not found"));
 
-        // Check if field name is being changed to an existing name of a different field
-        if (!existingField.getFieldName().equals(fieldDTO.getFieldName())) {
+        if (fieldDTO.getFieldName() != null && !fieldDTO.getFieldName().equals(existingField.getFieldName())) {
             if (fieldRepository.existsByFieldName(fieldDTO.getFieldName())) {
                 throw new RuntimeException("Field name '" + fieldDTO.getFieldName() + "' is already in use");
             }
+            existingField.setFieldName(fieldDTO.getFieldName());
         }
 
-        Field fields = Field.builder()
-                .fieldId(fieldDTO.getFieldId())
-                .fieldName(fieldDTO.getFieldName())
-                .size(fieldDTO.getSize())
-                .location(fieldDTO.getLocation())
-                .fieldImg1(fieldDTO.getFieldImg1())
-                .fieldImg2(fieldDTO.getFieldImg2())
-                .build();
-        fieldRepository.save(fields);
+        existingField.setLocationName(fieldDTO.getLocationName());
+        existingField.setCoordinates(fieldDTO.getCoordinates());
+        existingField.setArea(fieldDTO.getArea());
+        existingField.setAreaUnit(fieldDTO.getAreaUnit());
+        existingField.setDescription(fieldDTO.getDescription());
+
+        if (fieldDTO.getImage() != null && !fieldDTO.getImage().isEmpty()) {
+            existingField.setImage(fieldDTO.getImage());
+        }
+
+        fieldRepository.save(existingField);
         return "Field updated successfully";
     }
 
     @Override
-    public String deleteField(String fieldId){
+    public String deleteField(String fieldId) {
         if (!fieldRepository.existsById(fieldId)) {
             throw new RuntimeException("Field with ID " + fieldId + " does not exist");
         }
@@ -73,24 +77,21 @@ public class FieldServiceImpl implements FieldService {
     }
 
     @Override
-    public List<FieldDTO> getAllFields(){
-        return modelMapper.map(fieldRepository.findAll(), new TypeToken<List<FieldDTO>>() {}.getType());
+    public List<FieldDTO> getAllFields() {
+        List<Field> allFields = fieldRepository.findAll();
+        return modelMapper.map(allFields, new TypeToken<List<FieldDTO>>() {}.getType());
     }
 
     private String generateFieldID() {
-        if (fieldRepository.count() == 0) {
-            return "F001";
-        } else {
-            String lastId = fieldRepository.findAll().get(fieldRepository.findAll().size() - 1).getFieldId();
-            int newId = Integer.parseInt(lastId.substring(1)) + 1;
-            if (newId < 10) {
-                return "F00" + newId;
-            } else if (newId < 100) {
-                return "F0" + newId;
-            } else {
-                return "F" + newId;
-            }
-        }
+        // Optimization: Get only the last record by ID
+        return fieldRepository.findAll().stream()
+                .map(Field::getFieldId)
+                .sorted((id1, id2) -> id2.compareTo(id1)) // Sort descending
+                .findFirst()
+                .map(lastId -> {
+                    int nextNum = Integer.parseInt(lastId.substring(1)) + 1;
+                    return String.format("F%03d", nextNum); // Formats to F001, F002, etc.
+                })
+                .orElse("F001");
     }
-
 }

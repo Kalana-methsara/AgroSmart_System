@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>AgroSmart | Field & Equipment Command Center</title>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <!-- TailwindCSS for premium look -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* custom overrides & smooth animations */
+    body { background: #f5f7f2; font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+    .glass-card { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(2px); border: 1px solid rgba(34, 197, 94, 0.2); }
+    .sidebar-item-active { background-color: #166534; color: white; box-shadow: 0 4px 12px rgba(22,101,52,0.2); }
+    .btn-farm { background: linear-gradient(135deg, #15803d, #166534); transition: all 0.2s ease; }
+    .btn-farm:hover { transform: translateY(-2px); box-shadow: 0 12px 20px -10px #166534; }
+    .input-modern { border: 1.5px solid #e2e8f0; border-radius: 1rem; transition: 0.2s; }
+    .input-modern:focus { border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,0.2); outline: none; }
+    .stat-tile { transition: all 0.2s cubic-bezier(0.2,0.9,0.4,1.1); }
+    .stat-tile:hover { transform: translateY(-3px); border-color: #22c55e; background: #fefce8; }
+    .map-container { border-radius: 1.5rem; overflow: hidden; border: 1px solid #dcfce7; }
+    .table-row-hover:hover { background-color: #fef9e6; cursor: pointer; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #eef2e6; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #22c55e; border-radius: 10px; }
+  </style>
+</head>
+<body class="bg-gray-50 antialiased">
+
+<div class="max-w-[1600px] mx-auto px-4 md:px-6 ">
+  <!-- Header with stats (premium match) -->
+  <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+    <div class="flex items-center gap-3">
+    </div>
+    <div class="flex gap-3 flex-wrap">
+      <div class="bg-white rounded-2xl shadow-sm px-5 py-2 border border-green-100 stat-tile"><span class="font-bold text-green-700" id="totalFields">0</span> <span class="text-gray-600 text-sm">Fields</span></div>
+      <div class="bg-white rounded-2xl shadow-sm px-5 py-2 border border-green-100 stat-tile"><span class="font-bold text-green-700" id="totalEquipment">0</span> <span class="text-gray-600 text-sm">Equipment</span></div>
+      <div class="bg-white rounded-2xl shadow-sm px-5 py-2 border border-green-100 stat-tile"><span class="font-bold text-green-700" id="totalStaffCount">0</span> <span class="text-gray-600 text-sm">Staff</span></div>
+      <div class="bg-white rounded-2xl shadow-sm px-5 py-2 border border-green-100 stat-tile"><span class="font-bold text-green-700" id="totalLogsCount">0</span> <span class="text-gray-600 text-sm">Activity logs</span></div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+    <!-- LEFT PANEL: modern form card -->
+    <div class="xl:col-span-1 bg-white rounded-3xl shadow-xl border border-gray-100 p-6 h-fit sticky top-6">
+      <div class="flex items-center gap-2 border-b border-gray-100 pb-4 mb-4">
+        <i class="fa-solid fa-tractor text-green-700 text-xl"></i>
+        <h2 class="text-xl font-bold text-gray-800">Management Hub</h2>
+      </div>
+
+      <!-- Tabs with professional styling -->
+      <div class="flex flex-wrap gap-2 bg-gray-50 p-1.5 rounded-2xl mb-6">
+        <button data-module="field" class="tab-btn flex-1 py-2.5 rounded-xl font-semibold transition-all text-sm active-tab bg-green-700 text-white shadow-sm"><i class="fa-solid fa-map mr-1"></i> Fields</button>
+        <button data-module="equipment" class="tab-btn flex-1 py-2.5 rounded-xl font-semibold transition-all text-sm text-gray-600 hover:bg-green-50"><i class="fa-solid fa-gear mr-1"></i> Equipment</button>
+        <button data-module="staff" class="tab-btn flex-1 py-2.5 rounded-xl font-semibold transition-all text-sm text-gray-600 hover:bg-green-50"><i class="fa-solid fa-users mr-1"></i> Staff</button>
+        <button data-module="log" class="tab-btn flex-1 py-2.5 rounded-xl font-semibold transition-all text-sm text-gray-600 hover:bg-green-50"><i class="fa-solid fa-clipboard-list mr-1"></i> Logs</button>
+        <button data-module="assignment" class="tab-btn flex-1 py-2.5 rounded-xl font-semibold transition-all text-sm text-gray-600 hover:bg-green-50"><i class="fa-solid fa-link mr-1"></i> Assign</button>
+      </div>
+
+      <!-- FIELD MODULE (dynamic) -->
+      <div id="fieldModule" class="module-panel space-y-4">
+        <input type="text" id="fieldId" placeholder="Field ID (e.g., F-101)" class="w-full px-4 py-3 rounded-xl border border-gray-200 input-modern">
+        <input type="text" id="fieldName" placeholder="Field Name *" class="w-full px-4 py-3 rounded-xl border border-gray-200 input-modern">
+        <input type="text" id="fieldSize" placeholder="Size (acres / hectares)" class="w-full px-4 py-3 rounded-xl border border-gray-200 input-modern">
+        <div><label class="text-xs font-semibold text-gray-500 block mb-1"><i class="fa-regular fa-image"></i> Field Images</label>
+          <div class="flex gap-3">
+            <div class="flex-1"><div id="img1Preview" class="h-24 bg-gray-100 rounded-xl border border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition"><i class="fa-solid fa-camera text-gray-400"></i><span class="text-xs ml-1">Img1</span></div><input type="file" id="img1Input" class="hidden" accept="image/*"></div>
+            <div class="flex-1"><div id="img2Preview" class="h-24 bg-gray-100 rounded-xl border border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition"><i class="fa-solid fa-camera text-gray-400"></i><span class="text-xs ml-1">Img2</span></div><input type="file" id="img2Input" class="hidden" accept="image/*"></div>
+          </div>
+        </div>
+        <div><label class="text-xs font-semibold text-gray-500"><i class="fa-solid fa-location-dot"></i> Geopin on map</label><div id="map" class="map-container h-44 mt-1 rounded-xl"></div><div class="text-xs text-gray-500 mt-1">Lat: <span id="coordLat">-</span> | Lng: <span id="coordLng">-</span></div></div>
+        <div class="flex gap-3 pt-2">
+          <button id="saveFieldBtn" class="bg-green-700 hover:bg-green-800 text-white font-semibold py-2.5 px-5 rounded-xl shadow-sm transition flex-1"><i class="fa-solid fa-save"></i> Save</button>
+          <button id="updateFieldBtn" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2.5 px-5 rounded-xl transition flex-1"><i class="fa-solid fa-pen"></i> Update</button>
+          <button id="clearFieldBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2.5 px-5 rounded-xl transition">Clear</button>
+        </div>
+      </div>
+
+      <!-- EQUIPMENT MODULE -->
+      <div id="equipmentModule" class="module-panel hidden space-y-4">
+        <input type="text" id="eqId" placeholder="Equipment ID *" class="w-full px-4 py-3 rounded-xl border border-gray-200 input-modern">
+        <input type="text" id="eqCategory" placeholder="Category (Tractor, Harvester)" class="w-full px-4 py-3 rounded-xl border border-gray-200 input-modern">
+        <input type="text" id="eqType" placeholder="Model / Type" class="w-full px-4 py-3 rounded-xl border border-gray-200 input-modern">
+        <select id="eqStatus" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white"><option value="AVAILABLE">✅ AVAILABLE</option><option value="UNDER_REPAIR">🔧 UNDER_REPAIR</option><option value="IN_USE">⚙️ IN_USE</option></select>
+        <input type="text" id="eqFieldId" placeholder="Assigned Field ID (optional)">
+        <input type="text" id="eqStaffId" placeholder="Assigned Staff ID (optional)">
+        <div class="flex gap-3"><button id="saveEqBtn" class="bg-green-700 hover:bg-green-800 text-white font-semibold py-2.5 px-5 rounded-xl flex-1">Save</button><button id="updateEqBtn" class="bg-amber-500 text-white font-semibold py-2.5 px-5 rounded-xl flex-1">Update</button><button id="clearEqBtn" class="bg-gray-200 px-5 rounded-xl">Clear</button></div>
+      </div>
+      <!-- STAFF MODULE -->
+      <div id="staffModule" class="module-panel hidden space-y-4">
+        <input type="text" id="staffId" placeholder="Staff ID" class="w-full px-4 py-3 rounded-xl border border-gray-200">
+        <input type="text" id="staffName" placeholder="Full Name" class="w-full px-4 py-3 rounded-xl border border-gray-200">
+        <input type="text" id="designation" placeholder="Designation">
+        <select id="gender" class="w-full px-4 py-3 rounded-xl border"><option>MALE</option><option>FEMALE</option></select>
+        <input type="text" id="contactNo" placeholder="Contact">
+        <input type="email" id="emailStaff" placeholder="Email">
+        <select id="roleStaff"><option>MANAGER</option><option>SUPERVISOR</option><option>WORKER</option></select>
+        <div class="flex gap-3"><button id="saveStaffBtn" class="bg-green-700 text-white py-2 rounded-xl flex-1">Save</button><button id="updateStaffBtn" class="bg-amber-500 text-white py-2 rounded-xl flex-1">Update</button><button id="clearStaffBtn" class="bg-gray-200 px-5 rounded-xl">Clear</button></div>
+      </div>
+      <!-- LOG MODULE -->
+      <div id="logModule" class="module-panel hidden space-y-4">
+        <input type="text" id="logId" placeholder="Log ID">
+        <select id="logFieldSelect" class="w-full py-3 rounded-xl border"></select>
+        <select id="logEquipmentSelect" class="w-full py-3 rounded-xl border"></select>
+        <textarea id="logDetails" rows="2" placeholder="Activity details..."></textarea>
+        <input type="date" id="logDate">
+        <div class="flex gap-3"><button id="saveLogBtn" class="bg-green-700 text-white py-2 rounded-xl flex-1">Add Log</button><button id="updateLogBtn" class="bg-amber-500 text-white py-2 rounded-xl flex-1">Update</button><button id="clearLogBtn" class="bg-gray-200 px-5 rounded-xl">Clear</button></div>
+      </div>
+      <!-- ASSIGNMENT MODULE -->
+      <div id="assignmentModule" class="module-panel hidden space-y-5">
+        <div class="bg-green-50 p-3 rounded-2xl"><h3 class="font-bold text-green-800"><i class="fa-solid fa-link"></i> Equipment ↔ Field</h3><select id="assignFieldId" class="w-full mt-2 p-2 rounded-xl border"></select><select id="assignEquipmentId" class="w-full mt-2 p-2 rounded-xl border"></select><input type="date" id="assignDateEq" class="w-full mt-2 p-2 rounded-xl border"><button id="assignEquipmentBtn" class="mt-3 bg-green-700 text-white w-full py-2 rounded-xl">Assign Equipment</button></div>
+        <div class="bg-amber-50 p-3 rounded-2xl"><h3 class="font-bold text-amber-800"><i class="fa-solid fa-user-plus"></i> Staff to Field</h3><select id="assignStaffFieldId" class="w-full mt-2 p-2 rounded-xl border"></select><select id="assignStaffPersonId" class="w-full mt-2 p-2 rounded-xl border"></select><input type="date" id="assignStaffDate" class="w-full mt-2 p-2 rounded-xl border"><button id="assignStaffToFieldBtn" class="mt-3 bg-amber-600 text-white w-full py-2 rounded-xl">Assign Staff</button></div>
+      </div>
+      <div id="statusMsg" class="text-xs text-green-700 bg-green-50 p-2 rounded-xl mt-4 text-center"><i class="fa-regular fa-circle-check"></i> Live sync · Local + API fields</div>
+    </div>
+
+    <!-- RIGHT PANEL: dynamic data table premium -->
+    <div class="xl:col-span-2 bg-white rounded-3xl shadow-xl border border-gray-100 p-6 overflow-hidden">
+      <div class="flex justify-between items-center mb-5 flex-wrap gap-2">
+        <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class="fa-solid fa-table-list text-green-600"></i> <span id="tableTitle">Fields Registry</span></h2>
+        <div class="flex gap-2"><button id="refreshAllBtn" class="text-sm bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-full"><i class="fa-solid fa-rotate-right"></i> Refresh</button><button id="deleteSelectedBtn" class="text-sm bg-red-50 hover:bg-red-100 text-red-700 px-4 py-2 rounded-full"><i class="fa-regular fa-trash-can"></i> Delete selected</button></div>
+      </div>
+      <div class="overflow-x-auto rounded-2xl border border-gray-100">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead id="tableHeader" class="bg-gray-50"></thead>
+          <tbody id="tableBody" class="divide-y divide-gray-100"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---------- API / storage integration (consistent with original but modern UI) ----------
+  const FIELD_API = 'http://localhost:8080/api/v1/field';
+  const STORAGE_KEYS = { equipment: 'agrosmart_equipment', staff: 'agrosmart_staff', logs: 'agrosmart_logs', fieldEquipment: 'agrosmart_field_equip', fieldStaff: 'agrosmart_field_staff' };
+  let currentModule = 'field';
+  let selectedId = null;
+  let fieldsMaster = [];        // from API
+  let equipment = [], staffList = [], logs = [];
+  let map, marker;
+  let currentLat = null, currentLng = null;
+  let img1Data = null, img2Data = null;
+
+  function initMap() { map = L.map('map').setView([7.8731, 80.7718], 7); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); map.on('click', e => { currentLat = e.latlng.lat; currentLng = e.latlng.lng; $('#coordLat').text(currentLat.toFixed(5)); $('#coordLng').text(currentLng.toFixed(5)); if(marker) map.removeLayer(marker); marker = L.marker([currentLat, currentLng]).addTo(map); }); }
+  function setupImages() {
+    $('#img1Input').change(e => { if(e.target.files[0]){ let r=new FileReader(); r.onload=ev=>{ img1Data=ev.target.result; $('#img1Preview').html(`<img src="${img1Data}" class="w-full h-full object-cover rounded-xl">`); }; r.readAsDataURL(e.target.files[0]); } });
+    $('#img2Input').change(e => { if(e.target.files[0]){ let r=new FileReader(); r.onload=ev=>{ img2Data=ev.target.result; $('#img2Preview').html(`<img src="${img2Data}" class="w-full h-full object-cover rounded-xl">`); }; r.readAsDataURL(e.target.files[0]); } });
+    $('#img1Preview').click(()=>$('#img1Input').click()); $('#img2Preview').click(()=>$('#img2Input').click());
+  }
+  function loadLocalCollections() { equipment = JSON.parse(localStorage.getItem(STORAGE_KEYS.equipment) || '[]'); staffList = JSON.parse(localStorage.getItem(STORAGE_KEYS.staff) || '[]'); logs = JSON.parse(localStorage.getItem(STORAGE_KEYS.logs) || '[]'); }
+  function saveLocal(key,data) { localStorage.setItem(key, JSON.stringify(data)); }
+  async function fetchFieldsFromAPI() { try { const res = await fetch(`${FIELD_API}/all`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }); const json = await res.json(); if(json.code === 200) fieldsMaster = json.data; else fieldsMaster = []; renderFieldTable(fieldsMaster); $('#totalFields').text(fieldsMaster.length); populateDropdowns(); } catch(e) { fieldsMaster = []; renderFieldTable([]); Swal.fire('Warning','Could not fetch fields, using local?','info'); } }
+  function populateDropdowns() { let opts = '<option value="">--Select Field--</option>' + fieldsMaster.map(f=>`<option value="${f.fieldId}">${f.fieldName}</option>`).join(''); $('#logFieldSelect, #assignFieldId, #assignStaffFieldId').html(opts); let eqOpts = '<option value="">--Select Eq--</option>' + equipment.map(e=>`<option value="${e.equipmentId}">${e.category} ${e.type}</option>`).join(''); $('#logEquipmentSelect, #assignEquipmentId').html(eqOpts); let staffOpts = '<option value="">--Select Staff--</option>' + staffList.map(s=>`<option value="${s.staffId}">${s.fullName}</option>`).join(''); $('#assignStaffPersonId').html(staffOpts); }
+  function renderFieldTable(items) { let tbody = $('#tableBody'); if(!items.length){ $('#tableHeader').html('<tr><th>ID</th><th>Name</th><th>Size</th><th>Location</th><th>Action</th></tr>'); tbody.html('<tr><td colspan="5" class="text-center py-10 text-gray-400">No fields. Add new field.</td></tr>'); return; } let rows=''; items.forEach(f=>{ rows+=`<tr data-id="${f.fieldId}" class="table-row-hover"><td class="px-5 py-3 font-medium">${f.fieldId}</td><td>${f.fieldName}</td><td>${f.size||'-'}</td><td>${f.location?`${f.location.lat},${f.location.lng}`:(f.lat?`${f.lat},${f.lng}`:'-')}</td><td><button class="edit-field text-blue-600 hover:text-blue-800 mr-2"><i class="fa-regular fa-pen-to-square"></i></button><button class="delete-field text-red-500 hover:text-red-700"><i class="fa-regular fa-trash-can"></i></button></td></tr>`; }); $('#tableHeader').html('<tr><th>ID</th><th>Name</th><th>Size</th><th>Location</th><th>Actions</th></tr>'); tbody.html(rows); $('.edit-field').click(function(){ let id=$(this).closest('tr').data('id'); editRecordById(id); }); $('.delete-field').click(function(){ let id=$(this).closest('tr').data('id'); deleteFieldById(id); }); }
+  async function deleteFieldById(id) { let confirm = await Swal.fire({title:'Delete Field',text:`Delete ${id}?`,icon:'warning',showCancelButton:true}); if(confirm.isConfirmed){ try{ await fetch(`${FIELD_API}/${id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); Swal.fire('Deleted','','success'); fetchFieldsFromAPI(); } catch(e){ Swal.fire('Error','Delete failed','error'); } } }
+  async function saveFieldToAPI() { let fieldId=$('#fieldId').val().trim(); let fieldName=$('#fieldName').val().trim(); if(!fieldId||!fieldName) return Swal.fire('Error','ID & Name required'); let payload={fieldId,fieldName,size:$('#fieldSize').val(),location:(currentLat&&currentLng)?{lat:currentLat,lng:currentLng}:null,fieldImg1:img1Data,fieldImg2:img2Data}; try{ let res=await fetch(FIELD_API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify(payload)}); if(res.ok){ Swal.fire('Saved','Field added','success'); clearFieldForm(); fetchFieldsFromAPI(); } else throw new Error(); } catch(e){ Swal.fire('Error','Server error','error'); } }
+  async function updateFieldAPI() { if(!selectedId) return Swal.fire('Select a field first'); let fieldName=$('#fieldName').val(); let payload={fieldId:selectedId,fieldName,size:$('#fieldSize').val(),location:(currentLat&&currentLng)?{lat:currentLat,lng:currentLng}:null,fieldImg1:img1Data,fieldImg2:img2Data}; try{ let res=await fetch(FIELD_API,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':`Bearer ${localStorage.getItem('token')}`},body:JSON.stringify(payload)}); if(res.ok){ Swal.fire('Updated'); clearFieldForm(); fetchFieldsFromAPI(); } else throw new Error(); } catch(e){ Swal.fire('Update failed'); } }
+  function clearFieldForm() { $('#fieldId,#fieldName,#fieldSize').val(''); img1Data=img2Data=null; $('#img1Preview,#img2Preview').html('<i class="fa-solid fa-camera"></i><span class="text-xs ml-1">Image</span>'); if(marker) map.removeLayer(marker); marker=null; currentLat=currentLng=null; $('#coordLat,#coordLng').text('-'); selectedId=null; }
+  function editRecordById(id) { if(currentModule==='field'){ let f=fieldsMaster.find(x=>x.fieldId===id); if(f){ selectedId=f.fieldId; $('#fieldId').val(f.fieldId); $('#fieldName').val(f.fieldName); $('#fieldSize').val(f.size||''); if(f.location){ currentLat=f.location.lat; currentLng=f.location.lng; $('#coordLat').text(currentLat); $('#coordLng').text(currentLng); if(marker) map.removeLayer(marker); marker=L.marker([currentLat,currentLng]).addTo(map); map.setView([currentLat,currentLng],12); } img1Data=f.fieldImg1||null; img2Data=f.fieldImg2||null; $('#img1Preview').html(img1Data?`<img src="${img1Data}" class="w-full h-full object-cover rounded-xl">`:'<i class="fa-solid fa-camera"></i> Image'); $('#img2Preview').html(img2Data?`<img src="${img2Data}" class="w-full h-full object-cover rounded-xl">`:'<i class="fa-solid fa-camera"></i> Image'); } } else if(currentModule==='equipment'){ let e=equipment.find(x=>x.equipmentId===id); if(e){ selectedId=e.equipmentId; $('#eqId').val(e.equipmentId); $('#eqCategory').val(e.category||''); $('#eqType').val(e.type||''); $('#eqStatus').val(e.status); $('#eqFieldId').val(e.fieldId||''); $('#eqStaffId').val(e.staffId||''); } } else if(currentModule==='staff'){ let s=staffList.find(x=>x.staffId===id); if(s){ selectedId=s.staffId; $('#staffId').val(s.staffId); $('#staffName').val(s.fullName); $('#designation').val(s.designation||''); $('#gender').val(s.gender); $('#contactNo').val(s.contactNumber||''); $('#emailStaff').val(s.email||''); $('#roleStaff').val(s.role); } } else if(currentModule==='log'){ let lg=logs.find(x=>x.logId===id); if(lg){ selectedId=lg.logId; $('#logId').val(lg.logId); $('#logFieldSelect').val(lg.fieldId); $('#logEquipmentSelect').val(lg.equipmentId); $('#logDetails').val(lg.details||''); $('#logDate').val(lg.logDate||''); } } }
+  // Equipment CRUD local
+  function saveEquipment() { let id=$('#eqId').val().trim(); if(!id) return Swal.fire('ID required'); if(equipment.find(e=>e.equipmentId===id)) return Swal.fire('Duplicate'); equipment.push({equipmentId:id,category:$('#eqCategory').val(),type:$('#eqType').val(),status:$('#eqStatus').val(),fieldId:$('#eqFieldId').val()||null,staffId:$('#eqStaffId').val()||null}); saveLocal(STORAGE_KEYS.equipment,equipment); Swal.fire('Saved'); clearEqForm(); loadLocalCollections(); renderEquipmentTable(); $('#totalEquipment').text(equipment.length); populateDropdowns(); }
+  function updateEquipment() { if(!selectedId) return; let idx=equipment.findIndex(e=>e.equipmentId===selectedId); if(idx!==-1){ equipment[idx]={...equipment[idx],category:$('#eqCategory').val(),type:$('#eqType').val(),status:$('#eqStatus').val(),fieldId:$('#eqFieldId').val()||null,staffId:$('#eqStaffId').val()||null}; saveLocal(STORAGE_KEYS.equipment,equipment); Swal.fire('Updated'); clearEqForm(); selectedId=null; renderEquipmentTable(); populateDropdowns(); } }
+  function clearEqForm() { $('#eqId,#eqCategory,#eqType,#eqFieldId,#eqStaffId').val(''); $('#eqStatus').val('AVAILABLE'); selectedId=null; }
+  function renderEquipmentTable() { let items=equipment; if(!items.length){ $('#tableHeader').html('<tr><th>ID</th><th>Category</th><th>Type</th><th>Status</th><th>Field</th><th>Action</th></tr>'); $('#tableBody').html('<tr><td colspan="6" class="text-center py-8">No equipment</td></tr>'); return; } let rows=''; items.forEach(e=>{ rows+=`<tr data-id="${e.equipmentId}" class="table-row-hover"><td>${e.equipmentId}</td><td>${e.category||'-'}</td><td>${e.type||'-'}</td><td><span class="px-2 py-0.5 rounded-full text-xs ${e.status==='AVAILABLE'?'bg-green-100 text-green-700':e.status==='UNDER_REPAIR'?'bg-yellow-100':'bg-red-100'}">${e.status}</span></td><td>${e.fieldId||'-'}</td><td><button class="edit-row-btn text-blue-600"><i class="fa-regular fa-pen-to-square"></i></button></td></tr>`; }); $('#tableHeader').html('<tr><th>ID</th><th>Category</th><th>Type</th><th>Status</th><th>Field</th><th>Edit</th></tr>'); $('#tableBody').html(rows); $('.edit-row-btn').click(function(){ let id=$(this).closest('tr').data('id'); editRecordById(id); }); }
+  function renderStaffTable() { let items=staffList; if(!items.length){ $('#tableBody').html('<tr><td colspan="5">No staff</td></tr>'); return; } let rows=''; items.forEach(s=>{ rows+=`<tr data-id="${s.staffId}"><td>${s.staffId}</td><td>${s.fullName}</td><td>${s.designation||'-'}</td><td>${s.contactNumber||'-'}</td><td><button class="edit-row-btn text-blue-600">Edit</button></td></tr>`; }); $('#tableHeader').html('<tr><th>ID</th><th>Name</th><th>Designation</th><th>Contact</th><th>Action</th></tr>'); $('#tableBody').html(rows); $('.edit-row-btn').click(function(){ let id=$(this).closest('tr').data('id'); editRecordById(id); }); }
+  function renderLogsTable() { let items=logs; let rows=''; items.forEach(l=>{ rows+=`<tr data-id="${l.logId}"><td>${l.logId}</td><td>${l.fieldId||'-'}</td><td>${l.equipmentId||'-'}</td><td>${l.details?.slice(0,30)}</td><td><button class="edit-row-btn">Edit</button></td></tr>`; }); $('#tableHeader').html('<tr><th>ID</th><th>Field</th><th>Equipment</th><th>Details</th><th></th></tr>'); $('#tableBody').html(rows||'<tr><td colspan="5">No logs</td></tr>'); $('.edit-row-btn').click(function(){ let id=$(this).closest('tr').data('id'); editRecordById(id); }); }
+  function deleteSelected() { if(!selectedId) return Swal.fire('Select a row'); if(currentModule==='field') deleteFieldById(selectedId); else if(currentModule==='equipment'){ equipment=equipment.filter(e=>e.equipmentId!==selectedId); saveLocal(STORAGE_KEYS.equipment,equipment); renderEquipmentTable(); $('#totalEquipment').text(equipment.length); selectedId=null; } else if(currentModule==='staff'){ staffList=staffList.filter(s=>s.staffId!==selectedId); saveLocal(STORAGE_KEYS.staff,staffList); renderStaffTable(); $('#totalStaffCount').text(staffList.length); selectedId=null; } else if(currentModule==='log'){ logs=logs.filter(l=>l.logId!==selectedId); saveLocal(STORAGE_KEYS.logs,logs); renderLogsTable(); $('#totalLogsCount').text(logs.length); selectedId=null; } }
+  function saveStaff() { let id=$('#staffId').val().trim(); if(!id||!$('#staffName').val()) return Swal.fire('Required'); if(staffList.find(s=>s.staffId===id)) return Swal.fire('Duplicate'); staffList.push({staffId:id,fullName:$('#staffName').val(),designation:$('#designation').val(),gender:$('#gender').val(),contactNumber:$('#contactNo').val(),email:$('#emailStaff').val(),role:$('#roleStaff').val()}); saveLocal(STORAGE_KEYS.staff,staffList); Swal.fire('Saved'); clearStaffForm(); loadLocalCollections(); renderStaffTable(); $('#totalStaffCount').text(staffList.length); populateDropdowns(); }
+  function updateStaff() { if(!selectedId) return; let idx=staffList.findIndex(s=>s.staffId===selectedId); if(idx!==-1){ staffList[idx]={...staffList[idx],fullName:$('#staffName').val(),designation:$('#designation').val(),gender:$('#gender').val(),contactNumber:$('#contactNo').val(),email:$('#emailStaff').val(),role:$('#roleStaff').val()}; saveLocal(STORAGE_KEYS.staff,staffList); Swal.fire('Updated'); clearStaffForm(); selectedId=null; renderStaffTable(); populateDropdowns(); } }
+  function clearStaffForm() { $('#staffId,#staffName,#designation,#contactNo,#emailStaff').val(''); $('#gender,#roleStaff').val('MALE'); selectedId=null; }
+  function saveLog() { let lid=$('#logId').val().trim(); if(!lid) return Swal.fire('Log ID needed'); logs.push({logId:lid,fieldId:$('#logFieldSelect').val(),equipmentId:$('#logEquipmentSelect').val(),details:$('#logDetails').val(),logDate:$('#logDate').val()||new Date().toISOString().slice(0,10)}); saveLocal(STORAGE_KEYS.logs,logs); Swal.fire('Log added'); clearLogForm(); loadLocalCollections(); renderLogsTable(); $('#totalLogsCount').text(logs.length); }
+  function updateLog() { if(!selectedId) return; let idx=logs.findIndex(l=>l.logId===selectedId); if(idx!==-1){ logs[idx]={...logs[idx],fieldId:$('#logFieldSelect').val(),equipmentId:$('#logEquipmentSelect').val(),details:$('#logDetails').val(),logDate:$('#logDate').val()}; saveLocal(STORAGE_KEYS.logs,logs); Swal.fire('Updated'); clearLogForm(); selectedId=null; renderLogsTable(); } }
+  function clearLogForm() { $('#logId,#logDetails').val(''); $('#logFieldSelect,#logEquipmentSelect').val(''); $('#logDate').val(''); selectedId=null; }
+  function assignEquipmentToField() { let field=$('#assignFieldId').val(); let eq=$('#assignEquipmentId').val(); if(!field||!eq) return Swal.fire('Select both'); let assign = {id:`fe_${Date.now()}`,fieldId:field,equipmentId:eq,assignedDate:$('#assignDateEq').val()}; let existing=JSON.parse(localStorage.getItem(STORAGE_KEYS.fieldEquipment)||'[]'); existing.push(assign); localStorage.setItem(STORAGE_KEYS.fieldEquipment,JSON.stringify(existing)); Swal.fire('Assigned'); }
+  function assignStaffToField() { let field=$('#assignStaffFieldId').val(); let staff=$('#assignStaffPersonId').val(); if(!field||!staff) return; let arr=JSON.parse(localStorage.getItem(STORAGE_KEYS.fieldStaff)||'[]'); arr.push({id:`fs_${Date.now()}`,fieldId:field,staffId:staff,assignedDate:$('#assignStaffDate').val()}); localStorage.setItem(STORAGE_KEYS.fieldStaff,JSON.stringify(arr)); Swal.fire('Staff assigned'); }
+  function switchModule(module) { currentModule=module; $('.module-panel').hide(); $(`#${module}Module`).show(); $('.tab-btn').removeClass('active-tab bg-green-700 text-white shadow').addClass('text-gray-600'); $(`.tab-btn[data-module="${module}"]`).addClass('active-tab bg-green-700 text-white shadow').removeClass('text-gray-600'); $('#tableTitle').text(module==='field'?'Fields Registry':module==='equipment'?'Equipment Inventory':module==='staff'?'Staff Directory':'Activity Logs'); if(module==='field') fetchFieldsFromAPI(); else if(module==='equipment'){ loadLocalCollections(); renderEquipmentTable(); $('#totalEquipment').text(equipment.length); } else if(module==='staff'){ loadLocalCollections(); renderStaffTable(); $('#totalStaffCount').text(staffList.length); } else if(module==='log'){ loadLocalCollections(); renderLogsTable(); $('#totalLogsCount').text(logs.length); populateDropdowns(); } else if(module==='assignment'){ populateDropdowns(); } }
+  // initializers
+  $(document).ready(()=>{ initMap(); setupImages(); loadLocalCollections(); fetchFieldsFromAPI(); $('#totalEquipment').text(equipment.length); $('#totalStaffCount').text(staffList.length); $('#totalLogsCount').text(logs.length); $('.tab-btn').click(function(){ switchModule($(this).data('module')); }); $('#saveFieldBtn').click(saveFieldToAPI); $('#updateFieldBtn').click(updateFieldAPI); $('#clearFieldBtn').click(clearFieldForm); $('#saveEqBtn').click(saveEquipment); $('#updateEqBtn').click(updateEquipment); $('#clearEqBtn').click(clearEqForm); $('#saveStaffBtn').click(saveStaff); $('#updateStaffBtn').click(updateStaff); $('#clearStaffBtn').click(clearStaffForm); $('#saveLogBtn').click(saveLog); $('#updateLogBtn').click(updateLog); $('#clearLogBtn').click(clearLogForm); $('#assignEquipmentBtn').click(assignEquipmentToField); $('#assignStaffToFieldBtn').click(assignStaffToField); $('#deleteSelectedBtn').click(deleteSelected); $('#refreshAllBtn').click(()=>{ if(currentModule==='field') fetchFieldsFromAPI(); else if(currentModule==='equipment'){ loadLocalCollections(); renderEquipmentTable(); } else if(currentModule==='staff'){ loadLocalCollections(); renderStaffTable(); } else if(currentModule==='log'){ loadLocalCollections(); renderLogsTable(); } }); switchModule('field'); });
+</script>
+</body>
+</html>
