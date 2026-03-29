@@ -32,7 +32,7 @@ public class FieldServiceImpl implements FieldService {
                 .locationName(fieldDTO.getLocationName())
                 .coordinates(fieldDTO.getCoordinates())
                 .area(fieldDTO.getArea())
-                .areaUnit(fieldDTO.getAreaUnit())
+                .areaUnit("acres")
                 .description(fieldDTO.getDescription())
                 .image(fieldDTO.getImage())
                 .build();
@@ -56,7 +56,7 @@ public class FieldServiceImpl implements FieldService {
         existingField.setLocationName(fieldDTO.getLocationName());
         existingField.setCoordinates(fieldDTO.getCoordinates());
         existingField.setArea(fieldDTO.getArea());
-        existingField.setAreaUnit(fieldDTO.getAreaUnit());
+        existingField.setAreaUnit("acres");
         existingField.setDescription(fieldDTO.getDescription());
 
         if (fieldDTO.getImage() != null && !fieldDTO.getImage().isEmpty()) {

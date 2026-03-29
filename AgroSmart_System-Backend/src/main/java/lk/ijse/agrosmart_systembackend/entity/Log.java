@@ -21,6 +21,8 @@ public class Log {
     private String temperature;
     @Column(columnDefinition = "LONGTEXT")
     private String observedImg;
+    private Double landSize; // වගා කරන බිම් ප්‍රමාණය (Acres)
+    private LocalDate estimatedHarvestDate; // පද්ධතිය ගණනය කරන දිනය
     @ManyToOne
     @JoinColumn(name = "field_id", nullable = false)
     private Field field;

@@ -27,6 +27,8 @@ public class LogDTO implements Serializable {
     private String temperature;
     @Size(max = 10485760, message = "Image size exceeds maximum allowed length")
     private String observedImg;
+    private Double landSize; // වගා කරන බිම් ප්‍රමාණය (Acres)
+    private LocalDate estimatedHarvestDate; // පද්ධතිය ගණනය කරන දිනය
     @NotEmpty(message = "Field ID cannot be empty")
     private String fieldId;
     @NotEmpty(message = "Crop ID cannot be empty")

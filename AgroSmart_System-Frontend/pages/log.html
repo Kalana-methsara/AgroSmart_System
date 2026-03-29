@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>AgroClimate · Farmer's Dashboard | Sri Lanka</title>
+  <!-- Simple & Clean Fonts & Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f7faf4;
+      color: #1f2e1c;
+      line-height: 1.5;
+    }
+    .card-soft {
+      background: #ffffff;
+      border-radius: 1.5rem;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03), 0 2px 4px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s ease;
+      border: 1px solid #e2e8dd;
+    }
+    .btn-primary {
+      background: #2c6e49;
+      color: white;
+      font-weight: 600;
+      padding: 0.6rem 1.2rem;
+      border-radius: 3rem;
+      transition: 0.2s;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-primary:hover {
+      background: #1f543b;
+      transform: scale(0.98);
+    }
+    .input-simple {
+      border: 1.5px solid #dde4da;
+      border-radius: 1.2rem;
+      padding: 0.7rem 1rem;
+      width: 100%;
+      font-size: 0.9rem;
+      background: #fefef7;
+      transition: 0.2s;
+    }
+    .input-simple:focus {
+      outline: none;
+      border-color: #2c6e49;
+      box-shadow: 0 0 0 3px rgba(44, 110, 73, 0.1);
+    }
+    .badge-crop {
+      background: #eaf5e6;
+      color: #1c4d2d;
+      padding: 0.2rem 0.8rem;
+      border-radius: 2rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th {
+      text-align: left;
+      padding: 0.9rem 0.8rem;
+      background: #f1f5ee;
+      font-weight: 600;
+      color: #1b4b2b;
+    }
+    td {
+      padding: 0.8rem;
+      border-bottom: 1px solid #e9efe4;
+    }
+    .harvest-card {
+      background: linear-gradient(125deg, #0f5b3a, #1f7a4a);
+      border-radius: 1.5rem;
+      color: white;
+    }
+    .stat-block {
+      background: white;
+      border-radius: 1.2rem;
+      padding: 1rem;
+      border-left: 5px solid #4c9a6f;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+    .weather-icon-large {
+      font-size: 3rem;
+      filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.1));
+    }
+    .grid-responsive {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.2rem;
+    }
+    @media (max-width: 640px) {
+      .container-padding {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+    }
+    /* improved forecast card hover */
+    .forecast-card {
+      transition: transform 0.1s ease;
+    }
+    .forecast-card:hover {
+      transform: translateY(-2px);
+    }
+    /* custom scroll */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #eef2ea;
+      border-radius: 8px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #b7cfaa;
+      border-radius: 8px;
+    }
+    .text-farm-800 {
+      color: #1e4620;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(-10px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .field-card {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .field-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.2);
+    }
+    .filter-active {
+      background-color: #166534 !important;
+      color: white !important;
+    }
+    .btn-primary {
+      background-color: #166534;
+      transition: all 0.2s;
+    }
+    .btn-primary:hover {
+      background-color: #14532d;
+      transform: translateY(-1px);
+    }
+    .modal-input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.5rem;
+      font-size: 0.95rem;
+    }
+    .modal-input:focus {
+      outline: none;
+      border-color: #166534;
+      ring: 2px solid #166534;
+    }
+    .image-preview {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin: 5px;
+      border: 2px solid #e2e8f0;
+      transition: all 0.2s;
+    }
+    .image-preview:hover {
+      transform: scale(1.05);
+      border-color: #166534;
+    }
+    .image-container {
+      position: relative;
+      display: inline-block;
+    }
+    .remove-image {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #ef4444;
+      color: white;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      text-align: center;
+      font-size: 12px;
+      line-height: 22px;
+      transition: all 0.2s;
+    }
+    .remove-image:hover {
+      background: #dc2626;
+      transform: scale(1.1);
+    }
+    .location-info {
+      background: #f0f9ff;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+    #map {
+      height: 300px;
+      border-radius: 12px;
+      margin-top: 10px;
+      z-index: 1;
+    }
+    .stat-card {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+    }
+    .status-badge {
+      transition: all 0.2s;
+    }
+    .leaflet-control-attribution {
+      font-size: 9px;
+    }
+    .image-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 5px;
+      border: 1px dashed #e2e8f0;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+  </style>
+</head>
+<body class="container-padding" style="max-width: 1280px; margin: 0 auto; padding: 1.2rem 1rem 2rem;">
+
+
+<!-- 2-COLUMN LAYOUT: Weather + Harvest card -->
+<div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+  <div style="display: flex; grid-template-columns: 1fr; gap: 1.5rem;">
+    <!-- Weather card (main) -->
+    <div class="card-soft" style="padding: 1.5rem;">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: start; gap: 1rem; margin-bottom: 1rem;">
+        <div style="flex:1;">
+          <label style="font-size: 0.7rem; font-weight: 600; color: #2c6e49; letter-spacing: 0.5px;"><i class="fas fa-tractor"></i> Your Agro Zone</label>
+          <select id="locationSelect" style="margin-top: 0.25rem; font-size: 1.1rem; font-weight: 600; background: transparent; border: none; border-bottom: 2px solid #cfe3c4; padding: 0.2rem 1.5rem 0.2rem 0.2rem; cursor: pointer; color: #1f3b2c;">
+            <option value="colombo">🌴 Colombo - Wet Zone</option>
+            <option value="anuradhapura">🌾 Anuradhapura - Dry Zone</option>
+            <option value="kandy">⛰️ Kandy - Mid Country</option>
+            <option value="jaffna">🏝️ Jaffna - Arid Belt</option>
+            <option value="galle">🌊 Galle - Southern Wet</option>
+          </select>
+          <p id="provinceName" style="font-size: 0.7rem; color: #417b5a; margin-top: 0.25rem;"><i class="fas fa-location-dot"></i> Western Province</p>
+        </div>
+        <div style="background: #eef5ea; padding: 0.3rem 0.9rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 700; color: #1f543b;"><i class="far fa-clock"></i> Sowing Index: <span id="sowingIndex">Optimal</span></div>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <i id="currentWeatherIcon" class="fas fa-cloud-sun" style="font-size: 3rem; color: #e0a800;"></i>
+          <div>
+            <span id="mainTemp" style="font-size: 3rem; font-weight: 800;">--</span><span style="font-size: 1.3rem;">°C</span>
+            <p id="weatherDesc" style="font-size: 0.75rem; color: #4f6b46; margin-top: 0.2rem;"><i class="fas fa-wind"></i> Loading forecast...</p>
+          </div>
+        </div>
+        <div style="display: flex; gap: 1rem; background: #f8fbf6; padding: 0.6rem 1rem; border-radius: 1.5rem;">
+          <div><p style="font-size: 0.65rem; font-weight: 700; color: #799b6b;">💨 WIND</p><p id="topWind" style="font-weight: 700;">-- km/h</p></div>
+          <div><p style="font-size: 0.65rem; font-weight: 700; color: #799b6b;">🌧️ RAIN RISK</p><p id="topRain" style="font-weight: 700; color: #2c6e8f;">--%</p></div>
+          <div><p style="font-size: 0.65rem; font-weight: 700; color: #799b6b;">💧 HUMIDITY</p><p id="topHumid" style="font-weight: 700; color: #2f855a;">--%</p></div>
+        </div>
+      </div>
+      <div style="margin-top: 1rem; background: #eef3e9; padding: 0.6rem 1rem; border-radius: 1.2rem; font-size: 0.75rem; color: #1f5a3a; display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-lightbulb"></i> <span id="quickAdvice">Agro tip: check soil moisture before sowing</span></div>
+    </div>
+
+    <!-- Harvest estimation card -->
+    <div id="fieldsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+  </div>
+</div>
+
+<!-- QUICK STATS ROW -->
+<div class="grid-responsive" style="margin-bottom: 2rem;">
+  <div class="stat-block"><div style="display: flex; justify-content: space-between;"><span style="font-size: 0.7rem; font-weight: 700; color: #5d6e53;">🌱 SOIL MOISTURE</span><i class="fas fa-tint" style="color: #4c9aff;"></i></div><div style="font-size: 1.7rem; font-weight: 800;">44%</div><div style="width: 100%; background: #e2e8dd; border-radius: 1rem; height: 0.3rem; margin-top: 0.4rem;"><div style="background: #3b9b6e; width:44%; height:0.3rem; border-radius:1rem;"></div></div><p style="font-size: 0.65rem; margin-top: 0.5rem; color: #5c6f53;">Good for root development</p></div>
+  <div class="stat-block"><div style="display: flex; justify-content: space-between;"><span style="font-size: 0.7rem; font-weight: 700; color: #5d6e53;">🐛 PEST ALERT</span><i class="fas fa-bug" style="color: #c95a3a;"></i></div><div style="font-size: 1.7rem; font-weight: 800;">Moderate</div><p style="font-size: 0.7rem; margin-top: 0.4rem; color: #bc6f4b;"><i class="fas fa-exclamation-triangle"></i> Check for leaf folders</p></div>
+  <div class="stat-block"><div style="display: flex; justify-content: space-between;"><span style="font-size: 0.7rem; font-weight: 700; color: #5d6e53;">🧪 FERTILIZER</span><i class="fas fa-flask" style="color: #2c6e49;"></i></div><div style="font-size: 1.3rem; font-weight: 800;">Window: Open</div><p style="font-size: 0.65rem; color: #6c7f61;">No heavy rain next 48h</p></div>
+  <div class="stat-block"><div style="display: flex; justify-content: space-between;"><span style="font-size: 0.7rem; font-weight: 700; color: #5d6e53;">📈 PADDY PRICE</span><i class="fas fa-chart-line" style="color: #dd9944;"></i></div><div style="font-size: 1.5rem; font-weight: 800;">Rs 142/kg</div><p style="font-size: 0.65rem; color: #5f734b;">+2% weekly trend</p></div>
+</div>
+
+<!-- CROP LOG FORM -->
+<div class="card-soft" style="padding: 1.5rem; margin-bottom: 2rem;">
+  <h2 style="font-size: 1.2rem; font-weight: 700; display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem;"><i class="fas fa-clipboard-list" style="color: #2c6e49;"></i> Log Your Cultivation Activity</h2>
+  <form id="logForm" style="display: flex; flex-direction: column; gap: 1rem;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.8rem;">
+      <div><label style="display: block; font-size: 0.75rem; font-weight: 500; margin-bottom: 0.25rem;">🌾 Crop</label><select id="cropId" class="input-simple" required><option value="">-- Select crop --</option></select></div>
+      <div><label style="display: block; font-size: 0.75rem; font-weight: 500; margin-bottom: 0.25rem;">🗺️ Field / Plot</label><select id="fieldId" class="input-simple" required><option value="">-- Select field --</option></select></div>
+      <div><label style="display: block; font-size: 0.75rem; font-weight: 500; margin-bottom: 0.25rem;">📏 Land size (acres)</label><input type="number" id="landSize" class="input-simple" step="0.1" placeholder="e.g., 1.5" required></div>
+    </div>
+    <div><label style="display: block; font-size: 0.75rem; font-weight: 500; margin-bottom: 0.25rem;">📝 Notes (sowing, fertilizer, pest control..)</label><textarea id="details" rows="2" class="input-simple" placeholder="E.g., Applied urea, weeding done, irrigation schedule..."></textarea></div>
+    <div><button type="button" class="btn-primary" onclick="saveFarmingLog()"><i class="fas fa-save"></i> Save Farming Record</button></div>
+  </form>
+</div>
+
+<!-- RECENT ACTIVITY LOGS TABLE -->
+<div class="card-soft" style="overflow: hidden; margin-bottom: 2rem;">
+  <div style="padding: 1rem; border-bottom: 1px solid #ecf3e6;"><h3 style="font-weight: 700; display: flex; gap: 0.5rem;"><i class="fas fa-history" style="color: #2c6e49;"></i> Recent Cultivation Logs</h3></div>
+  <div style="overflow-x: auto;">
+    <table style="width:100%">
+      <thead><tr style="background:#f4f9ef;"><th>Date</th><th>Crop</th><th>Field</th><th>Acres</th><th>Activity summary</th><th>Weather</th></tr></thead>
+      <tbody id="logsTableBody"><tr><td colspan="6" style="text-align:center; padding:2rem; color:#95a889;"><i class="fas fa-seedling" style="font-size:1.8rem; display:block; margin-bottom:0.5rem;"></i>No logs yet. Start tracking your farm!</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- DAILY FORECAST PREVIEW -->
+<div style="margin-top: 0.5rem;">
+  <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem;"><i class="fas fa-cloud-sun-rain" style="color: #2c6e49;"></i><h3 style="font-weight: 700;">5-Day Farming Forecast</h3></div>
+  <div id="forecastContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.8rem;"></div>
+</div>
+
+<footer style="text-align: center; font-size: 0.7rem; color: #8d9e80; margin-top: 2rem; border-top: 1px solid #dfe9d8; padding-top: 1.5rem;"><i class="fas fa-hand-holding-heart"></i> AgroClimate Pro — Real-time insights for Sri Lankan farmers</footer>
+
+<script>
+
+  // ==================== DATA MODELS ====================
+  const crops = [
+    { id: 1, name: "🌾 Rice (Paddy)", duration: 120 },
+    { id: 2, name: "🌽 Corn (Maize)", duration: 100 },
+    { id: 3, name: "🫘 Soybean", duration: 90 },
+    { id: 4, name: "🥥 Coconut (intercrop)", duration: 150 }
+  ];
+  const fields = [
+    { id: 1, name: "North Paddy Field", location: "Colombo" },
+    { id: 2, name: "East Valley Plot", location: "Kandy" },
+    { id: 3, name: "South Lowlands", location: "Galle" },
+    { id: 4, name: "Dry Zone Farm", location: "Jaffna" }
+  ];
+
+  let farmingLogs = [];
+  let nextLogId = 1;
+
+  function loadLogs() {
+    const stored = localStorage.getItem('agro_simple_logs');
+    if (stored) {
+      farmingLogs = JSON.parse(stored);
+      nextLogId = farmingLogs.length ? Math.max(...farmingLogs.map(l => l.id)) + 1 : 1;
+    } else {
+      farmingLogs = [];
+      nextLogId = 1;
+    }
+    renderLogsTable();
+  }
+  function syncLogs() {
+    localStorage.setItem('agro_simple_logs', JSON.stringify(farmingLogs));
+  }
+  function renderLogsTable() {
+    const tbody = $('#logsTableBody');
+    tbody.empty();
+    if (farmingLogs.length === 0) {
+      tbody.html('<tr><td colspan="6" class="text-center py-8 text-gray-400" style="text-align:center; padding:2rem; color:#95a889;"><i class="fas fa-tractor" style="font-size:1.8rem; display:block; margin-bottom:0.4rem;"></i>No records yet — start adding activities</td></tr>');
+      return;
+    }
+    [...farmingLogs].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(log => {
+      const crop = crops.find(c => c.id === log.cropId);
+      const field = fields.find(f => f.id === log.fieldId);
+      tbody.append(`
+          <tr>
+            <td style="font-size:0.8rem;">${new Date(log.date).toLocaleDateString()}</td>
+            <td><span style="background:#eaf5e6; padding:0.2rem 0.6rem; border-radius:2rem; font-size:0.7rem; font-weight:600;">${crop ? crop.name : log.cropName}</span></td>
+            <td style="font-size:0.8rem;">${field ? field.name : log.fieldName}</td>
+            <td style="font-size:0.8rem;">${log.landSize} ac</td>
+            <td style="font-size:0.8rem; max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${log.details.substring(0, 55)}${log.details.length > 55 ? '…' : ''}</td>
+            <td style="font-size:0.7rem; color:#557b44;">${log.tempNote || '—'}</td>
+          </tr>
+        `);
+    });
+  }
+
+  window.saveFarmingLog = function() {
+    const cropId = $('#cropId').val();
+    const fieldId = $('#fieldId').val();
+    const landSize = $('#landSize').val();
+    const details = $('#details').val().trim();
+
+    if (!cropId || !fieldId || !landSize || !details) {
+      Swal.fire({ icon: 'info', title: 'Missing info', text: 'Please fill all fields to log your farming activity', confirmButtonColor: '#2c6e49' });
+      return;
+    }
+    const crop = crops.find(c => c.id === parseInt(cropId));
+    const field = fields.find(f => f.id === parseInt(fieldId));
+    if (!crop || !field) return;
+
+    const tempMap = { "Colombo": "28°C 🌤️", "Kandy": "24°C 🌦️", "Galle": "29°C ☁️", "Jaffna": "31°C 🌞" };
+    const tempNote = tempMap[field.location] || "26°C";
+    const newLog = {
+      id: nextLogId++,
+      date: new Date().toISOString().split('T')[0],
+      details: details,
+      landSize: parseFloat(landSize),
+      fieldId: field.id,
+      cropId: crop.id,
+      cropName: crop.name,
+      fieldName: field.name,
+      tempNote: tempNote
+    };
+    farmingLogs.unshift(newLog);
+    syncLogs();
+    renderLogsTable();
+    $('#logForm')[0].reset();
+    Swal.fire({ icon: 'success', title: 'Saved!', text: 'Farm activity recorded', timer: 1400, showConfirmButton: false });
+    const selectedCrop = $('#cropId').val();
+    if (selectedCrop) updateHarvestPreview(parseInt(selectedCrop));
+  };
+
+  function updateHarvestPreview(cropId) {
+    const crop = crops.find(c => c.id === cropId);
+    if (!crop) {
+      $('#displayHarvestDate').text('—/—/—-');
+      $('#displayCropName').html('<i class="fas fa-seedling"></i> Select crop for harvest');
+      return;
+    }
+    const harvestDate = new Date();
+    harvestDate.setDate(harvestDate.getDate() + crop.duration);
+    const formatted = harvestDate.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
+    $('#displayHarvestDate').text(formatted);
+    $('#displayCropName').html(`<i class="fas fa-calendar-week"></i> ${crop.name} · ${crop.duration} days`);
+  }
+
+  function initDropdowns() {
+    crops.forEach(c => $('#cropId').append(`<option value="${c.id}">${c.name}</option>`));
+    fields.forEach(f => $('#fieldId').append(`<option value="${f.id}">${f.name} (${f.location})</option>`));
+    $('#cropId').on('change', function() { const val = $(this).val(); if (val) updateHarvestPreview(parseInt(val)); else $('#displayHarvestDate').text('—/—/—-'); });
+  }
+
+  // Weather section (improved reliability)
+  const sriLankaZones = {
+    colombo: { lat: 6.9271, lon: 79.8612, name: "Colombo", province: "Western · Wet Zone", baseTemp: 28 },
+    kandy: { lat: 7.2906, lon: 80.6337, name: "Kandy", province: "Central · Mid Country", baseTemp: 24 },
+    jaffna: { lat: 9.6615, lon: 80.0255, name: "Jaffna", province: "Northern · Dry Arid", baseTemp: 30 },
+    galle: { lat: 6.0328, lon: 80.2168, name: "Galle", province: "Southern · Wet Coastal", baseTemp: 28 },
+    anuradhapura: { lat: 8.3114, lon: 80.4037, name: "Anuradhapura", province: "North Central · Dry Zone", baseTemp: 29 }
+  };
+  let currentZone = "colombo";
+
+  function getFriendlyAdvice(temp, pop, humidity) {
+    if (pop > 55) return "⚠️ High rain probability — postpone fertilizer & protect seedlings";
+    if (temp > 32) return "🌞 Heat stress alert! Increase irrigation intervals";
+    if (humidity > 80) return "💧 High humidity — watch for fungal diseases in paddy";
+    return "✅ Favorable conditions for weeding and pest scouting";
+  }
+
+  function renderWeatherUI(data, zone) {
+    if (!data || !data.list) return;
+    const current = data.list[0];
+    const temp = Math.round(current.main.temp);
+    const pop = Math.round((current.pop || 0) * 100);
+    const humidity = current.main.humidity;
+    const windKmh = (current.wind.speed * 3.6).toFixed(1);
+    $('#mainTemp').text(temp);
+    $('#weatherDesc').text(current.weather[0].description);
+    $('#topWind').text(`${windKmh} km/h`);
+    $('#topRain').text(`${pop}%`);
+    $('#topHumid').text(`${humidity}%`);
+    $('#provinceName').html(`<i class="fas fa-map-pin"></i> ${zone.province} · ${zone.name}`);
+    const iconCode = current.weather[0].icon;
+    let iconClass = "fa-cloud-sun";
+    if (iconCode.includes("01")) iconClass = "fa-sun";
+    else if (iconCode.includes("02")) iconClass = "fa-cloud-sun";
+    else if (iconCode.includes("09") || iconCode.includes("10")) iconClass = "fa-cloud-showers-heavy";
+    else iconClass = "fa-cloud";
+    $('#currentWeatherIcon').attr('class', `fas ${iconClass} weather-icon-large`).css('color', '#e0a800');
+    const advice = getFriendlyAdvice(temp, pop, humidity);
+    $('#quickAdvice').text(advice);
+    let sowIndex = "🌾 Moderate";
+    if (pop < 30 && temp > 22 && temp < 33) sowIndex = "🌱 Excellent for sowing";
+    else if (pop > 60) sowIndex = "⏳ Delay sowing (heavy rain)";
+    else sowIndex = "🌿 Fair — monitor conditions";
+    $('#sowingIndex').text(sowIndex);
+
+    let dailyMap = new Map();
+    data.list.forEach(item => {
+      const dateKey = item.dt_txt.split(' ')[0];
+      if (!dailyMap.has(dateKey) && dailyMap.size < 5) dailyMap.set(dateKey, item);
+    });
+    let forecastHtml = '';
+    Array.from(dailyMap.values()).forEach(day => {
+      const dayTemp = Math.round(day.main.temp);
+      const dayPop = Math.round((day.pop || 0) * 100);
+      const weekday = new Date(day.dt_txt).toLocaleDateString('en-GB', { weekday: 'short' });
+      const icon = day.weather[0].icon.includes("01") ? "fa-sun" : (day.weather[0].icon.includes("02") ? "fa-cloud-sun" : "fa-cloud-rain");
+      forecastHtml += `
+          <div class="forecast-card" style="background: white; border-radius: 1rem; padding: 0.7rem; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.03); border: 1px solid #d9e8d0;">
+            <p style="font-weight: 700; font-size: 0.75rem;">${weekday}</p>
+            <i class="fas ${icon}" style="font-size: 1.4rem; color: #f2b84e; margin: 0.3rem 0;"></i>
+            <p style="font-weight: 800; font-size: 1.1rem;">${dayTemp}°C</p>
+            <p style="font-size: 0.65rem; color: #637a55;">☔ ${dayPop}% rain</p>
+            <p style="font-size: 0.6rem; color: #8aa37c;">${day.weather[0].description}</p>
+          </div>
+        `;
+    });
+    $('#forecastContainer').html(forecastHtml);
+  }
+
+  function generateFallbackWeather(zone) {
+    const list = [];
+    const now = new Date();
+    for (let i = 0; i < 40; i++) {
+      const fakeDate = new Date(now.getTime() + i * 3 * 3600000);
+      const tempVal = zone.baseTemp + (Math.sin(i * 0.6) * 2.2);
+      const humidityBase = 60 + Math.floor(Math.random() * 25);
+      list.push({
+        dt_txt: fakeDate.toISOString().replace('T', ' ').slice(0, 19),
+        main: { temp: tempVal, humidity: humidityBase, pressure: 1012 },
+        weather: [{ icon: "02d", description: "partly cloudy" }],
+        wind: { speed: 2.4 },
+        pop: 0.28
+      });
+    }
+    return { list, city: { timezone: 19800 } };
+  }
+
+  async function fetchWeatherForZone(zoneKey) {
+    const zone = sriLankaZones[zoneKey];
+    if (!zone) return;
+    try {
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${zone.lat}&lon=${zone.lon}&appid=36ae79b3c48ce2a5e18f45a589b503cd&units=metric`);
+      if (!res.ok) throw new Error("API fail");
+      const json = await res.json();
+      renderWeatherUI(json, zone);
+    } catch (err) {
+      console.warn("Using fallback weather");
+      const fallback = generateFallbackWeather(zone);
+      renderWeatherUI(fallback, zone);
+    }
+  }
+
+  $('#locationSelect').on('change', function() {
+    currentZone = $(this).val();
+    fetchWeatherForZone(currentZone);
+  });
+
+  function updateDate() {
+    const now = new Date();
+    $('#friendlyDate').text(now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }));
+  }
+  updateDate();
+  setInterval(updateDate, 60000);
+  initDropdowns();
+  loadLogs();
+  fetchWeatherForZone('colombo');
+  updateHarvestPreview(1);
+  $('#cropId').val(1).trigger('change');
+</script>
+</body>
+</html>

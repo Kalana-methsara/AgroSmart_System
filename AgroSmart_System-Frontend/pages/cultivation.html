@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>AgroSmart · Field Management Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        @keyframes slideIn {
+            from { transform: translateX(-10px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .field-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .field-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.2);
+        }
+        .btn-primary {
+            background-color: #166534;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #14532d;
+            transform: translateY(-1px);
+        }
+        .modal-input {
+            width: 100%;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+        }
+        .modal-input:focus {
+            outline: none;
+            border-color: #166534;
+            ring: 2px solid #166534;
+        }
+        .image-preview {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin: 5px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+        .card-soft {
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.03), 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .input-simple {
+            width: 100%;
+            padding: 0.6rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            background: #fefefe;
+            font-size: 0.9rem;
+        }
+        .input-simple:focus {
+            outline: none;
+            border-color: #166534;
+            ring: 2px solid #166534;
+        }
+        .weather-icon-large {
+            font-size: 3rem;
+            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.1));
+        }
+        .forecast-scroll {
+            display: flex;
+            gap: 0.8rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+            scrollbar-width: thin;
+        }
+        .forecast-card {
+            min-width: 85px;
+            background: #fefce8;
+            border-radius: 1.2rem;
+            padding: 0.6rem;
+            text-align: center;
+        }
+        .field-selector {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border: 1px solid #bbf7d0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased">
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+    <div class="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center">
+        <div class="w-20 h-20 border-4 border-green-200 border-t-green-600 rounded-full animate-spin mb-4"></div>
+        <p class="text-gray-700 font-medium">Loading Fields...</p>
+    </div>
+</div>
+
+<!-- Main Content -->
+<main class="min-h-screen p-6 md:p-10 max-w-8xl mx-auto">
+    <!-- Weather & Agro Zone Header -->
+    <div style="display: flex; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+
+        <div class="card-soft p-5 ">
+            <div class="flex flex-wrap justify-between items-start gap-4">
+                <div class="flex-1">
+                    <label class="text-xs font-semibold text-green-700 uppercase tracking-wide"><i class="fas fa-tractor mr-1"></i> Your Agro Zone</label>
+                    <select id="locationSelect" class="mt-1 text-lg font-bold bg-transparent border-b-2 border-green-200 py-1 pr-8 cursor-pointer text-gray-800 focus:outline-none">
+                        <option value="colombo">🌴 Colombo - Wet Zone</option>
+                        <option value="anuradhapura">🌾 Anuradhapura - Dry Zone</option>
+                        <option value="kandy">⛰️ Kandy - Mid Country</option>
+                        <option value="jaffna">🏝️ Jaffna - Arid Belt</option>
+                        <option value="galle">🌊 Galle - Southern Wet</option>
+                    </select>
+                    <p id="provinceName" class="text-xs text-green-600 mt-1"><i class="fas fa-location-dot"></i> Western Province</p>
+                </div>
+                <div class="bg-green-50 px-3 py-1 rounded-full text-green-800"><i class="far fa-clock mr-1"></i> Sowing Index: <span id="sowingIndex">Optimal</span></div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-5 mt-4">
+                <div class="flex items-center gap-4">
+                    <i id="currentWeatherIcon" class="fas fa-cloud-sun weather-icon-large text-amber-500 text-5xl"></i>
+                    <div>
+                        <span id="mainTemp" class="text-5xl font-black">--</span><span class="text-xl align-top">°C</span>
+                        <p id="weatherDesc" class="text-sm text-gray-500 mt-1"><i class="fas fa-wind"></i> Loading forecast...</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 bg-gray-50 p-3 rounded-2xl">
+                    <div><p class="text-xs font-bold text-gray-400">💨 WIND</p><p id="topWind" class="font-bold text-gray-700">-- km/h</p></div>
+                    <div><p class="text-xs font-bold text-gray-400">🌧️ RAIN RISK</p><p id="topRain" class="font-bold text-blue-600">--%</p></div>
+                    <div><p class="text-xs font-bold text-gray-400">💧 HUMIDITY</p><p id="topHumid" class="font-bold text-green-700">--%</p></div>
+                </div>
+            </div>
+
+            <div id="forecastContainer" class="forecast-scroll mt-4"></div>
+        </div>
+        <div id="fieldsGrid" class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6 max-w-2xl mx-auto"></div>
+        <img src="oy7L-ui-SC-so8s0sUXUZQ.jpg" style="height: 330px; border-radius: 12px;">
+    </div>
+
+    <div class="card-soft p-3 mb-6 field-selector">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h2 class="text-base font-bold text-gray-800"><i class="fas fa-search-location text-green-700 mr-2"></i>Select a Field to View</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Choose a field from the dropdown below to display its details</p>
+            </div>
+            <div class="w-full md:w-80">
+                <label class="block text-xs font-medium text-gray-600 mb-1"><i class="fas fa-tractor"></i> Available Fields</label>
+                <select id="fieldSelectorDropdown" class="input-simple bg-white font-medium text-sm py-1.5">
+                    <option value="">-- Select a field --</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="grid grid-cols-1 md:grid-cols-[60%_40%] gap-4">    <!-- Log Cultivation Activity Card -->
+    <div class="card-soft p-6">
+        <h2 class="text-xl font-bold flex gap-2 items-center mb-4">
+            <i class="fas fa-clipboard-list text-green-700"></i> Log Your Cultivation Activity
+        </h2>
+        <form id="logForm" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Selected Field</label>
+                    <input type="text" id="selectedFieldName" class="input-simple bg-gray-100" readonly placeholder="Select a field first">
+                    <input type="hidden" id="selectedFieldId">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Total Land Area (acres)</label>
+                    <input type="number" id="landSize" class="input-simple bg-gray-100" step="0.1" placeholder="Field area" readonly>
+                </div>
+            </div>
+
+            <div class="bg-green-50/50 p-4 rounded-2xl border border-green-100">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-bold text-green-800 uppercase tracking-wider">Crops being cultivated</h3>
+                    <button type="button" onclick="addCropRow()" class="text-xs bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700">
+                        <i class="fas fa-plus mr-1"></i> Add Crop
+                    </button>
+                </div>
+                <div id="cropRowsContainer" class="space-y-3">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-600 mb-2">Assign Staff Members</label>
+                <div id="staffList" class="flex flex-wrap gap-2">
+                    <label class="flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-xl cursor-pointer hover:border-green-500">
+                        <input type="checkbox" name="staff" value="ST-001" class="rounded text-green-600">
+                        <span class="text-sm">Kamal Silva (Manager)</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-xl cursor-pointer hover:border-green-500">
+                        <input type="checkbox" name ="staff" value="ST-002" class="rounded text-green-600">
+                        <span class="text-sm">Nimal Perera (Laborer)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">Activity Details</label>
+                <textarea id="details" rows="2" class="input-simple" placeholder="E.g., Irrigation schedule, specific fertilizer brands..."></textarea>
+            </div>
+
+            <button type="button" class="btn-primary text-white font-semibold py-2.5 px-6 rounded-xl shadow-sm w-full md:w-auto" onclick="saveFarmingLog()">
+                <i class="fas fa-save mr-1"></i> Save Farming Record
+            </button>
+        </form>
+    </div>
+
+    <div style="height: 100%">
+
+        <!-- LEFT: TASK TABLE -->
+        <div class="card-soft p-5" style="height: 100%">
+            <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
+                <i class="fas fa-tasks text-green-700"></i> Crop Tasks
+            </h2>
+
+            <div id="taskTableContainer" class="overflow-auto">
+                <table class="min-w-full text-sm text-left border rounded-xl overflow-hidden">
+                    <thead class="bg-green-100 text-green-800">
+                    <tr>
+                        <th class="px-3 py-2">Task</th>
+                        <th class="px-3 py-2">Start Day</th>
+                        <th class="px-3 py-2">Repeat</th>
+                        <th class="px-3 py-2">Working Days</th>
+                    </tr>
+                    </thead>
+                    <tbody id="taskTableBody" class="bg-white">
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-gray-400">
+                            Select a crop to view tasks
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- RIGHT: EXISTING FORM -->
+        <div class="lg:col-span-2">
+            <!-- KEEP your existing "Log Cultivation Activity" card here -->
+        </div>
+
+    </div>
+    </div>
+
+</main>
+
+<script>
+    // ======================= GLOBAL STATE =======================
+    let allFields = [];
+    let currentLocationFilter = "colombo";
+    let selectedField = null;
+    let allCrops = [];
+    const CROP_API = 'http://localhost:8080/api/v1/crop';
+
+    // 2. Fetch all crops from Backend
+    async function fetchCrops() {
+        try {
+            const token = localStorage.getItem('token') || 'demo-mode';
+            const res = await fetch(`${CROP_API}/all`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (res.ok) {
+                const apiRes = await res.json();
+                // Handle both wrapped response {code: 200, data: [...]} or direct array
+                allCrops = (apiRes.code === 200 && Array.isArray(apiRes.data)) ? apiRes.data : apiRes;
+                console.log("Crops loaded:", allCrops);
+            } else {
+                console.warn('Backend unavailable, using static crop list');
+                allCrops = [
+                    { cropCode: "C001", commonName: "Paddy" },
+                    { cropCode: "C002", commonName: "Maize" }
+                ];
+            }
+        } catch (err) {
+            console.error('Fetch error:', err);
+        }
+    }
+
+    function addCropRow() {
+        const rowId = Date.now();
+
+        let cropOptions = '<option value="">-- Select crop --</option>';
+
+        if (allCrops && allCrops.length > 0) {
+            cropOptions += allCrops.map(c =>
+                `<option value="${c.cropCode}">${c.commonName}</option>`
+            ).join('');
+        } else {
+            cropOptions += '<option disabled>Loading crops...</option>';
+        }
+
+        const html = `
+    <div class="flex gap-2 items-center mb-3 crop-data-row" id="crop-row-${rowId}">
+        <div class="flex-1">
+            <select class="input-simple crop-select w-full" required>
+                ${cropOptions}
+            </select>
+        </div>
+        <div class="w-24">
+            <input type="number" class="input-simple crop-area w-full" placeholder="Acres" step="0.1">
+        </div>
+        <button type="button" onclick="$('#crop-row-${rowId}').remove()" class="text-red-500 px-2">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>`;
+
+        $('#cropRowsContainer').append(html);
+    }
+
+    // 2. Comprehensive Save Logic
+    window.saveFarmingLog = function() {
+        const fieldId = $('#selectedFieldId').val();
+        const details = $('#details').val();
+        const totalLand = $('#landSize').val();
+
+        const crops = [];
+        $('#cropRowsContainer > div').each(function() {
+            const cropCode = $(this).find('.crop-select').val();
+            const cropArea = $(this).find('.crop-area').val();
+
+            if (cropCode) {
+                crops.push({
+                    cropCode: cropCode,
+                    allocatedArea: parseFloat(cropArea) || 0
+                });
+            }
+        });
+
+        const selectedStaff = [];
+        $('input[name="staff"]:checked').each(function() {
+            selectedStaff.push($(this).val());
+        });
+
+        if (!fieldId) {
+            Swal.fire("Field required", "Please select a field first", "warning");
+            return;
+        }
+
+        if (crops.length === 0) {
+            Swal.fire("Crops required", "Please add at least one crop", "warning");
+            return;
+        }
+
+        const payload = {
+            fieldId: fieldId,
+            totalLand: totalLand,
+            crops: crops,
+            staffIds: selectedStaff,
+            details: details,
+            timestamp: new Date().toISOString()
+        };
+
+        console.log("Payload to Spring Boot:", payload);
+
+        Swal.fire({
+            title: "Log Recorded!",
+            text: `Saved ${crops.length} crops successfully.`,
+            icon: "success",
+            confirmButtonColor: '#166534'
+        });
+
+        // Reset
+        $('#cropRowsContainer').empty();
+        $('input[name="staff"]').prop('checked', false);
+        addCropRow();
+    };
+    // 4. Update Initialization
+    $(document).ready(async function() {
+        showLoading(true);
+
+        await fetchAllFields();
+        await fetchCrops();
+
+        currentLocationFilter = "colombo";
+        $('#locationSelect').val('colombo');
+
+        fetchWeatherForZone('colombo');
+
+        updateFieldSelectorDropdown();
+        renderSelectedField();
+
+        $('#cropRowsContainer').empty();
+        addCropRow();
+
+        showLoading(false);
+    });
+
+    function showLoading(show) {
+        if (show) $('#loadingOverlay').removeClass('hidden').addClass('flex');
+        else $('#loadingOverlay').addClass('hidden').removeClass('flex');
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // Fetch all fields
+    async function fetchAllFields() {
+        showLoading(true);
+        try {
+            const token = localStorage.getItem('token') || 'demo-mode';
+            const response = await fetch('http://localhost:8080/api/v1/field/all', {
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+            });
+            if (response.ok) {
+                const apiRes = await response.json();
+                if (apiRes.code === 200 && Array.isArray(apiRes.data) && apiRes.data.length > 0) {
+                    allFields = apiRes.data.map(f => ({ ...f, zoneKey: guessZoneFromLocation(f.locationName || f.fieldName || '') }));
+                    showLoading(false);
+                    updateFieldSelectorDropdown();
+                    return;
+                }
+            }
+            showLoading(false);
+            updateFieldSelectorDropdown();
+        } catch (err) {
+            console.warn("Backend not reachable, using demo fields");
+            allFields = [...DEMO_FIELDS];
+            showLoading(false);
+            updateFieldSelectorDropdown();
+        }
+    }
+
+    function guessZoneFromLocation(locStr) {
+        const lower = (locStr || "").toLowerCase();
+        if (lower.includes("colombo") || lower.includes("homagama")) return "colombo";
+        if (lower.includes("kandy") || lower.includes("gampola")) return "kandy";
+        if (lower.includes("jaffna") || lower.includes("chavakachcheri")) return "jaffna";
+        if (lower.includes("galle") || lower.includes("ambalangoda")) return "galle";
+        if (lower.includes("anuradhapura") || lower.includes("kurunegala")) return "anuradhapura";
+        return "colombo";
+    }
+
+    // Update the field selector dropdown with fields filtered by zone
+    function updateFieldSelectorDropdown() {
+        const filteredFields = allFields.filter(f => f.zoneKey === currentLocationFilter);
+        let options = '<option value="">-- Select a field --</option>';
+        filteredFields.forEach(field => {
+            options += `<option value="${escapeHtml(field.fieldId)}">${escapeHtml(field.fieldName)} (${field.area} ${field.areaUnit})</option>`;
+        });
+        $('#fieldSelectorDropdown').html(options);
+
+        // Reset selected field if dropdown is empty
+        if (filteredFields.length === 0) {
+            selectedField = null;
+            renderSelectedField();
+            $('#selectedFieldName').val('');
+            $('#selectedFieldId').val('');
+        }
+    }
+
+    // Render ONLY the selected field in the grid
+    function renderSelectedField() {
+        const container = $('#fieldsGrid');
+
+        if (!selectedField) {
+            container.html(`
+            <div class="text-center py-8 bg-white rounded-xl shadow-sm border-2 border-dashed border-green-200">
+                <i class="fas fa-hand-pointer text-4xl mb-2 text-green-300"></i>
+                <p class="text-base font-semibold text-gray-600">No Field Selected</p>
+                <p class="text-sm text-gray-400">Select a field from the dropdown above</p>
+            </div>
+        `);
+            return;
+        }
+
+        const imageUrl = selectedField.image && selectedField.image.trim() !== ""
+            ? selectedField.image
+            : "https://placehold.co/600x400/4c7a5a/white?text=Agro+Field";
+
+        const html = `
+        <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden field-card">
+            <div class="relative h-36 overflow-hidden bg-green-50">
+                <img src="${imageUrl}" class="w-full h-full object-cover" alt="${escapeHtml(selectedField.fieldName)}"
+                     onerror="this.src='https://placehold.co/600x400/4c7a5a/white?text=Field'">
+                <div class="absolute top-2 right-2 bg-green-600 text-white px-2 py-0.5 rounded-full text-xs font-semibold">
+                    ${escapeHtml(currentLocationFilter.toUpperCase())} Zone
+                </div>
+            </div>
+            <div class="p-4">
+                <h3 class="text-lg font-black text-gray-800 capitalize mb-2">${escapeHtml(selectedField.fieldName)}</h3>
+
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <div class="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+                        <i class="fas fa-ruler-combined text-green-600 text-sm"></i>
+                        <div>
+                            <p class="text-xs text-gray-500">Area</p>
+                            <p class="text-sm font-bold text-gray-800">${selectedField.area || 0} ${selectedField.areaUnit || 'acres'}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 p-2 bg-red-50 rounded-lg">
+                        <i class="fas fa-location-dot text-red-500 text-sm"></i>
+                        <div>
+                            <p class="text-xs text-gray-500">Location</p>
+                            <p class="text-sm font-bold text-gray-800">${escapeHtml(selectedField.locationName || '—')}</p>
+                        </div>
+                    </div>
+                    ${selectedField.soilType ? `
+                    <div class="flex items-center gap-2 p-2 bg-amber-50 rounded-lg">
+                        <i class="fas fa-seedling text-amber-600 text-sm"></i>
+                        <div>
+                            <p class="text-xs text-gray-500">Soil Type</p>
+                            <p class="text-sm font-bold text-gray-800">${escapeHtml(selectedField.soilType)}</p>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${selectedField.cropStatus ? `
+                    <div class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
+                        <i class="fas fa-chart-line text-blue-600 text-sm"></i>
+                        <div>
+                            <p class="text-xs text-gray-500">Crop Status</p>
+                            <p class="text-sm font-bold text-gray-800">${escapeHtml(selectedField.cropStatus)}</p>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+
+                ${selectedField.coordinates ? `
+                    <div class="mb-2 p-2 bg-blue-50 rounded-lg">
+                        <p class="text-xs text-blue-700"><i class="fas fa-map-marker-alt mr-1"></i> ${selectedField.coordinates}</p>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+
+        container.html(html);
+
+        $('#selectedFieldName').val(selectedField.fieldName);
+        $('#selectedFieldId').val(selectedField.fieldId);
+    }
+    window.viewFullDetails = function() {
+        if (selectedField) {
+            Swal.fire({
+                title: selectedField.fieldName,
+                html: `<div class="text-left">
+                    <p><i class="fas fa-tachometer-alt text-green-600"></i> <strong>Field ID:</strong> ${selectedField.fieldId}</p>
+                    <p><i class="fas fa-ruler-combined"></i> <strong>Area:</strong> ${selectedField.area} ${selectedField.areaUnit}</p>
+                    <p><i class="fas fa-map-pin"></i> <strong>Location:</strong> ${selectedField.locationName}</p>
+                    <p><i class="fas fa-leaf"></i> <strong>Soil Type:</strong> ${selectedField.soilType || 'Not specified'}</p>
+                    <p><i class="fas fa-chart-line"></i> <strong>Crop Status:</strong> ${selectedField.cropStatus || 'Not specified'}</p>
+                    <p><i class="fas fa-globe"></i> <strong>Coordinates:</strong> ${selectedField.coordinates || 'Not specified'}</p>
+                    <p><i class="fas fa-align-left"></i> <strong>Description:</strong> ${selectedField.description || '—'}</p>
+                </div>`,
+                icon: 'info',
+                confirmButtonColor: '#166534'
+            });
+        }
+    };
+
+    // Save activity log
+    window.saveFarmingLog = function() {
+        const crop = $('#cropId').val();
+        const fieldId = $('#selectedFieldId').val();
+        const landSize = $('#landSize').val();
+        const details = $('#details').val();
+
+        if (!crop) {
+            Swal.fire("Missing info", "Please select a crop", "warning");
+            return;
+        }
+        if (!fieldId) {
+            Swal.fire("Field required", "Please select a field from the dropdown first", "warning");
+            return;
+        }
+
+        const logEntry = {
+            crop,
+            fieldId,
+            fieldName: $('#selectedFieldName').val(),
+            landSize: landSize || "Not specified",
+            details: details || "—",
+            timestamp: new Date().toISOString(),
+            zone: currentLocationFilter
+        };
+        console.log("Saved log:", logEntry);
+
+        Swal.fire({
+            title: "Record Saved!",
+            text: `Cultivation activity for ${crop} logged successfully on ${logEntry.fieldName}.`,
+            icon: "success",
+            toast: true,
+            timer: 2000,
+            showConfirmButton: false
+        });
+
+        $('#cropId').val('');
+        $('#details').val('');
+        $('#landSize').val('');
+    };
+
+    // Weather zone handling
+    const sriLankaZones = {
+        colombo: { lat: 6.9271, lon: 79.8612, name: "Colombo", province: "Western · Wet Zone", baseTemp: 28 },
+        kandy: { lat: 7.2906, lon: 80.6337, name: "Kandy", province: "Central · Mid Country", baseTemp: 24 },
+        jaffna: { lat: 9.6615, lon: 80.0255, name: "Jaffna", province: "Northern · Dry Arid", baseTemp: 30 },
+        galle: { lat: 6.0328, lon: 80.2168, name: "Galle", province: "Southern · Wet Coastal", baseTemp: 28 },
+        anuradhapura: { lat: 8.3114, lon: 80.4037, name: "Anuradhapura", province: "North Central · Dry Zone", baseTemp: 29 }
+    };
+
+    function getFriendlyAdvice(temp, pop, humidity) {
+        if (pop > 55) return "⚠️ High rain probability — postpone fertilizer & protect seedlings";
+        if (temp > 32) return "🌞 Heat stress alert! Increase irrigation intervals";
+        if (humidity > 80) return "💧 High humidity — watch for fungal diseases in paddy";
+        return "✅ Favorable conditions for weeding and pest scouting";
+    }
+
+    function renderWeatherUI(data, zone) {
+        if (!data || !data.list) return;
+        const current = data.list[0];
+        const temp = Math.round(current.main.temp);
+        const pop = Math.round((current.pop || 0) * 100);
+        const humidity = current.main.humidity;
+        const windKmh = (current.wind.speed * 3.6).toFixed(1);
+        $('#mainTemp').text(temp);
+        $('#weatherDesc').text(current.weather[0].description);
+        $('#topWind').text(`${windKmh} km/h`);
+        $('#topRain').text(`${pop}%`);
+        $('#topHumid').text(`${humidity}%`);
+        $('#provinceName').html(`<i class="fas fa-map-pin"></i> ${zone.province} · ${zone.name}`);
+
+        let iconClass = "fa-cloud-sun";
+        const iconCode = current.weather[0].icon;
+        if (iconCode.includes("01")) iconClass = "fa-sun";
+        else if (iconCode.includes("02")) iconClass = "fa-cloud-sun";
+        else if (iconCode.includes("09") || iconCode.includes("10")) iconClass = "fa-cloud-showers-heavy";
+        else iconClass = "fa-cloud";
+        $('#currentWeatherIcon').attr('class', `fas ${iconClass} weather-icon-large`).css('color', '#e0a800');
+
+        const advice = getFriendlyAdvice(temp, pop, humidity);
+        $('#quickAdvice').text(advice);
+
+        let sowIndex = "🌾 Moderate";
+        if (pop < 30 && temp > 22 && temp < 33) sowIndex = "🌱 Excellent for sowing";
+        else if (pop > 60) sowIndex = "⏳ Delay sowing (heavy rain)";
+        else sowIndex = "🌿 Fair — monitor conditions";
+        $('#sowingIndex').text(sowIndex);
+
+        let dailyMap = new Map();
+        data.list.forEach(item => {
+            const dateKey = item.dt_txt.split(' ')[0];
+            if (!dailyMap.has(dateKey) && dailyMap.size < 6) dailyMap.set(dateKey, item);
+        });
+        let forecastHtml = '';
+        Array.from(dailyMap.values()).forEach(day => {
+            const dayTemp = Math.round(day.main.temp);
+            const dayPop = Math.round((day.pop || 0) * 100);
+            const weekday = new Date(day.dt_txt).toLocaleDateString('en-GB', { weekday: 'short' });
+            const icon = day.weather[0].icon.includes("01") ? "fa-sun" : (day.weather[0].icon.includes("02") ? "fa-cloud-sun" : "fa-cloud-rain");
+            forecastHtml += `<div class="forecast-card"><p class="font-bold text-xs">${weekday}</p><i class="fas ${icon} text-amber-500 text-xl"></i><p class="font-bold text-sm">${dayTemp}°C</p><p class="text-xs">☔ ${dayPop}%</p></div>`;
+        });
+        $('#forecastContainer').html(forecastHtml);
+    }
+
+    function generateFallbackWeather(zone) {
+        const list = [];
+        const now = new Date();
+        for (let i = 0; i < 40; i++) {
+            const fakeDate = new Date(now.getTime() + i * 3 * 3600000);
+            const tempVal = zone.baseTemp + (Math.sin(i * 0.6) * 2);
+            list.push({
+                dt_txt: fakeDate.toISOString().replace('T', ' ').slice(0, 19),
+                main: { temp: tempVal, humidity: 65 + Math.sin(i) * 10 },
+                weather: [{ icon: "02d", description: "Partly cloudy" }],
+                wind: { speed: 2.2 },
+                pop: 0.2 + (Math.sin(i) * 0.1)
+            });
+        }
+        return { list };
+    }
+
+    async function fetchWeatherForZone(zoneKey) {
+        const zone = sriLankaZones[zoneKey];
+        if (!zone) return;
+        try {
+            const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${zone.lat}&lon=${zone.lon}&appid=36ae79b3c48ce2a5e18f45a589b503cd&units=metric`);
+            if (!res.ok) throw new Error("API fail");
+            const json = await res.json();
+            renderWeatherUI(json, zone);
+        } catch (err) {
+            console.warn("Fallback weather");
+            const fallback = generateFallbackWeather(zone);
+            renderWeatherUI(fallback, zone);
+        }
+    }
+
+    // Event Handlers
+    $('#locationSelect').on('change', function() {
+        currentLocationFilter = $(this).val();
+        fetchWeatherForZone(currentLocationFilter);
+        updateFieldSelectorDropdown();
+        // Reset selected field when zone changes
+        selectedField = null;
+        $('#fieldSelectorDropdown').val('');
+        renderSelectedField();
+        $('#selectedFieldName').val('');
+        $('#selectedFieldId').val('');
+    });
+
+    // Initialize
+    $(document).ready(async function() {
+        await fetchAllFields();
+        fetchWeatherForZone('colombo');
+        currentLocationFilter = "colombo";
+        $('#locationSelect').val('colombo');
+        updateFieldSelectorDropdown();
+        renderSelectedField();
+    });
+
+    // Listen for change on dynamically added crop rows
+    $(document).on('change', '.crop-select', async function() {
+        const cropCode = $(this).val();
+        if (!cropCode) {
+            $('#taskTableBody').html(`
+            <tr>
+                <td colspan="4" class="text-center py-4 text-gray-400">Select a crop to view tasks</td>
+            </tr>
+        `);
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token') || 'demo-mode';
+            const res = await fetch(`http://localhost:8080/api/v1/crop-task-template/search/${cropCode}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!res.ok) throw new Error("Failed to fetch tasks");
+
+            const apiRes = await res.json();
+            const tasks = (apiRes.code === 200 && Array.isArray(apiRes.data)) ? apiRes.data : [];
+
+            if (tasks.length === 0) {
+                $('#taskTableBody').html(`
+                <tr>
+                    <td colspan="4" class="text-center py-4 text-gray-400">No tasks found for this crop</td>
+                </tr>
+            `);
+                return;
+            }
+
+            // Populate table
+            const rowsHtml = tasks.map(t => `
+            <tr class="border-b hover:bg-gray-50">
+                <td class="px-3 py-2">${t.taskName}</td>
+                <td class="px-3 py-2">${t.startDay}</td>
+                <td class="px-3 py-2">${t.repeatInterval || '-'}</td>
+                <td class="px-3 py-2">${t.standardDuration || '-'}</td>
+            </tr>
+        `).join('');
+
+            $('#taskTableBody').html(rowsHtml);
+
+        } catch (err) {
+            console.error(err);
+            $('#taskTableBody').html(`
+            <tr>
+                <td colspan="4" class="text-center py-4 text-red-400">Error loading tasks</td>
+            </tr>
+        `);
+        }
+    });
+
+    $('#fieldSelectorDropdown').on('change', function() {
+        const selectedFieldId = $(this).val();
+        if (selectedFieldId) {
+            selectedField = allFields.find(f => f.fieldId === selectedFieldId);
+            renderSelectedField();
+
+            // Auto assign area and make it non-editable
+            if (selectedField) {
+                $('#landSize').val(selectedField.area);
+            }
+        } else {
+            selectedField = null;
+            renderSelectedField();
+            $('#selectedFieldName').val('');
+            $('#selectedFieldId').val('');
+            $('#landSize').val(''); // Clear the area if no field selected
+        }
+    });
+
+
+    // Override the saveFarmingLog function
+    window.saveFarmingLog = function() {
+        const fieldId = $('#selectedFieldId').val();
+        const details = $('#details').val();
+        const totalLand = $('#landSize').val();
+
+        // 1. Gather Crops
+        const crops = [];
+        $('.crop-row-container .flex').each(function() { // Wait, corrected selector below
+        });
+
+        // Proper way to iterate dynamic rows:
+        $('#cropRowsContainer > div').each(function() {
+            const cropName = $(this).find('.crop-select').val();
+            const cropArea = $(this).find('.crop-area').val();
+            if(cropName) crops.push({ name: cropName, area: cropArea });
+        });
+
+        // 2. Gather Selected Staff
+        const selectedStaff = [];
+        $('input[name="staff"]:checked').each(function() {
+            selectedStaff.push($(this).val());
+        });
+
+        // Validation
+        if (!fieldId) {
+            Swal.fire("Field required", "Please select a field first", "warning");
+            return;
+        }
+        if (crops.length === 0) {
+            Swal.fire("Crops required", "Please add at least one crop", "warning");
+            return;
+        }
+
+        const logEntry = {
+            fieldId: fieldId,
+            totalLand: totalLand,
+            crops: crops, // Array of objects
+            staffIds: selectedStaff, // Array of IDs
+            details: details,
+            timestamp: new Date().toISOString()
+        };
+
+        console.log("Payload to Send to Spring Boot:", logEntry);
+
+        // Simulate API Call
+        Swal.fire({
+            title: "Log Recorded!",
+            text: `Activity saved for ${crops.length} crops with ${selectedStaff.length} staff members assigned.`,
+            icon: "success",
+            confirmButtonColor: '#166534'
+        });
+
+        // Optional: Reset Form
+        $('#cropRowsContainer').empty();
+        $('input[name="staff"]').prop('checked', false);
+        addCropRow(); // Add one empty row back
+    };
+
+    // Initialize with one crop row
+    $(document).ready(function() {
+        addCropRow();
+    });
+</script>
+</body>
+</html>

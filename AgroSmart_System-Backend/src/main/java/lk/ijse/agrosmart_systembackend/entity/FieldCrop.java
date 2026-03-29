@@ -25,4 +25,5 @@ public class FieldCrop implements Serializable {
     @JoinColumn(name = "crop_id", referencedColumnName = "cropId")
     private Crop crop;
     private LocalDate assignedDate;
+
 }

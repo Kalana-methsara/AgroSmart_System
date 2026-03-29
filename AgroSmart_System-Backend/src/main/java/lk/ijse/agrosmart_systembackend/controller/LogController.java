@@ -2,6 +2,7 @@ package lk.ijse.agrosmart_systembackend.controller;
 
 import lk.ijse.agrosmart_systembackend.dto.LogDTO;
 import lk.ijse.agrosmart_systembackend.service.LogService;
+import lk.ijse.agrosmart_systembackend.service.TaskService;
 import lk.ijse.agrosmart_systembackend.util.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class LogController {
 
     private final LogService logService;
+    private final TaskService taskService; // TaskService එක Inject කරගත්තා
 
     // CREATE
     @PostMapping
@@ -24,7 +26,13 @@ public class LogController {
                 HttpStatus.CREATED
         );
     }
-
+    @PatchMapping("/complete/{taskId}")
+    public ResponseEntity<ApiResponse> completeTask(@PathVariable String taskId) {
+        return new ResponseEntity<>(
+                new ApiResponse(200, "Task Marked as Completed",taskService.markTaskAsCompleted(taskId)),
+                HttpStatus.OK
+        );
+    }
     // GET ALL
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllLogs() {
