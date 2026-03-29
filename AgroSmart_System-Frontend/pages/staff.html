@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Management - AgroSmart</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+    .status-badge {
+      @apply px-2 py-1 rounded-full text-xs font-medium;
+    }
+    .table-hover tbody tr:hover {
+      background-color: #f9fafb;
+      transition: all 0.2s;
+    }
+    .btn-transition {
+      transition: all 0.2s ease;
+    }
+    /* Custom style for select dropdown to match inputs */
+    .staff-select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      background-color: white;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .staff-select:focus {
+      outline: none;
+      border-color: #16a34a;
+      box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.1);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased">
+
+<div class="min-h-screen">
+  <div class="p-6">
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white rounded-xl shadow-md p-6 card-hover border border-gray-100">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-500 mb-1">Total Staff</p>
+            <p class="text-2xl font-bold text-gray-800" id="totalStaffCount">0</p>
+          </div>
+          <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+            <i class="fa-solid fa-users text-green-600 text-xl"></i>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-md p-6 card-hover border border-gray-100">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-500 mb-1">Managers</p>
+            <p class="text-2xl font-bold text-gray-800" id="managerCount">0</p>
+          </div>
+          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+            <i class="fa-solid fa-user-tie text-blue-600 text-xl"></i>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-md p-6 card-hover border border-gray-100">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-500 mb-1">Scientists</p>
+            <p class="text-2xl font-bold text-gray-800" id="scientistCount">0</p>
+          </div>
+          <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+            <i class="fa-solid fa-microscope text-purple-600 text-xl"></i>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-md p-6 card-hover border border-gray-100">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-500 mb-1">Staff</p>
+            <p class="text-2xl font-bold text-gray-800" id="staffCount">0</p>
+          </div>
+          <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+            <i class="fa-solid fa-user text-yellow-600 text-xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions Bar -->
+    <div class="flex justify-between items-center mb-6 flex-wrap gap-3">
+      <div class="flex space-x-3">
+        <button id="addStaffBtn" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg transition shadow-sm flex items-center space-x-2">
+          <i class="fa-solid fa-plus"></i>
+          <span>Add New Staff</span>
+        </button>
+        <button id="refreshBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-lg transition flex items-center space-x-2">
+          <i class="fa-solid fa-rotate-right"></i>
+          <span>Refresh</span>
+        </button>
+      </div>
+      <div class="relative">
+        <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input type="text" id="searchStaff" placeholder="Search by name, designation, or email..." class="pl-9 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-200 text-sm w-72">
+      </div>
+    </div>
+
+    <!-- Staff Table -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff ID</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Designation</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle ID</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+          </thead>
+          <tbody id="staffTableBody" class="divide-y divide-gray-200 bg-white">
+          <tr>
+            <td colspan="9" class="text-center py-12 text-gray-400">
+              <i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading staff members...
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---------- API ENDPOINTS ----------
+  const API_BASE = 'http://localhost:8080/api/v1/staff';
+  const VEHICLE_API = 'http://localhost:8080/api/v1/vehicle';
+
+  let currentStaffData = [];
+  let currentVehicleData = [];    // global vehicle list (each vehicle should have vehicleId / numberPlate)
+  let searchTimeout = null;
+
+  // Helper: get auth token
+  function getAuthToken() {
+    return localStorage.getItem('token');
+  }
+
+  // ---------- VEHICLE API: fetch all vehicles (for dropdown) ----------
+  async function fetchVehicles() {
+    try {
+      const token = getAuthToken();
+      if (!token) return [];
+      const res = await fetch(`${VEHICLE_API}/all`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      const apiRes = await res.json();
+      if (apiRes.code === 200 && Array.isArray(apiRes.data)) {
+        currentVehicleData = apiRes.data;
+        return currentVehicleData;
+      } else {
+        currentVehicleData = [];
+        return [];
+      }
+    } catch (err) {
+      console.error('Error fetching vehicles:', err);
+      currentVehicleData = [];
+      return [];
+    }
+  }
+
+  // Helper: generate options html for vehicle dropdown (display numberPlate, value = vehicleId or numberPlate based on backend)
+  // The staff entity expects 'vehicleId' field. Assuming each vehicle object has `vehicleId` and `numberPlate`.
+  // We'll set value = vehicle.vehicleId, display text = numberPlate (or combined info)
+  function getVehicleOptionsHtml(selectedVehicleId = null) {
+    if (!currentVehicleData || currentVehicleData.length === 0) {
+      return '<option value="">-- No vehicles available --</option>';
+    }
+    let options = '<option value="">-- Select Vehicle (Optional) --</option>';
+    currentVehicleData.forEach(vehicle => {
+      const vehicleIdVal = vehicle.vehicleId || vehicle.id || '';
+      const displayText = vehicle.numberPlate ? `${vehicle.numberPlate} (${vehicleIdVal})` : vehicleIdVal;
+      const selectedAttr = (selectedVehicleId && selectedVehicleId === vehicleIdVal) ? 'selected' : '';
+      options += `<option value="${escapeHtml(vehicleIdVal)}" ${selectedAttr}>${escapeHtml(displayText)}</option>`;
+    });
+    return options;
+  }
+
+  // ---------- STAFF CRUD ----------
+  async function fetchStaff() {
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        window.location.href = '../index.html';
+        return;
+      }
+      const response = await fetch(`${API_BASE}/all`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      const result = await response.json();
+      if (result.code === 200 && Array.isArray(result.data)) {
+        currentStaffData = result.data;
+        renderStaffTable(currentStaffData);
+        updateStats(currentStaffData);
+      } else {
+        console.warn('Unexpected response format:', result);
+        renderStaffTable([]);
+        updateStats([]);
+      }
+    } catch (error) {
+      console.error('Error fetching staff:', error);
+      Swal.fire('Error', 'Could not load staff members. Please check your connection.', 'error');
+      renderStaffTable([]);
+      updateStats([]);
+    }
+  }
+
+  function updateStats(staffList) {
+    const total = staffList.length;
+    const managers = staffList.filter(s => s.role === 'MANAGER').length;
+    const scientists = staffList.filter(s => s.role === 'SCIENTIST').length;
+    const staff = staffList.filter(s => s.role === 'USER').length;
+    $('#totalStaffCount').text(total);
+    $('#managerCount').text(managers);
+    $('#scientistCount').text(scientists);
+    $('#staffCount').text(staff);
+  }
+
+  function renderStaffTable(staffList) {
+    const tbody = $('#staffTableBody');
+    if (!staffList || staffList.length === 0) {
+      tbody.html(`
+        <tr>
+          <td colspan="9" class="text-center py-12 text-gray-400">
+            <i class="fa-solid fa-users-slash text-4xl mb-3 block"></i>
+            No staff members found. Click "Add New Staff" to get started.
+          </td>
+        </tr>
+      `);
+      return;
+    }
+
+    let rows = '';
+    staffList.forEach(staff => {
+      const roleColors = {
+        'ADMIN': 'bg-purple-100 text-purple-700',
+        'MANAGER': 'bg-blue-100 text-blue-700',
+        'SCIENTIST': 'bg-green-100 text-green-700',
+        'USER': 'bg-gray-100 text-gray-700'
+      };
+      const roleClass = roleColors[staff.role] || 'bg-gray-100 text-gray-700';
+      const genderIcon = staff.gender === 'MALE' ? 'fa-mars' : (staff.gender === 'FEMALE' ? 'fa-venus' : 'fa-genderless');
+      const genderColor = staff.gender === 'MALE' ? 'text-blue-600' : (staff.gender === 'FEMALE' ? 'text-pink-600' : 'text-gray-600');
+
+      rows += `
+        <tr class="hover:bg-gray-50 transition">
+          <td class="px-6 py-4"><span class="font-mono text-sm text-gray-600">${escapeHtml(staff.staffId || '—')}</span></td>
+          <td class="px-6 py-4">
+            <div class="flex items-center space-x-2">
+              <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center"><i class="fa-solid fa-user text-green-600 text-sm"></i></div>
+              <span class="font-medium text-gray-900">${escapeHtml(staff.fullName || '—')}</span>
+            </div>
+          </td>
+          <td class="px-6 py-4 text-gray-600">${escapeHtml(staff.designation || '—')}</td>
+          <td class="px-6 py-4"><div class="flex items-center space-x-1"><i class="fa-solid ${genderIcon} ${genderColor}"></i><span class="text-gray-600">${staff.gender || '—'}</span></div></td>
+          <td class="px-6 py-4"><div class="flex items-center space-x-1"><i class="fa-solid fa-phone text-gray-400 text-xs"></i><span class="text-gray-600">${escapeHtml(staff.contactNumber || '—')}</span></div></td>
+          <td class="px-6 py-4"><div class="flex items-center space-x-1"><i class="fa-solid fa-envelope text-gray-400 text-xs"></i><span class="text-gray-600 text-sm">${escapeHtml(staff.email || '—')}</span></div></td>
+          <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-medium ${roleClass}">${staff.role || '—'}</span></td>
+          <td class="px-6 py-4"><span class="font-mono text-sm text-gray-500">${staff.vehicleId ? escapeHtml(staff.vehicleId) : 'Not Assigned'}</span></td>
+          <td class="px-6 py-4 text-right space-x-2">
+            <button class="text-blue-600 hover:text-blue-800 edit-staff-btn transition" data-id="${staff.staffId}"><i class="fa-regular fa-pen-to-square"></i> Edit</button>
+            <button class="text-red-600 hover:text-red-800 delete-staff-btn transition ml-2" data-id="${staff.staffId}"><i class="fa-regular fa-trash-can"></i> Del</button>
+          </td>
+        </tr>
+      `;
+    });
+    tbody.html(rows);
+    $('.edit-staff-btn').click(function() { const id = $(this).data('id'); openStaffModal(id); });
+    $('.delete-staff-btn').click(function() { const id = $(this).data('id'); deleteStaff(id); });
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  async function deleteStaff(id) {
+    const result = await Swal.fire({
+      title: 'Delete Staff Member?',
+      text: 'This action cannot be undone!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, delete it!'
+    });
+    if (result.isConfirmed) {
+      try {
+        const token = getAuthToken();
+        const response = await fetch(`${API_BASE}/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+        if (response.ok) {
+          Swal.fire('Deleted!', 'Staff member has been removed.', 'success');
+          fetchStaff();
+        } else {
+          const error = await response.json();
+          throw new Error(error.message || 'Delete failed');
+        }
+      } catch (error) {
+        console.error('Error deleting staff:', error);
+        Swal.fire('Error', error.message || 'Could not delete staff member.', 'error');
+      }
+    }
+  }
+
+  // ---------- OPEN MODAL WITH VEHICLE DROPDOWN (populated from fetched vehicles) ----------
+  async function openStaffModal(id = null) {
+    const isEdit = id !== null;
+    let staffData = null;
+    if (isEdit) {
+      staffData = currentStaffData.find(s => s.staffId === id);
+      if (!staffData) {
+        Swal.fire('Error', 'Staff member not found', 'error');
+        return;
+      }
+    }
+
+    // Make sure vehicles are loaded before showing modal (refresh list in background)
+    await fetchVehicles(); // ensure latest vehicle data for dropdown
+
+    // Build dynamic vehicle dropdown options using global currentVehicleData
+    const selectedVehicleId = isEdit ? (staffData.vehicleId || '') : '';
+    const vehicleDropdownOptions = getVehicleOptionsHtml(selectedVehicleId);
+
+    const modalHtml = `
+      <style>
+        .swal2-html-container { margin: 0; text-align: left; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 5px; color: #374151; text-align: left; }
+        .staff-input { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; transition: all 0.2s; background: white; }
+        .staff-input:focus { outline: none; border-color: #16a34a; box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.1); }
+        .row { display: flex; gap: 12px; margin-bottom: 15px; }
+        .row .form-group { flex: 1; margin-bottom: 0; }
+        .staff-select { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; background: white; }
+      </style>
+      <div style="max-height: 500px; overflow-y: auto; padding: 5px;">
+        ${isEdit ? `<div class="form-group"><label>Staff ID</label><input id="staff-id" class="staff-input" value="${staffData.staffId}" disabled style="background-color: #f3f4f6;"></div>` : ''}
+        <div class="form-group"><label>Full Name *</label><input id="full-name" class="staff-input" placeholder="e.g., John Doe" value="${isEdit ? escapeHtml(staffData.fullName) : ''}"></div>
+        <div class="row">
+          <div class="form-group"><label>Designation *</label><input id="designation" class="staff-input" placeholder="e.g., Farm Manager" value="${isEdit ? escapeHtml(staffData.designation) : ''}"></div>
+          <div class="form-group"><label>Gender</label><select id="gender" class="staff-select"><option value="MALE" ${isEdit && staffData.gender === 'MALE' ? 'selected' : ''}>Male</option><option value="FEMALE" ${isEdit && staffData.gender === 'FEMALE' ? 'selected' : ''}>Female</option><option value="OTHER" ${isEdit && staffData.gender === 'OTHER' ? 'selected' : ''}>Other</option></select></div>
+        </div>
+        <div class="row">
+          <div class="form-group"><label>Contact Number *</label><input id="contact" class="staff-input" placeholder="e.g., +94 77 123 4567" value="${isEdit ? escapeHtml(staffData.contactNumber) : ''}"></div>
+          <div class="form-group"><label>Email</label><input id="email" type="email" class="staff-input" placeholder="e.g., john@example.com" value="${isEdit ? escapeHtml(staffData.email) : ''}"></div>
+        </div>
+        <div class="row">
+          <div class="form-group"><label>Role *</label><select id="role" class="staff-select"><option value="ADMIN" ${isEdit && staffData.role === 'ADMIN' ? 'selected' : ''}>Admin</option><option value="MANAGER" ${isEdit && staffData.role === 'MANAGER' ? 'selected' : ''}>Manager</option><option value="SCIENTIST" ${isEdit && staffData.role === 'SCIENTIST' ? 'selected' : ''}>Scientist</option><option value="USER" ${isEdit && staffData.role === 'USER' ? 'selected' : ''}>Staff</option></select></div>
+          <div class="form-group"><label>Vehicle (Select from registered vehicles)</label><select id="vehicle-id" class="staff-select">${vehicleDropdownOptions}</select></div>
+        </div>
+        <div class="text-xs text-gray-400 mt-1">* Vehicle dropdown shows number plates from vehicle registry. Optional field.</div>
+      </div>
+    `;
+
+    const { value: formData } = await Swal.fire({
+      title: isEdit ? 'Edit Staff Member' : 'Add New Staff Member',
+      html: modalHtml,
+      showCancelButton: true,
+      confirmButtonText: isEdit ? 'Update Staff' : 'Add Staff',
+      confirmButtonColor: '#16a34a',
+      cancelButtonColor: '#6c757d',
+      focusConfirm: false,
+      width: '680px',
+      preConfirm: () => {
+        const fullName = document.getElementById('full-name').value.trim();
+        const designation = document.getElementById('designation').value.trim();
+        const contact = document.getElementById('contact').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const gender = document.getElementById('gender').value;
+        const role = document.getElementById('role').value;
+        const vehicleId = document.getElementById('vehicle-id').value;  // selected vehicleId (could be empty string)
+
+        if (!fullName) { Swal.showValidationMessage('Full name is required'); return false; }
+        if (!designation) { Swal.showValidationMessage('Designation is required'); return false; }
+        if (!contact) { Swal.showValidationMessage('Contact number is required'); return false; }
+
+        const staffPayload = {
+          fullName,
+          designation,
+          gender,
+          contactNumber: contact,
+          email: email || null,
+          role,
+          vehicleId: vehicleId && vehicleId.trim() !== '' ? vehicleId.trim() : null
+        };
+        if (isEdit) { staffPayload.staffId = id; }
+        return staffPayload;
+      }
+    });
+
+    if (formData) {
+      try {
+        const token = getAuthToken();
+        const method = isEdit ? 'PUT' : 'POST';
+        const url = API_BASE;
+        const response = await fetch(url, {
+          method: method,
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        if (response.ok) {
+          Swal.fire('Success', `Staff member ${isEdit ? 'updated' : 'added'} successfully!`, 'success');
+          fetchStaff();  // refresh staff table after operation
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Operation failed');
+        }
+      } catch (error) {
+        console.error('Error saving staff:', error);
+        Swal.fire('Error', error.message || 'Could not save staff member.', 'error');
+      }
+    }
+  }
+
+  // ---------- SEARCH ----------
+  function searchStaff() {
+    const searchTerm = $('#searchStaff').val().toLowerCase();
+    if (!searchTerm) {
+      renderStaffTable(currentStaffData);
+      return;
+    }
+    const filtered = currentStaffData.filter(staff => {
+      return (staff.fullName && staff.fullName.toLowerCase().includes(searchTerm)) ||
+              (staff.designation && staff.designation.toLowerCase().includes(searchTerm)) ||
+              (staff.email && staff.email.toLowerCase().includes(searchTerm)) ||
+              (staff.contactNumber && staff.contactNumber.includes(searchTerm));
+    });
+    renderStaffTable(filtered);
+  }
+
+  // ---------- INITIALIZE PAGE ----------
+  $(document).ready(async function() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '../index.html';
+      return;
+    }
+    // Preload vehicles for dropdown so that when adding staff, vehicles are ready
+    await fetchVehicles();
+    // Load staff members
+    await fetchStaff();
+
+    // Event handlers
+    $('#addStaffBtn').click(() => openStaffModal());
+    $('#refreshBtn').click(() => { fetchStaff(); fetchVehicles(); });
+    $('#backToDashboardBtn').click(() => { window.location.href = 'index.html'; });
+    $('#searchStaff').on('input', function() {
+      if (searchTimeout) clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => searchStaff(), 300);
+    });
+    // Auto-refresh staff list every 30 seconds, but also fetch vehicles in background to keep dropdown fresh
+    setInterval(() => {
+      fetchStaff();
+      fetchVehicles(); // keep vehicle list updated for future modals
+    }, 30000);
+  });
+</script>
+</body>
+</html>
