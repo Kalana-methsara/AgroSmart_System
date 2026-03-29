@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>AgroSmart · Farmer Intelligence Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    @keyframes slideIn {
+      from { transform: translateX(-10px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes pulseGreen {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.05); }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-slide-in { animation: slideIn 0.3s ease-out; }
+    .sidebar-item { transition: all 0.2s; }
+    .sidebar-item:hover:not(.active) { background-color: rgba(34, 197, 94, 0.1); color: #166534; }
+    .sidebar-item.active { background-color: #166534; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+    .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+    .weather-glow { background: linear-gradient(145deg, #fbbf24, #f59e0b); box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.2); }
+    .mobile-menu { transition: transform 0.3s ease-in-out; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    .btn-transition { transition: all 0.2s ease; }
+    .inventory-status-badge { @apply px-2 py-1 rounded-full text-xs font-medium; }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased">
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+  <div class="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center">
+    <div class="w-20 h-20 border-4 border-green-200 border-t-green-600 rounded-full animate-spin mb-4"></div>
+    <p class="text-gray-700 font-medium">Loading AgroSmart...</p>
+  </div>
+</div>
+
+<div class="flex h-screen bg-gray-50 overflow-hidden">
+  <!-- Sidebar Desktop -->
+  <aside class="hidden md:flex md:flex-shrink-0">
+    <div class="w-72 bg-white shadow-2xl flex flex-col h-full overflow-y-auto">
+      <div class="p-6 border-b border-gray-100">
+        <div class="flex items-center space-x-3">
+          <div class="w-12 h-12 bg-gradient-to-br from-green-700 to-green-600 rounded-xl shadow-lg flex items-center justify-center">
+            <i class="fa-solid fa-leaf text-white text-2xl"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-gray-800">Agro<span class="text-green-600">Smart</span></h1>
+            <p class="text-xs text-gray-500">Farmer Dashboard</p>
+          </div>
+        </div>
+      </div>
+      <nav class="flex-1 overflow-y-auto py-6 px-4">
+        <div class="space-y-1"><p class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 mb-2">Main</p>
+          <a href="#" class="sidebar-item active flex items-center space-x-3 px-4 py-3 rounded-xl transition" data-section="overview"><i class="fa-solid fa-chart-pie w-6 text-lg"></i><span class="font-medium">Overview</span></a>
+          <a href="#" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl transition" data-section="fields"><i class="fa-solid fa-map w-6 text-lg"></i><span class="font-medium">My Fields</span></a>
+          <a href="#" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl transition" data-section="crops"><i class="fa-solid fa-seedling w-6 text-lg"></i><span class="font-medium">Crops</span></a>
+          <a href="#" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl transition" data-section="weather"><i class="fa-solid fa-cloud-sun w-6 text-lg"></i><span class="font-medium">Weather</span></a>
+          <a href="#" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl transition" data-section="analytics"><i class="fa-solid fa-chart-line w-6 text-lg"></i><span class="font-medium">Analytics</span></a>
+          <a href="#" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl transition" data-section="assistant"><i class="fa-solid fa-robot w-6 text-lg"></i><span class="font-medium">AI Assistant</span></a>
+        </div>
+        <div class="space-y-1 mt-8"><p class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 mb-2">Management</p>
+          <a href="#" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl transition" data-section="inventory"><i class="fa-solid fa-boxes w-6 text-lg"></i><span class="font-medium">Inventory</span></a>
+          <a href="#" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl transition" data-section="equipment"><i class="fa fa-tools w-6 text-lg"></i><span class="font-medium">Equipment</span></a>
+          <a href="#" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl transition" data-section="vehicle"><i class="fa-solid fa-tractor w-6 text-lg"></i><span class="font-medium">Vehicle</span></a>
+          <a href="#" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl transition" data-section="tasks"><i class="fa-solid fa-list-check w-6 text-lg"></i><span class="font-medium">Tasks</span><span class="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">3</span></a>
+        </div>
+        <div class="space-y-1 mt-8"><p class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 mb-2">Settings</p>
+          <a href="#" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl transition" data-section="user"><i class="fa-solid fa-user-gear w-6 text-lg"></i><span class="font-medium">User</span></a>
+          <a href="#" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl transition" data-section="profile"><i class="fa-solid fa-user w-6 text-lg"></i><span class="font-medium">Profile</span></a>
+          <a href="#" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl transition" data-section="notifications"><i class="fa-solid fa-bell w-6 text-lg"></i><span class="font-medium">Notifications</span><span class="ml-auto bg-green-100 text-green-600 text-xs px-2 py-1 rounded-full">2</span></a>
+          <a href="#" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-xl transition text-red-500 hover:bg-red-50 hover:text-red-600" id="logoutBtn"><i class="fa-solid fa-sign-out w-6 text-lg"></i><span class="font-medium">Logout</span></a>
+        </div>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- Mobile Header + Menu -->
+  <div class="md:hidden fixed top-0 left-0 right-0 bg-white shadow-lg z-30"><div class="flex items-center justify-between p-4"><button id="mobileMenuBtn" class="text-gray-600 hover:text-green-600"><i class="fa-solid fa-bars text-2xl"></i></button><div class="flex items-center space-x-2"><div class="w-8 h-8 bg-green-700 rounded-lg flex items-center justify-center"><i class="fa-solid fa-leaf text-white text-sm"></i></div><span class="font-bold text-gray-800">Agro<span class="text-green-600">Smart</span></span></div><button id="mobileNotifications" class="relative"><i class="fa-regular fa-bell text-xl text-gray-600"></i><span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">2</span></button></div></div>
+  <div id="mobileMenu" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden"><div class="w-72 bg-white h-full overflow-y-auto"><div class="p-6 border-b"><div class="flex items-center justify-between"><div class="flex items-center space-x-3"><div class="w-10 h-10 bg-green-700 rounded-lg flex items-center justify-center"><i class="fa-solid fa-leaf text-white"></i></div><span class="font-bold text-gray-800">AgroSmart</span></div><button id="closeMobileMenu" class="text-gray-400"><i class="fa-solid fa-times text-xl"></i></button></div></div><div class="p-4 space-y-2"><a href="#" class="block py-3 px-4 hover:bg-green-50 rounded-lg" data-section-mobile="overview">Overview</a><a href="#" class="block py-3 px-4 hover:bg-green-50 rounded-lg" data-section-mobile="fields">My Fields</a><a href="#" class="block py-3 px-4 hover:bg-green-50 rounded-lg" data-section-mobile="crops">Crops</a><a href="#" class="block py-3 px-4 hover:bg-green-50 rounded-lg" data-section-mobile="weather">Weather</a><a href="#" class="block py-3 px-4 hover:bg-green-50 rounded-lg" data-section-mobile="analytics">Analytics</a><hr class="my-2"><a href="#" class="block py-3 px-4 hover:bg-green-50 rounded-lg text-red-500" id="mobileLogout">Logout</a></div></div></div>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 overflow-y-auto bg-gray-50 pt-16 md:pt-0">
+    <div class="bg-white shadow-sm border-b border-gray-100 py-4 px-8 hidden md:block"><div class="flex items-center justify-between"><div class="flex items-center space-x-4"><h2 class="text-xl font-semibold text-gray-800" id="currentSection">Overview</h2><span class="text-sm text-gray-500" id="currentDate"></span></div><div class="flex items-center space-x-4"><div class="relative"><i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i><input type="text" id="globalSearch" placeholder="Search fields, crops..." class="pl-9 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-green-400 text-sm w-64"></div><button id="desktopNotifications" class="relative text-gray-600 hover:text-green-600"><i class="fa-regular fa-bell text-xl"></i><span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">2</span></button><div class="relative" id="userMenu"><button class="flex items-center space-x-2 focus:outline-none" id="userMenuButton"><div class="w-8 h-8 bg-green-700 rounded-lg flex items-center justify-center text-white font-bold" id="userInitials">F</div><span class="text-sm font-medium text-gray-700" id="userDisplayName">Farmer</span><i class="fa-solid fa-chevron-down text-xs text-gray-500"></i></button><div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden z-20" id="userDropdown"><a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50" data-section="profile">Profile</a><hr class="my-1"><button id="dropdownLogout" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Logout</button></div></div></div></div></div>
+
+    <div class="p-6 md:p-8">
+      <!-- Overview Section -->
+      <div id="overview-section" class="section-content">
+        <div class="bg-gradient-to-r from-green-700 to-green-600 rounded-2xl shadow-lg p-6 mb-8 text-white"><div class="flex items-center justify-between"><div><h3 class="text-2xl font-bold mb-2">Welcome back, <span id="welcomeName">Farmer</span>! 🌱</h3><p class="text-green-100">Your farm is looking great today. Here's your daily summary.</p></div><div class="hidden md:block"><i class="fa-solid fa-sun text-6xl text-yellow-300"></i></div></div></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="bg-white rounded-xl shadow-md p-6 card-hover"><div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-green-600"><i class="fa-solid fa-map text-xl"></i></div><span class="text-sm text-green-600 font-semibold">+2 new</span></div><h4 class="text-2xl font-bold text-gray-800 mb-1">3</h4><p class="text-gray-500 text-sm">Active Fields</p><p class="text-xs text-gray-400 mt-2">Total area: 245 acres</p></div>
+          <div class="bg-white rounded-xl shadow-md p-6 card-hover"><div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center text-yellow-600"><i class="fa-solid fa-seedling text-xl"></i></div><span class="text-sm text-green-600 font-semibold">+12%</span></div><h4 class="text-2xl font-bold text-gray-800 mb-1">8</h4><p class="text-gray-500 text-sm">Active Crops</p><p class="text-xs text-gray-400 mt-2">Wheat, Corn, Soybeans</p></div>
+          <div class="bg-white rounded-xl shadow-md p-6 card-hover"><div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600"><i class="fa-solid fa-droplet text-xl"></i></div><span class="text-sm text-green-600 font-semibold">Optimal</span></div><h4 class="text-2xl font-bold text-gray-800 mb-1">78%</h4><p class="text-gray-500 text-sm">Soil Moisture</p><p class="text-xs text-gray-400 mt-2">+5% from yesterday</p></div>
+          <div class="bg-white rounded-xl shadow-md p-6 card-hover"><div class="flex items-center justify-between mb-4"><div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600"><i class="fa-solid fa-tractor text-xl"></i></div><span class="text-sm text-green-600 font-semibold">3 tasks</span></div><h4 class="text-2xl font-bold text-gray-800 mb-1">5</h4><p class="text-gray-500 text-sm">Equipment Active</p><p class="text-xs text-gray-400 mt-2">2 need maintenance</p></div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8"><div class="lg:col-span-2 space-y-8"><div class="bg-white rounded-xl shadow-md p-6"><div class="flex items-center justify-between mb-6"><h3 class="text-lg font-semibold text-gray-800">Today's Weather</h3><a href="#" class="text-sm text-green-600 hover:underline" data-section="weather">View forecast →</a></div><div class="flex items-center justify-between"><div class="flex items-center space-x-4"><div class="weather-glow w-20 h-20 rounded-2xl flex items-center justify-center"><i class="fa-solid fa-sun text-white text-4xl"></i></div><div><span class="text-4xl font-bold text-gray-800" id="currentTemp">24°C</span><p class="text-gray-500" id="weatherDesc">Sunny</p></div></div><div class="grid grid-cols-2 gap-4"><div class="text-center"><p class="text-sm text-gray-500">Humidity</p><p class="font-semibold text-gray-800" id="humidity">65%</p></div><div class="text-center"><p class="text-sm text-gray-500">Wind</p><p class="font-semibold text-gray-800" id="windSpeed">12 km/h</p></div></div></div><div class="grid grid-cols-5 gap-2 mt-6 pt-6 border-t border-gray-100" id="forecastContainer"></div></div><div class="bg-white rounded-xl shadow-md p-6"><h3 class="text-lg font-semibold text-gray-800 mb-4">Today's Tasks</h3><div id="tasksListContainer" class="space-y-3"></div><button class="w-full mt-4 text-center text-sm text-green-600 hover:text-green-700 font-medium" id="viewAllTasksBtn">View all tasks →</button></div></div><div class="space-y-8"><div class="bg-gradient-to-br from-green-700 to-green-800 rounded-xl shadow-md p-6 text-white"><div class="flex items-center space-x-2 mb-4"><i class="fa-solid fa-robot text-2xl"></i><h3 class="text-lg font-semibold">AI Insights</h3></div><div id="aiInsightsContainer" class="space-y-3"></div><button class="mt-4 w-full bg-white text-green-700 py-2 rounded-lg font-semibold hover:bg-green-50 transition">View Details</button></div><div class="bg-white rounded-xl shadow-md p-6"><h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3><div class="grid grid-cols-2 gap-3"><button class="p-3 border border-gray-200 rounded-lg hover:bg-green-50 transition text-center" id="quickAddField"><i class="fa-solid fa-map text-green-600 text-xl mb-2"></i><p class="text-xs text-gray-600">Add Field</p></button><button class="p-3 border border-gray-200 rounded-lg hover:bg-green-50 transition text-center" id="quickPlantCrop"><i class="fa-solid fa-seedling text-green-600 text-xl mb-2"></i><p class="text-xs text-gray-600">Plant Crop</p></button><button class="p-3 border border-gray-200 rounded-lg hover:bg-green-50 transition text-center"><i class="fa-solid fa-truck text-green-600 text-xl mb-2"></i><p class="text-xs text-gray-600">Order Supply</p></button><button class="p-3 border border-gray-200 rounded-lg hover:bg-green-50 transition text-center"><i class="fa-solid fa-file-pdf text-green-600 text-xl mb-2"></i><p class="text-xs text-gray-600">Generate Report</p></button></div></div></div></div>
+      </div>
+
+      <!-- Inventory Section with FULL Backend Integration (CRUD) -->
+      <div id="inventory-section" class="section-content hidden">
+        <div class="flex justify-between items-center mb-6 flex-wrap gap-3">
+          <h2 class="text-2xl font-bold text-gray-800">Inventory Management</h2>
+          <button class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition shadow-sm flex items-center space-x-2" id="addItemBtn">
+            <i class="fa-solid fa-plus"></i><span>Add New Item</span>
+          </button>
+        </div>
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item Name</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Updated</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+              </tr>
+              </thead>
+              <tbody id="inventoryTableBody" class="divide-y divide-gray-200 bg-white">
+              <tr><td colspan="5" class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading inventory...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Fields Section with FULL Backend Fields (CRUD) -->
+      <div id="fields-section" class="section-content hidden">
+        <h2 class="text-2xl font-bold text-gray-800">Fields Management</h2>
+        <iframe src="jhj.html" style="width: 100%; height: 900px; border: none; border-radius: 12px; shadow: lg;"></iframe>
+      </div>
+
+      <!-- Crop Section with FULL Backend Crop (CRUD) -->
+      <div id="crops-section" class="section-content hidden">
+        <h2 class="text-2xl font-bold text-gray-800">Crop Management</h2>
+        <iframe src="crop.html" style="width: 100%; height: 800px; border: none; border-radius: 12px; shadow: lg;"></iframe>
+      </div>
+
+      <!-- Weather Section with FULL Backend Weather (CRUD) -->
+      <div id="weather-section" class="section-content hidden">
+        <iframe src="wether.html" style="width: 100%; height: 900px; border: none; border-radius: 12px; shadow: lg;"></iframe>
+      </div>
+
+      <div id="analytics-section" class="section-content hidden"><h2 class="text-2xl font-bold text-gray-800 mb-6">Yield Analytics</h2><canvas id="yieldChart" width="400" height="200" class="bg-white p-4 rounded-xl shadow"></canvas></div>
+
+      <!-- AI Assistant Section - Integrated Chat -->
+      <div id="assistant-section" class="section-content hidden">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div class="bg-gradient-to-r from-green-700 to-green-600 px-6 py-5">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <i class="fa-solid fa-robot text-white text-xl"></i>
+              </div>
+              <div>
+                <h2 class="text-xl font-bold text-white">AgroSmart AI Assistant</h2>
+                <p class="text-green-100 text-sm">Your intelligent farming companion - Ask me anything about agriculture!</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-col h-[600px]">
+            <!-- Chat Messages Container -->
+            <div id="chatMessages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-gray-50 to-white">
+              <div class="flex items-start space-x-3 chat-message-ai">
+                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <i class="fa-solid fa-leaf text-green-600 text-sm"></i>
+                </div>
+                <div class="flex-1">
+                  <div class="bg-white rounded-2xl rounded-tl-none shadow-sm p-4 border border-gray-100">
+                    <p class="text-gray-700 text-sm leading-relaxed">👋 <strong>Hello! I'm your AgroSmart AI Assistant.</strong> I can help you with:</p>
+                    <div class="grid grid-cols-2 gap-2 mt-3 text-sm">
+                      <div class="flex items-center space-x-2 text-gray-600"><i class="fa-solid fa-seedling text-green-500 text-xs"></i><span>Crop recommendations</span></div>
+                      <div class="flex items-center space-x-2 text-gray-600"><i class="fa-solid fa-bug text-green-500 text-xs"></i><span>Pest control solutions</span></div>
+                      <div class="flex items-center space-x-2 text-gray-600"><i class="fa-solid fa-cloud-sun text-green-500 text-xs"></i><span>Weather-based advice</span></div>
+                      <div class="flex items-center space-x-2 text-gray-600"><i class="fa-solid fa-chart-line text-green-500 text-xs"></i><span>Market prices</span></div>
+                    </div>
+                    <p class="text-gray-600 text-sm mt-3">What would you like to know about agriculture today?</p>
+                  </div>
+                  <span class="text-xs text-gray-400 mt-1 block">Just now</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div id="typingIndicator" class="hidden px-6 py-2">
+              <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <i class="fa-solid fa-leaf text-green-600 text-sm"></i>
+                </div>
+                <div class="bg-gray-100 rounded-2xl px-4 py-2">
+                  <div class="flex space-x-1">
+                    <div class="w-2 h-2 bg-green-500 rounded-full typing-dot" style="animation-delay: 0s"></div>
+                    <div class="w-2 h-2 bg-green-500 rounded-full typing-dot" style="animation-delay: 0.2s"></div>
+                    <div class="w-2 h-2 bg-green-500 rounded-full typing-dot" style="animation-delay: 0.4s"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="border-t border-gray-200 p-4 bg-white">
+              <div class="flex items-end space-x-3">
+                <div class="flex-1 relative">
+                  <textarea id="chatInput" rows="1" placeholder="Ask about farming, crops, weather, pests..." class="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-200 resize-none text-sm"></textarea>
+                </div>
+                <button id="sendChatBtn" class="bg-green-600 hover:bg-green-700 text-white rounded-full w-10 h-10 flex items-center justify-center transition shadow-md">
+                  <i class="fa-solid fa-paper-plane text-sm"></i>
+                </button>
+                <button id="clearChatBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full w-10 h-10 flex items-center justify-center transition">
+                  <i class="fa-solid fa-trash-alt text-sm"></i>
+                </button>
+              </div>
+              <div class="flex flex-wrap gap-2 mt-3">
+                <button class="suggestion-chip text-xs px-3 py-1.5 bg-gray-100 hover:bg-green-100 text-gray-600 rounded-full transition">🌱 Best crops for rainy season</button>
+                <button class="suggestion-chip text-xs px-3 py-1.5 bg-gray-100 hover:bg-green-100 text-gray-600 rounded-full transition">🐞 Natural pest control</button>
+                <button class="suggestion-chip text-xs px-3 py-1.5 bg-gray-100 hover:bg-green-100 text-gray-600 rounded-full transition">💧 Drip irrigation tips</button>
+                <button class="suggestion-chip text-xs px-3 py-1.5 bg-gray-100 hover:bg-green-100 text-gray-600 rounded-full transition">📈 Current market prices</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Equipment Section with FULL Backend Equipment (CRUD) -->
+      <div id="equipment-section" class="section-content hidden">
+        <div class="flex justify-between items-center mb-6 flex-wrap gap-3">
+          <h2 class="text-2xl font-bold text-gray-800">Equipment Management</h2>
+          <button id="addEquipmentBtn" class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition shadow-sm flex items-center space-x-2">
+            <i class="fa-solid fa-plus"></i><span>Add New Equipment</span>
+          </button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Field ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assigned To</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+              </tr>
+              </thead>
+              <tbody id="equipmentTableBody" class="divide-y divide-gray-200 bg-white">
+              <tr>
+                <td colspan="6" class="text-center py-8 text-gray-400">
+                  <i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading equipment...
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vehicle Section with FULL Backend Vehicle (CRUD) -->
+      <div id="vehicle-section" class="section-content">
+        <div class="flex justify-between items-center mb-6 flex-wrap gap-3">
+          <h2 class="text-2xl font-bold text-gray-800">Vehicle Management</h2>
+          <button id="addVehicleBtn" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition shadow-sm flex items-center space-x-2">
+            <i class="fa-solid fa-car"></i><span>Add New Vehicle</span>
+          </button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Plate Number</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fuel Type</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Remarks</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+              </tr>
+              </thead>
+              <tbody id="vehicleTableBody" class="divide-y divide-gray-200 bg-white">
+              <tr>
+                <td colspan="7" class="text-center py-8 text-gray-400">
+                  <i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Loading vehicles...
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Section with FULL Backend User (CRUD) -->
+      <div id="user-section" class="section-content hidden">
+        <div class="flex justify-between items-center mb-6 flex-wrap gap-3">
+          <h2 class="text-2xl font-bold text-gray-800">User Management</h2>
+          <button id="addUserBtn" class="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 transition shadow-sm flex items-center space-x-2">
+            <i class="fa-solid fa-user-plus"></i><span>Create New User</span>
+          </button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+              </tr>
+              </thead>
+              <tbody id="userTableBody" class="divide-y divide-gray-200 bg-white">
+              <tr>
+                <td colspan="5" class="text-center py-8 text-gray-400">
+                  <i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading system users...
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="tasks-section" class="section-content hidden"><h2 class="text-2xl font-bold text-gray-800 mb-6">All Tasks</h2><div id="allTasksPanel" class="bg-white rounded-xl shadow p-5"></div></div>
+      <div id="profile-section" class="section-content hidden">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">My Profile</h2>
+
+        <!-- Loading State -->
+        <div id="profileLoading" class="bg-white p-6 rounded-xl shadow text-center">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+          <p class="mt-2 text-gray-600">Loading profile...</p>
+        </div>
+
+        <!-- Profile Content -->
+        <div id="profileContent" class="bg-white p-6 rounded-xl shadow hidden">
+          <div class="space-y-4">
+            <div class="flex items-center space-x-4 pb-3 border-b border-gray-200">
+              <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">User ID</p>
+                <p class="font-semibold text-gray-900" id="profileId"></p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p class="text-sm text-gray-500 mb-1">Username</p>
+                <p class="font-medium text-gray-900" id="profileUsername"></p>
+              </div>
+
+              <div>
+                <p class="text-sm text-gray-500 mb-1">Email</p>
+                <p class="font-medium text-gray-900" id="profileEmail"></p>
+              </div>
+
+              <div>
+                <p class="text-sm text-gray-500 mb-1">Role</p>
+                <p class="font-medium">
+                  <span id="profileRole"></span>
+                </p>
+              </div>
+
+              <div>
+                <p class="text-sm text-gray-500 mb-1">Password</p>
+                <p class="font-medium text-gray-900">••••••••</p>
+                <button id="changePasswordMock" class="text-sm text-green-600 hover:text-green-700 mt-1">
+                  Change Password
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-gray-200 flex space-x-3">
+            <button id="editProfileMock" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200">
+              Edit Profile
+            </button>
+            <button id="saveProfileMock" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200 hidden">
+              Save Changes
+            </button>
+            <button id="cancelEditMock" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition duration-200 hidden">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="notifications-section" class="section-content hidden"><h2 class="text-2xl font-bold text-gray-800 mb-6">Notifications Center</h2><div id="notificationsList" class="bg-white rounded-xl shadow divide-y"></div></div>
+    </div>
+  </main>
+</div>
+
+<script>
+
+  const API_BASE = 'http://localhost:8080/api/v1/inventory';
+  let currentInventoryData = [];
+  function getLocalDateTime() {
+    const now = new Date();
+
+    return now.getFullYear() + '-' +
+            String(now.getMonth() + 1).padStart(2, '0') + '-' +
+            String(now.getDate()).padStart(2, '0') + 'T' +
+            String(now.getHours()).padStart(2, '0') + ':' +
+            String(now.getMinutes()).padStart(2, '0') + ':' +
+            String(now.getSeconds()).padStart(2, '0');
+  }
+
+  $(document).ready(async function() {
+    const token = localStorage.getItem('token');
+    if (!token) { window.location.replace("../index.html"); return; }
+
+    $('#loadingOverlay').removeClass('hidden').addClass('flex');
+    const now = new Date();
+    $('#currentDate').text(now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+    const userIdentifier = localStorage.getItem('userIdentifier') || 'rajesh.farmer@agrosmart.com';
+    const firstName = userIdentifier.split('@')[0].split('.')[0];
+    const displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+    $('#welcomeName, #userDisplayName').text(displayName);
+    $('#userInitials').text(displayName.charAt(0).toUpperCase());
+    $('#profileName').text(displayName);
+    $('#profileEmail').text(userIdentifier);
+
+    // Mock data for non-inventory sections
+    const fieldsData = [{ name: "North Field", crop: "Wheat", acres: 85, health: 92, irrigation: "2 days ago", nextTask: "Fertilize" },{ name: "South Field", crop: "Corn", acres: 110, health: 78, irrigation: "Yesterday", nextTask: "Irrigate" },{ name: "East Field", crop: "Soybeans", acres: 50, health: 88, irrigation: "3 days ago", nextTask: "Pest control" }];
+    const cropsData = [{ name: "Wheat", stage: "Flowering", health: "Excellent", estYield: "5.2 t/ha" },{ name: "Corn", stage: "Silking", health: "Good", estYield: "8.1 t/ha" },{ name: "Soybeans", stage: "Pod development", health: "Good", estYield: "3.4 t/ha" }];
+    let tasks = [{ name: "Irrigate North Field", time: "10:00 AM", priority: "High", done: false },{ name: "Check soil sensors", time: "2:00 PM", priority: "Medium", done: false },{ name: "Order fertilizer", time: "5:00 PM", priority: "Low", done: false }];
+    function renderTasks(){ let html = ''; tasks.forEach((t,idx)=>{ html += `<div class="flex items-center justify-between p-3 ${t.priority==='High'?'bg-yellow-50':t.priority==='Medium'?'bg-green-50':'bg-blue-50'} rounded-lg"><div class="flex items-center space-x-3"><input type="checkbox" class="task-check w-5 h-5 rounded" data-idx="${idx}" ${t.done?'checked':''}><div><p class="font-medium text-gray-800">${t.name}</p><p class="text-xs text-gray-500">Due: ${t.time}</p></div></div><span class="text-xs px-2 py-1 rounded-full ${t.priority==='High'?'bg-yellow-100 text-yellow-700':t.priority==='Medium'?'bg-green-100 text-green-700':'bg-blue-100 text-blue-700'}">${t.priority}</span></div>`; }); $('#tasksListContainer').html(html); $('#allTasksPanel').html(html + '<p class="text-center text-gray-400 mt-4">Stay productive!</p>'); $('.task-check').change(function(){ let idx=$(this).data('idx'); tasks[idx].done=$(this).is(':checked'); renderTasks(); Swal.fire({title:'Great!',text:'Task updated',icon:'success',toast:true,timer:1500,showConfirmButton:false}); }); }
+    renderTasks();
+    function renderFields() { let html=''; fieldsData.forEach(f=>{ html+=`<div class="bg-white rounded-xl shadow-md p-6"><div class="flex justify-between"><div><h3 class="font-bold">${f.name}</h3><p class="text-sm text-gray-500">${f.crop} · ${f.acres} acres</p></div><span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Active</span></div><div class="mt-3"><div class="flex justify-between text-sm"><span>Soil Health</span><span class="font-semibold">${f.health}%</span></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-green-600 h-2 rounded-full" style="width: ${f.health}%"></div></div><div class="flex justify-between text-sm mt-2"><span>Last Irrigation</span><span>${f.irrigation}</span></div></div></div>`; }); $('#dynamicFieldsGrid').html(html); }
+    renderFields();
+    function renderCrops() { let html=''; cropsData.forEach(c=>{ html+=`<div class="bg-white rounded-xl shadow p-5 flex justify-between"><div><h3 class="font-bold text-xl">${c.name}</h3><p class="text-gray-500">Stage: ${c.stage}</p><p class="text-sm text-green-600">Health: ${c.health}</p></div><div class="text-right"><p class="text-2xl font-bold">${c.estYield}</p><p class="text-xs text-gray-400">Est. yield</p></div></div>`; }); $('#cropsGrid').html(html); }
+    renderCrops();
+    const aiMessages = ["🌾 Optimal time to irrigate North Field based on soil moisture", "🐛 Possible pest activity detected in South Field", "📈 Harvest forecast: 15% above average"];
+    function refreshAiInsights(){ let html=''; aiMessages.slice(0,3).forEach(m=>{ html+=`<div class="flex items-start space-x-3"><i class="fa-solid fa-lightbulb text-yellow-300 mt-1"></i><p class="text-sm text-green-100">${m}</p></div>`; }); $('#aiInsightsContainer').html(html); }
+    refreshAiInsights();
+    const forecast = [['Mon','sun',25],['Tue','cloud-sun',23],['Wed','cloud-rain',19],['Thu','cloud-sun',22],['Fri','sun',26]];
+    function updateForecast(){ let fc=''; forecast.forEach(f=>{ let iconClass=f[1]==='sun'?'fa-solid fa-sun text-yellow-500':f[1]==='cloud-sun'?'fa-solid fa-cloud-sun text-gray-500':'fa-solid fa-cloud-rain text-blue-500'; fc+=`<div class="text-center"><p class="text-xs">${f[0]}</p><i class="${iconClass} my-2 text-xl"></i><p class="text-sm font-semibold">${f[2]}°</p></div>`; }); $('#forecastContainer').html(fc); }
+    updateForecast();
+    if(typeof Chart !== 'undefined'){ new Chart(document.getElementById('yieldChart'), { type: 'line', data: { labels: ['Jan','Feb','Mar','Apr','May','Jun'], datasets: [{ label: 'Yield (kg/acre)', data: [320, 345, 380, 410, 470, 520], borderColor: '#22c55e', tension: 0.3 }] }, options: { responsive: true } }); }
+
+    // INVENTORY CRUD Functions (Backend integration)
+    async function fetchInventory() {
+      try {
+        const res = await fetch(`${API_BASE}/all`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+        const apiRes = await res.json();
+        if (apiRes.code === 200 && Array.isArray(apiRes.data)) {
+          currentInventoryData = apiRes.data;
+          renderInventoryTable(currentInventoryData);
+        } else {
+          console.warn("Unexpected inventory format", apiRes);
+          renderInventoryTable([]);
+        }
+      } catch (err) { console.error(err); renderInventoryTable([]); Swal.fire('Error','Could not load inventory','error'); }
+    }
+
+    function renderInventoryTable(items) {
+      const tbody = $('#inventoryTableBody');
+      if (!items || items.length === 0) {
+        tbody.html('<tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fa-solid fa-database"></i> No inventory items found. Add one!</td></tr>');
+        return;
+      }
+      let rows = '';
+      items.forEach(item => {
+        const id = item.id || item.inventoryId;
+        const name = item.name || item.itemName || 'Unnamed';
+        const category = item.category || 'General';
+        const quantity = item.quantity || 0;
+        const status = (quantity < 20) ? 'Low Stock' : (quantity > 200 ? 'High Stock' : 'In Stock');
+        const statusClass = status === 'Low Stock' ? 'bg-red-100 text-red-700' : (status === 'High Stock' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700');
+        rows += `<tr>
+                            <td class="px-6 py-4 font-medium text-gray-900">${escapeHtml(name)}</td>
+                            <td class="px-6 py-4 text-gray-500">${escapeHtml(category)}</td>
+                            <td class="px-6 py-4 text-gray-500">${quantity} ${item.unit || 'units'}</td>
+                            <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass}">${status}</span></td>
+                            <td class="px-6 py-4 text-gray-500 text-sm">
+                            ${formatDate(item.updatedAt || item.lastUpdated || item.modifiedAt)}</td>
+                            <td class="px-6 py-4 text-right space-x-2">
+                                <button class="text-blue-600 hover:text-blue-800 edit-inv-btn" data-id="${id}"><i class="fa-regular fa-pen-to-square"></i> Edit</button>
+                                <button class="text-red-600 hover:text-red-800 delete-inv-btn ml-2" data-id="${id}"><i class="fa-regular fa-trash-can"></i> Del</button>
+                            </td>
+                         </tr>`;
+      });
+      tbody.html(rows);
+      $('.edit-inv-btn').click(async function() { const id = $(this).data('id'); await openEditModal(id); });
+      $('.delete-inv-btn').click(async function() { const id = $(this).data('id'); await deleteInventoryItem(id); });
+    }
+    function formatDate(dateStr) {
+      if (!dateStr) return '—';
+
+      const d = new Date(dateStr);
+      if (isNaN(d)) return '—';
+
+      return d.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+    function escapeHtml(str) { if(!str) return ''; return String(str).replace(/[&<>]/g, function(m){ if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m;}); }
+
+    async function deleteInventoryItem(id) {
+      const confirm = await Swal.fire({ title: 'Delete Item?', text: "This action cannot be undone.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' });
+      if (!confirm.isConfirmed) return;
+      try {
+        const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+        const data = await res.json();
+        if (data.code === 200) { Swal.fire('Deleted!','Item removed','success'); fetchInventory(); }
+        else throw new Error(data.message);
+      } catch(e) { Swal.fire('Error','Could not delete','error'); }
+    }
+
+    async function openEditModal(id) {
+      const item = currentInventoryData.find(i => (i.id || i.inventoryId) === id);
+      if (!item) return;
+
+      const { value: updatedItem } = await Swal.fire({
+        title: '',
+        html: `
+        <style>
+            .swal2-html-container { margin: 0; text-align: left; }
+            .modal-container { font-family: 'Segoe UI', sans-serif; padding: 10px; }
+            .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+            .header-title { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: bold; }
+            .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+            .form-group label { font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #444; }
+            .inventory-input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+            .row { display: flex; gap: 15px; }
+            .row .form-group { flex: 1; }
+        </style>
+
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>Edit Inventory Item</h3>
+            </div>
+
+            <div class="form-group">
+                <label>Item Name *</label>
+                <input id="swal-name" class="inventory-input" value="${escapeHtml(item.name || item.itemName)}">
+            </div>
+
+            <div class="form-group">
+                <label>Category</label>
+                <select id="swal-category" class="inventory-input">
+                    <option value="PESTICIDE" ${item.category === 'Equipment' ? 'selected' : ''}>Equipment</option>
+                    <option value="SEED" ${item.category === 'Seeds' ? 'selected' : ''}>Seeds</option>
+                    <option value="FERTILIZER" ${item.category === 'Fertilizer' ? 'selected' : ''}>Fertilizer</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label>Quantity *</label>
+                    <input id="swal-quantity" type="number" class="inventory-input" value="${item.quantity}">
+                </div>
+                <div class="form-group">
+                    <div class="form-group">
+    <label>Unit</label>
+    <select id="swal-unit" class="inventory-input">
+        <option value="kg" ${item.unit === 'kg' ? 'selected' : ''}>Kilograms (kg)</option>
+        <option value="g" ${item.unit === 'g' ? 'selected' : ''}>Grams (g)</option>
+        <option value="L" ${item.unit === 'L' ? 'selected' : ''}>Liters (L)</option>
+        <option value="pcs" ${item.unit === 'pcs' ? 'selected' : ''}>Pieces/Units</option>
+    </select>
+</div>
+                </div>
+            </div>
+        </div>`,
+
+        showCancelButton: true,
+        confirmButtonText: 'Update Item',
+        confirmButtonColor: '#2563EB', // Blue for update
+        cancelButtonColor: '#aaa',
+        focusConfirm: false,
+
+        preConfirm: () => {
+          const name = document.getElementById('swal-name').value;
+          const quantity = document.getElementById('swal-quantity').value;
+
+          if (!name || !quantity) {
+            Swal.showValidationMessage('Item Name and Quantity are required');
+            return false;
+          }
+
+          return {
+            ...item,
+            itemName: name,
+            category: document.getElementById('swal-category').value,
+            quantity: parseFloat(quantity),
+            unit: document.getElementById('swal-unit').value || 'units',
+            lastUpdated: getLocalDateTime()                    };
+        }
+      });
+
+      if (updatedItem) {
+        try {
+          const res = await fetch(API_BASE, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(updatedItem)
+          });
+
+          const result = await res.json();
+
+          if (res.ok || result.code === 200) {
+            Swal.fire('Updated!', 'Inventory updated successfully', 'success');
+            fetchInventory();
+          } else {
+            throw new Error(result.message || 'Update failed');
+          }
+        } catch (e) {
+          Swal.fire('Error', e.message || 'Could not update', 'error');
+        }
+      }
+    }
+
+    async function addNewInventory() {
+      const { value: newItem } = await Swal.fire({
+        title: '', // Left blank because your custom HTML has a header
+        html: `
+        <style>
+            .swal2-html-container { margin: 0; text-align: left; }
+            .modal-container { font-family: 'Segoe UI', sans-serif; padding: 10px; }
+            .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+            .header-title { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: bold; }
+            .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+            .form-group label { font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #444; }
+            .inventory-input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+            .row { display: flex; gap: 15px; }
+            .row .form-group { flex: 1; }
+            .info-alert { background-color: #e0f7fa; color: #006064; padding: 10px; border-radius: 8px; font-size: 12px; margin-top: 10px; }
+        </style>
+
+        <div class="modal-container">
+            <div class="modal-header">
+               <h3>Add Inventory Item</h3>
+            </div>
+
+            <div class="form-group">
+                <label>Item Name *</label>
+                <input id="swal-name" class="inventory-input" placeholder="e.g., Urea Fertilizer">
+            </div>
+
+            <div class="form-group">
+                <label>Category</label>
+                <select id="swal-category" class="inventory-input">
+                   <option value="SEED">Seed</option>
+    <option value="FERTILIZER">Fertilizer</option>
+    <option value="PESTICIDE">Pesticide</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label>Quantity *</label>
+                    <input id="swal-quantity" type="number" class="inventory-input" value="0">
+                </div>
+               <div class="form-group">
+    <label>Unit</label>
+    <select id="swal-unit" class="inventory-input">
+        <option value="" disabled selected>Select a unit</option>
+        <option value="kg">Kilograms (kg)</option>
+        <option value="grams">Grams (g)</option>
+        <option value="L">Liters (L)</option>
+        <option value="pcs">Pieces/Units</option>
+    </select>
+</div>
+            </div>
+
+
+        </div>`,
+        showCancelButton: true,
+        confirmButtonText: 'Save Item',
+        confirmButtonColor: '#16A34A', // Matches your Forest Green
+        cancelButtonColor: '#aaa',
+        focusConfirm: false,
+        preConfirm: () => {
+          const name = document.getElementById('swal-name').value;
+          const quantity = document.getElementById('swal-quantity').value;
+
+          if (!name || !quantity) {
+            Swal.showValidationMessage('Item Name and Quantity are required');
+            return false;
+          }
+
+          return {
+            itemName: name,
+            category: document.getElementById('swal-category').value,
+            quantity: parseFloat(quantity),
+            unit: document.getElementById('swal-unit').value || 'units',
+            lastUpdated: getLocalDateTime()                    };
+        }
+      });
+
+      if (newItem) {
+        try {
+          const res = await fetch(API_BASE, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(newItem)
+          });
+
+          const result = await res.json();
+          if (res.ok || result.code === 201) {
+            Swal.fire('Created!', 'New item added', 'success');
+            fetchInventory();
+          } else {
+            throw new Error(result.message || 'Failed to save');
+          }
+        } catch (e) {
+          Swal.fire('Error', e.message || 'Could not save', 'error');
+        }
+      }
+    }
+
+    const EQUIPMENT_API = 'http://localhost:8080/api/v1/equipment';
+    let currentEquipmentData = [];
+
+    async function fetchEquipment() {
+      try {
+        const res = await fetch(`${EQUIPMENT_API}/all`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+        const apiRes = await res.json();
+        if (apiRes.code === 200) { currentEquipmentData = apiRes.data; renderEquipmentTable(currentEquipmentData); }
+        else { renderEquipmentTable([]); }
+      } catch (err) { console.error(err); renderEquipmentTable([]); Swal.fire('Error', 'Could not load equipment', 'error'); }
+    }
+
+
+    function renderEquipmentTable(items) {
+      const tbody = $('#equipmentTableBody');
+      if (!items || items.length === 0) { tbody.html('<tr><td colspan="7" class="text-center py-8 text-gray-400">No equipment found. Add new equipment.</td></tr>'); return; }
+      let rows = '';
+      items.forEach(item => {
+        const statusClass = item.status === 'AVAILABLE' ? 'bg-green-100 text-green-700' : (item.status === 'UNDER_REPAIR' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700');
+        rows += `<tr class="hover:bg-gray-50"><td class="px-6 py-4 font-medium">${item.equipmentId || item.id || ''}</td><td class="px-6 py-4">${item.category || '-'}</td><td class="px-6 py-4">${item.type || '-'}</td><td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass}">${item.status || 'UNKNOWN'}</span></td><td class="px-6 py-4">${item.fieldId || 'Not Assigned'}</td>
+<td class="px-6 py-4">${item.staffId || 'Not Assigned'}</td><td class="px-6 py-4 text-right space-x-2"><button class="text-blue-600 hover:text-blue-800 edit-eq-btn" data-id="${item.equipmentId}"><i class="fa-regular fa-pen-to-square"></i> Edit</button><button class="text-red-600 hover:text-red-800 delete-eq-btn ml-2" data-id="${item.equipmentId}"><i class="fa-regular fa-trash-can"></i> Del</button></td></tr>`;
+      });
+      tbody.html(rows);
+      $('.edit-eq-btn').click(function() { openEquipmentModal($(this).data('id')); });
+      $('.delete-eq-btn').click(function() { deleteEquipment($(this).data('id')); });
+    }
+
+    async function deleteEquipment(id) {
+      const result = await Swal.fire({ title: 'Are you sure?', text: `Delete equipment ${id}?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' });
+      if (result.isConfirmed) {
+        try {
+          const res = await fetch(`${EQUIPMENT_API}/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+          if (res.ok) { Swal.fire('Deleted!', 'Equipment removed.', 'success'); fetchEquipment(); }
+          else throw new Error('Delete failed');
+        } catch (e) { Swal.fire('Error', 'Delete failed', 'error'); }
+      }
+    }
+
+    async function openEquipmentModal(id = null) {
+      const isEdit = id !== null;
+
+      const item = isEdit
+              ? currentEquipmentData.find(e => e.equipmentId === id)
+              : {
+                equipmentId: '',
+                category: '',
+                type: '',
+                status: 'AVAILABLE',
+                staffId: '',
+                fieldId: ''
+              };
+
+      const { value: formData } = await Swal.fire({
+        title: '',
+        html: `
+<style>
+    .swal2-html-container { margin: 0; text-align: left; }
+    .modal-container { font-family: 'Segoe UI', sans-serif; padding: 10px; }
+    .modal-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;
+    }
+    .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+    .form-group label { font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #444; }
+    .input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+    .row { display: flex; gap: 15px; }
+    .row .form-group { flex: 1; }
+</style>
+
+<div class="modal-container">
+
+    <div class="modal-header">
+        <h3>${isEdit ? 'Edit Equipment' : 'Add Equipment'}</h3>
+    </div>
+
+        ${isEdit ? `
+<div class="form-group">
+    <label>Equipment ID</label>
+    <input class="input" value="${item.equipmentId}" disabled>
+</div>
+` : ''}
+
+    <div class="row">
+        <div class="form-group">
+            <label>Category *</label>
+            <input id="eq-cat" class="input"
+                value="${item.category || ''}"
+                placeholder="e.g., Vehicle">
+        </div>
+
+        <div class="form-group">
+            <label>Type *</label>
+            <input id="eq-type" class="input"
+                value="${item.type || ''}"
+                placeholder="e.g., Tractor">
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="form-group">
+            <label>Status</label>
+            <select id="eq-status" class="input">
+                <option value="AVAILABLE" ${item.status === 'AVAILABLE' ? 'selected' : ''}>Available</option>
+                <option value="UNDER_REPAIR" ${item.status === 'UNDER_REPAIR' ? 'selected' : ''}>Under Repair</option>
+                <option value="OUT_OF_SERVICE" ${item.status === 'OUT_OF_SERVICE' ? 'selected' : ''}>Out of Service</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Field ID</label>
+            <select id="eq-field" class="input">
+    <option value="">Select Field</option>
+</select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Staff ID</label>
+        <select id="eq-staff" class="input">
+    <option value="">Select Staff</option>
+</select>
+    </div>
+
+</div>
+`,
+        showCancelButton: true,
+        confirmButtonText: isEdit ? 'Update Equipment' : 'Save Equipment',
+        confirmButtonColor: '#16A34A',
+        cancelButtonColor: '#aaa',
+        focusConfirm: false,
+
+        preConfirm: () => {
+          const category = document.getElementById('eq-cat')?.value;
+          const type = document.getElementById('eq-type')?.value;
+          const status = document.getElementById('eq-status')?.value;
+          const staffId = document.getElementById('eq-staff')?.value;
+          const fieldId = document.getElementById('eq-field')?.value;
+
+          if (!category || !type) {
+            Swal.showValidationMessage('Category and Type are required');
+            return false;
+          }
+
+          return {
+            ...(isEdit && { equipmentId: item.equipmentId }),
+            category,
+            type,
+            status,
+            staffId: staffId || null,
+            fieldId: fieldId || null
+          };
+        }
+      });
+
+      if (formData) {
+        const method = isEdit ? 'PUT' : 'POST';
+
+        try {
+          const res = await fetch(EQUIPMENT_API, {
+            method,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(formData)
+          });
+
+          if (res.ok) {
+            Swal.fire('Success', `Equipment ${isEdit ? 'updated' : 'saved'}`, 'success');
+            fetchEquipment();
+          } else {
+            const errData = await res.json();
+            throw new Error(errData.message || 'Operation failed');
+          }
+        } catch (e) {
+          Swal.fire('Error', e.message, 'error');
+        }
+      }
+    }
+    // Bind equipment add button
+    $('#addEquipmentBtn').click(() => openEquipmentModal());
+
+    const VEHICLE_API = 'http://localhost:8080/api/v1/vehicle';
+    let currentVehicleData = [];
+
+// 1. Fetch all vehicles from the backend
+    async function fetchVehicles() {
+      try {
+        const res = await fetch(`${VEHICLE_API}/all`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        const apiRes = await res.json();
+        if (apiRes.code === 200) {
+          currentVehicleData = apiRes.data;
+          renderVehicleTable(currentVehicleData);
+        } else {
+          renderVehicleTable([]);
+        }
+      } catch (err) {
+        console.error(err);
+        renderVehicleTable([]);
+        Swal.fire('Error', 'Could not load vehicles', 'error');
+      }
+    }
+
+// 2. Render the table rows dynamically
+    function renderVehicleTable(items) {
+      const tbody = $('#vehicleTableBody');
+      if (!items || items.length === 0) {
+        tbody.html('<tr><td colspan="7" class="text-center py-8 text-gray-400">No vehicles found. Add new vehicle.</td></tr>');
+        return;
+      }
+
+      let rows = '';
+      items.forEach(item => {
+        // Status color mapping
+        const statusClass = item.status === 'AVAILABLE' ? 'bg-green-100 text-green-700' :
+                (item.status === 'OUT_OF_SERVICE' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700');
+
+        rows += `
+            <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 font-medium">${item.vehicleId || ''}</td>
+                <td class="px-6 py-4">${item.category || '-'}</td>
+                <td class="px-6 py-4 font-mono font-bold">${item.numberPlate || '-'}</td>
+                <td class="px-6 py-4">${item.fuelType || '-'}</td>
+                <td class="px-6 py-4">
+                    <span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass}">${item.status || 'UNKNOWN'}</span>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-500">${item.remarks || '-'}</td>
+                <td class="px-6 py-4 text-right space-x-2">
+                    <button class="text-blue-600 hover:text-blue-800 edit-vh-btn" data-id="${item.vehicleId}">
+                        <i class="fa-regular fa-pen-to-square"></i> Edit
+                    </button>
+                    <button class="text-red-600 hover:text-red-800 delete-vh-btn" data-id="${item.vehicleId}">
+                        <i class="fa-regular fa-trash-can"></i> Del
+                    </button>
+                </td>
+            </tr>`;
+      });
+
+      tbody.html(rows);
+
+      // Bind Actions
+      $('.edit-vh-btn').click(function() { openVehicleModal($(this).data('id')); });
+      $('.delete-vh-btn').click(function() { deleteVehicle($(this).data('id')); });
+    }
+
+// 3. Delete Vehicle
+    async function deleteVehicle(id) {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: `Delete vehicle ${id}?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33'
+      });
+
+      if (result.isConfirmed) {
+        try {
+          const res = await fetch(`${VEHICLE_API}/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          });
+          if (res.ok) {
+            Swal.fire('Deleted!', 'Vehicle removed.', 'success');
+            fetchVehicles();
+          } else {
+            throw new Error('Delete failed');
+          }
+        } catch (e) {
+          Swal.fire('Error', 'Delete failed', 'error');
+        }
+      }
+    }
+
+// 4. Modal for Add/Edit
+    async function openVehicleModal(id = null) {
+      const isEdit = id !== null;
+      const item = isEdit
+              ? currentVehicleData.find(v => v.vehicleId === id)
+              : { vehicleId: '', category: '', numberPlate: '', fuelType: 'Diesel', status: 'AVAILABLE', remarks: '' };
+
+      const { value: formData } = await Swal.fire({
+        title: '',
+        html: `
+        <style>
+            .swal2-html-container { margin: 0; text-align: left; }
+            .modal-container { font-family: 'Segoe UI', sans-serif; padding: 10px; }
+            .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+            .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+            .form-group label { font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #444; }
+            .input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+            .row { display: flex; gap: 15px; }
+            .row .form-group { flex: 1; }
+        </style>
+        <div class="modal-container">
+            <div class="modal-header"><h3>${isEdit ? 'Edit Vehicle' : 'Add Vehicle'}</h3></div>
+            ${isEdit ? `<div class="form-group"><label>Vehicle ID</label><input class="input" value="${item.vehicleId}" disabled></div>` : ''}
+
+            <div class="row">
+                <div class="form-group">
+                    <label>Category *</label>
+                    <input id="vh-cat" class="input" value="${item.category || ''}" placeholder="e.g., Truck">
+                </div>
+                <div class="form-group">
+                    <label>Number Plate *</label>
+                    <input id="vh-plate" class="input" value="${item.numberPlate || ''}" placeholder="WP ABC-1234">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label>Fuel Type</label>
+                    <select id="vh-fuel" class="input">
+                        <option value="Diesel" ${item.fuelType === 'Diesel' ? 'selected' : ''}>Diesel</option>
+                        <option value="Petrol" ${item.fuelType === 'Petrol' ? 'selected' : ''}>Petrol</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="vh-status" class="input">
+                        <option value="AVAILABLE" ${item.status === 'AVAILABLE' ? 'selected' : ''}>Available</option>
+                        <option value="OUT_OF_SERVICE" ${item.status === 'OUT_OF_SERVICE' ? 'selected' : ''}>Out of Service</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Remarks</label>
+                <textarea id="vh-remarks" class="input" rows="2">${item.remarks || ''}</textarea>
+            </div>
+        </div>`,
+        showCancelButton: true,
+        confirmButtonText: isEdit ? 'Update Vehicle' : 'Save Vehicle',
+        confirmButtonColor: '#2563EB', // Blue to match Vehicle theme
+        preConfirm: () => {
+          const category = document.getElementById('vh-cat').value;
+          const numberPlate = document.getElementById('vh-plate').value;
+          if (!category || !numberPlate) {
+            Swal.showValidationMessage('Category and Plate Number are required');
+            return false;
+          }
+          return {
+            ...(isEdit && { vehicleId: item.vehicleId }),
+            category,
+            numberPlate,
+            fuelType: document.getElementById('vh-fuel').value,
+            status: document.getElementById('vh-status').value,
+            remarks: document.getElementById('vh-remarks').value
+          };
+        }
+      });
+
+      if (formData) {
+        try {
+          const res = await fetch(VEHICLE_API, {
+            method: isEdit ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+            body: JSON.stringify(formData)
+          });
+          if (res.ok) {
+            Swal.fire('Success', `Vehicle ${isEdit ? 'updated' : 'saved'}`, 'success');
+            fetchVehicles();
+          } else { throw new Error('Operation failed'); }
+        } catch (e) { Swal.fire('Error', e.message, 'error'); }
+      }
+    }
+
+    $('#addVehicleBtn').click(() => openVehicleModal());
+
+
+    const USER_API = 'http://localhost:8080/api/v1/user';
+    let currentUserData = [];
+
+// Fetch Users
+    async function fetchUsers() {
+      try {
+        const res = await fetch(`${USER_API}/all`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        const apiRes = await res.json();
+        if (apiRes.code === 200) {
+          currentUserData = apiRes.data;
+          renderUserTable(currentUserData);
+        } else {
+          renderUserTable([]);
+        }
+      } catch (err) {
+        console.error(err);
+        renderUserTable([]);
+        Swal.fire('Error', 'Could not load users', 'error');
+      }
+    }
+
+// Render Table
+    function renderUserTable(items) {
+      const tbody = $('#userTableBody');
+      if (!items || items.length === 0) {
+        tbody.html('<tr><td colspan="5" class="text-center py-8 text-gray-400">No users found.</td></tr>');
+        return;
+      }
+
+      let rows = '';
+      items.forEach(item => {
+        const roleClass = item.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
+                item.role === 'MANAGER' ? 'bg-blue-100 text-blue-700' :
+                        'bg-gray-100 text-gray-700';
+
+        rows += `
+            <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 text-sm text-gray-500">${item.id}</td>
+                <td class="px-6 py-4 font-medium">${item.username}</td>
+                <td class="px-6 py-4">${item.email}</td>
+                <td class="px-6 py-4">
+                    <span class="px-2 py-1 rounded-full text-xs font-medium ${roleClass}">${item.role}</span>
+                </td>
+                <td class="px-6 py-4 text-right space-x-2">
+                    <button class="text-blue-600 hover:text-blue-800 edit-user-btn" data-id="${item.id}">
+                        <i class="fa-regular fa-pen-to-square"></i> Edit
+                    </button>
+                    <button class="text-red-600 hover:text-red-800 delete-user-btn" data-id="${item.id}">
+                        <i class="fa-regular fa-trash-can"></i> Del
+                    </button>
+                </td>
+            </tr>`;
+      });
+      tbody.html(rows);
+    }
+
+// Event Delegation for dynamically added buttons
+    $(document).on('click', '.edit-user-btn', function() {
+      const id = $(this).data('id');
+      openUserModal(id);
+    });
+
+    $(document).on('click', '.delete-user-btn', function() {
+      const id = $(this).data('id');
+      deleteUser(id);
+    });
+
+// Delete User
+    async function deleteUser(id) {
+      const result = await Swal.fire({
+        title: 'Delete User?',
+        text: "This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444'
+      });
+
+      if (result.isConfirmed) {
+        try {
+          const res = await fetch(`${USER_API}/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          });
+          if (res.ok) {
+            Swal.fire('Deleted!', 'User has been removed.', 'success');
+            fetchUsers();
+          } else {
+            const errorText = await res.text();
+            throw new Error(errorText || 'Delete failed');
+          }
+        } catch (e) {
+          Swal.fire('Error', e.message, 'error');
+        }
+      }
+    }
+
+// Modal for Add/Edit User
+    async function openUserModal(id = null) {
+      const isEdit = id !== null;
+      const user = isEdit
+              ? currentUserData.find(u => u.id.toString() === id.toString())
+              : { id: '', username: '', email: '', password: '', role: 'ADMIN' };
+
+      const { value: formData } = await Swal.fire({
+        title: '',
+        html: `
+        <style>
+            .swal2-html-container { margin: 0; text-align: left; }
+            .modal-container { font-family: 'Segoe UI', sans-serif; padding: 10px; }
+            .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+            .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+            .form-group label { font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #444; }
+            .input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+            .row { display: flex; gap: 15px; }
+            .row .form-group { flex: 1; }
+        </style>
+        <div class="modal-container">
+            <div class="modal-header"><h3>${isEdit ? 'Edit User' : 'Add User'}</h3></div>
+            ${isEdit ? `<div class="form-group"><label>User ID</label><input class="input" value="${user.id}" disabled></div>` : ''}
+
+            <div class="form-group">
+                <label>Username *</label>
+                <input id="usr-username" class="input" value="${user.username || ''}" placeholder="Enter username">
+            </div>
+            <div class="form-group">
+                <label>Email *</label>
+                <input id="usr-email" class="input" type="email" value="${user.email || ''}" placeholder="Enter email">
+            </div>
+            <div class="form-group">
+                <label>${isEdit ? 'New Password' : 'Password'} ${isEdit ? '(leave blank to keep current)' : '*'}</label>
+                <input id="usr-password" class="input" type="password" placeholder="Enter password">
+            </div>
+            <div class="form-group">
+                <label>Role *</label>
+                <select id="usr-role" class="input">
+                    <option value="ADMIN" ${user.role === 'ADMIN' ? 'selected' : ''}>ADMIN</option>
+                    <option value="MANAGER" ${user.role === 'MANAGER' ? 'selected' : ''}>MANAGER</option>
+                    <option value="SCIENTIST" ${user.role === 'SCIENTIST' ? 'selected' : ''}>SCIENTIST</option>
+                </select>
+            </div>
+        </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: isEdit ? 'Update User' : 'Create User',
+        confirmButtonColor: '#4F46E5',
+        preConfirm: () => {
+          const username = document.getElementById('usr-username').value.trim();
+          const email = document.getElementById('usr-email').value.trim();
+          const password = document.getElementById('usr-password').value.trim();
+          const role = document.getElementById('usr-role').value;
+
+          if (!username || !email || (!isEdit && !password)) {
+            Swal.showValidationMessage('Username, Email, and Password are required');
+            return false;
+          }
+
+          return {
+            ...(isEdit && { id: user.id }),
+            username,
+            email,
+            password: password || undefined,
+            role
+          };
+        }
+      });
+
+      if (formData) {
+        try {
+          const res = await fetch(USER_API, {
+            method: isEdit ? 'PUT' : 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(formData)
+          });
+          if (res.ok) {
+            Swal.fire('Success', `User ${isEdit ? 'updated' : 'created'}`, 'success');
+            fetchUsers();
+          } else {
+            const errorText = await res.text();
+            throw new Error(errorText || 'Operation failed');
+          }
+        } catch (e) {
+          Swal.fire('Error', e.message, 'error');
+        }
+      }
+    }
+    // --- Profile Section Logic ---
+
+    async function loadUserProfile() {
+      const profileLoading = $('#profileLoading');
+      const profileContent = $('#profileContent');
+
+      const identifier = localStorage.getItem('username');
+
+      if (!identifier) {
+        Swal.fire('Error', 'User not logged in', 'error');
+        return;
+      }
+
+      profileLoading.removeClass('hidden');
+      profileContent.addClass('hidden');
+
+      try {
+        const res = await fetch(`${USER_API}/${identifier}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+
+        const apiRes = await res.json();
+
+        if (apiRes.code === 200) {
+          const user = apiRes.data;
+
+          // UI එකට data fill කිරීම
+          $('#profileId').text(user.id);
+          $('#profileUsername').text(user.username);
+          $('#profileEmail').text(user.email);
+
+          // Role එක අනුව පාට වෙනස් කිරීම
+          const roleBadge = $('#profileRole');
+          roleBadge.text(user.role);
+          roleBadge.attr('class', 'px-2 py-1 rounded-full text-xs font-medium ' +
+                  (user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
+                          user.role === 'MANAGER' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'));
+
+          profileLoading.addClass('hidden');
+          profileContent.removeClass('hidden');
+        } else {
+          throw new Error(apiRes.message || "Failed to fetch profile");
+        }
+      } catch (err) {
+        console.error(err);
+        Swal.fire('Error', 'Could not load profile details', 'error');
+      }
+    }
+
+    $('#editProfileMock').click(function() {
+      const userId = $('#profileId').text();
+      if (userId) {
+        openUserModal(userId);
+      }
+    });
+
+    $('#profile-nav-link').click(() => loadUserProfile());
+
+    $('#addUserBtn').click(() => openUserModal());
+
+
+    // Navigation with inventory fetch when needed
+    $('.sidebar-item[data-section]').click(function(e){
+      e.preventDefault();
+      let section=$(this).data('section');
+
+      $('.sidebar-item').removeClass('active');
+      $(this).addClass('active');
+
+      $('.section-content').addClass('hidden');
+      $(`#${section}-section`).removeClass('hidden');
+
+      $('#currentSection').text($(this).find('span').text().trim());
+
+      if(section === 'inventory') fetchInventory();
+      if(section === 'equipment') fetchEquipment();
+      if(section === 'vehicle') fetchVehicles();
+      if(section === 'user') fetchUsers();
+
+      if(section === 'weather') {
+        $('#weatherDetailed').html(`<p><i class="fa-solid fa-temperature-high"></i> Current: ${$('#currentTemp').text()}, sunny. Humidity ${$('#humidity').text()}. Next days: mild rain expected.</p>`);
+      }
+
+      if(section === 'tasks') renderTasks();
+
+      if(section === 'notifications') {
+        $('#notificationsList').html(`
+            <div class="p-4 border-b">
+                <p class="font-semibold">⚠️ Irrigation Reminder</p>
+                <p class="text-sm text-gray-500">North field moisture low</p>
+            </div>
+            <div class="p-4">
+                <p class="font-semibold">🌦️ Weather Alert</p>
+                <p class="text-sm text-gray-500">Heavy rain expected Thursday</p>
+            </div>
+        `);
+      }
+    });
+
+    // ========== AI CHAT ASSISTANT INTEGRATION ==========
+    const chatMessages = $('#chatMessages');
+    const chatInput = $('#chatInput');
+    const sendBtn = $('#sendChatBtn');
+    const clearChatBtn = $('#clearChatBtn');
+    const typingIndicator = $('#typingIndicator');
+
+    function addMessage(text, sender) {
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const isUser = sender === 'user';
+      const messageHtml = `
+                <div class="flex items-start space-x-3 chat-message-${sender}">
+                    <div class="w-8 h-8 ${isUser ? 'bg-green-600' : 'bg-green-100'} rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid ${isUser ? 'fa-user' : 'fa-leaf'} text-${isUser ? 'white' : 'green-600'} text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="${isUser ? 'bg-green-600 text-white' : 'bg-white border border-gray-100 shadow-sm'} rounded-2xl ${isUser ? 'rounded-tr-none' : 'rounded-tl-none'} p-3">
+                            <p class="text-sm ${isUser ? 'text-white' : 'text-gray-700'} leading-relaxed">${text.replace(/\n/g, '<br>')}</p>
+                        </div>
+                        <span class="text-xs text-gray-400 mt-1 block">${time}</span>
+                    </div>
+                </div>
+            `;
+      chatMessages.append(messageHtml);
+      chatMessages.scrollTop(chatMessages[0].scrollHeight);
+    }
+
+    function showTyping(show) {
+      if (show) typingIndicator.removeClass('hidden');
+      else typingIndicator.addClass('hidden');
+      chatMessages.scrollTop(chatMessages[0].scrollHeight);
+    }
+
+    async function sendToAI(prompt) {
+      try {
+        const response = await fetch('http://localhost:8080/ai/generate', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ prompt: prompt })
+        });
+        const data = await response.text();
+        let aiResponse;
+        try {
+          const jsonData = JSON.parse(data);
+          aiResponse = jsonData.aiResponse || jsonData.response || jsonData.message || data;
+        } catch(e) {
+          aiResponse = data;
+        }
+        return aiResponse || "I'm here to help with your farming questions! Please try again.";
+      } catch(error) {
+        console.error('AI Error:', error);
+        return "⚠️ I'm having trouble connecting to the AI service. Please make sure the backend server is running on http://localhost:8080";
+      }
+    }
+
+    async function sendMessage() {
+      if (isSending) return;
+      const query = chatInput.val().trim();
+      if (!query) return;
+
+      chatInput.val('');
+      addMessage(query, 'user');
+      isSending = true;
+      showTyping(true);
+
+      const aiResponse = await sendToAI(query);
+      showTyping(false);
+      addMessage(aiResponse, 'ai');
+      isSending = false;
+    }
+
+    sendBtn.click(sendMessage);
+    clearChatBtn.click(() => {
+      chatMessages.empty();
+      addMessage("👋 Hello! I'm your AgroSmart AI Assistant. I can help you with crop recommendations, pest control, weather advice, and more! What would you like to know?", 'ai');
+    });
+
+    chatInput.keypress(function(e) {
+      if (e.which === 13 && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    $('.suggestion-chip').click(function() {
+      chatInput.val($(this).text());
+      sendMessage();
+    });
+
+
+    $('[data-section-mobile]').click(function(e){ e.preventDefault(); let section=$(this).data('section-mobile'); $(`.sidebar-item[data-section="${section}"]`).click(); $('#mobileMenu').addClass('hidden'); });
+    $('#userMenuButton').click(e=>{ e.stopPropagation(); $('#userDropdown').toggleClass('hidden'); });
+    $(document).click(e=>{ if(!$(e.target).closest('#userMenu').length) $('#userDropdown').addClass('hidden'); });
+    $('#mobileMenuBtn').click(()=>$('#mobileMenu').removeClass('hidden'));
+    $('#closeMobileMenu').click(()=>$('#mobileMenu').addClass('hidden'));
+    function logoutAction(){ Swal.fire({ title:'Logout', text:'Are you sure?', icon:'question', showCancelButton:true, confirmButtonColor:'#059669' }).then(res=>{ if(res.isConfirmed){ localStorage.clear(); window.location.href='../index.html'; } }); }
+    $('#logoutBtn, #dropdownLogout, #mobileLogout').click(logoutAction);
+    $('#desktopNotifications, #mobileNotifications').click(()=>{ Swal.fire({ title:'Notifications', html:`<div><div class="p-2"><b>Irrigation Alert</b><br>North Field needs watering</div><div class="p-2 mt-2"><b>Weather Update</b><br>Rain expected tomorrow</div></div>`, confirmButtonColor:'#059669' }); });
+    $('#quickAddField').click(()=> Swal.fire('Feature','Field addition coming soon','info'));
+    $('#quickPlantCrop').click(()=> Swal.fire('AI recommendation','Plant Wheat this season','success'));
+    $('#viewAllTasksBtn').click(()=>{ $('[data-section="tasks"]').click(); });
+    $('#editProfileMock').click(()=> Swal.fire('Edit Profile','Update your farm details.','info'));
+    $('#addItemBtn').click(()=> addNewInventory());
+    setInterval(()=>{ let soil = Math.floor(70+Math.random()*15); $('.bg-blue-100').closest('.card-hover').find('h4').first().text(soil+'%'); refreshAiInsights(); }, 45000);
+    setTimeout(()=>{ $('#loadingOverlay').addClass('hidden'); }, 500);
+  });
+</script>
+</body>
+</html>
