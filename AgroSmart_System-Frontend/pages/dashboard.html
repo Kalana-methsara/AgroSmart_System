@@ -752,7 +752,17 @@
         }
 
         const EQUIPMENT_API = 'http://localhost:8080/api/v1/equipment';
+        const FIELD_API = 'http://localhost:8080/api/v1/field';
+        const STAFF_API = 'http://localhost:8080/api/v1/staff';
+
+
         let currentEquipmentData = [];
+
+        function getLocalDateTime() {
+            const now = new Date();
+            return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + 'T' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
+        }
+
 
         async function fetchEquipment() {
             try {
@@ -761,6 +771,56 @@
                 if (apiRes.code === 200) { currentEquipmentData = apiRes.data; renderEquipmentTable(currentEquipmentData); }
                 else { renderEquipmentTable([]); }
             } catch (err) { console.error(err); renderEquipmentTable([]); Swal.fire('Error', 'Could not load equipment', 'error'); }
+        }
+        // Generate Staff Dropdown HTML
+        function getStaffOptionsHtml(selectedStaffId = null) {
+            if (!currentStaffData || currentStaffData.length === 0) {
+                return '<option value="">-- No staff available --</option>';
+            }
+            let options = '<option value="">-- Select Staff (Optional) --</option>';
+            currentStaffData.forEach(staff => {
+                const staffIdVal = staff.staffId || staff.id || '';
+                const displayText = staff.fullName ? `${staff.fullName} (${staffIdVal})` : staffIdVal;
+                const selectedAttr = (selectedStaffId && selectedStaffId === staffIdVal) ? 'selected' : '';
+                options += `<option value="${escapeHtml(staffIdVal)}" ${selectedAttr}>${escapeHtml(displayText)}</option>`;
+            });
+            return options;
+        }
+
+        // Generate Field Dropdown HTML
+        function getFieldOptionsHtml(selectedFieldId = null) {
+            if (!currentFieldData || currentFieldData.length === 0) {
+                return '<option value="">-- No fields available --</option>';
+            }
+            let options = '<option value="">-- Select Field (Optional) --</option>';
+            currentFieldData.forEach(field => {
+                const fieldIdVal = field.fieldId || field.id || '';
+                const displayText = field.fieldName ? `${field.fieldName} (${fieldIdVal})` : fieldIdVal;
+                const selectedAttr = (selectedFieldId && selectedFieldId === fieldIdVal) ? 'selected' : '';
+                options += `<option value="${escapeHtml(fieldIdVal)}" ${selectedAttr}>${escapeHtml(displayText)}</option>`;
+            });
+            return options;
+        }
+        // Fetch Staff for dropdown
+        async function fetchStaffForDropdown() {
+            try {
+                const res = await fetch(`${STAFF_API}/all`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+                const apiRes = await res.json();
+                if (apiRes.code === 200 && Array.isArray(apiRes.data)) {
+                    currentStaffData = apiRes.data;
+                }
+            } catch (err) { console.error('Error fetching staff:', err); }
+        }
+
+        // Fetch Fields for dropdown
+        async function fetchFieldsForDropdown() {
+            try {
+                const res = await fetch(`${FIELD_API}/all`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+                const apiRes = await res.json();
+                if (apiRes.code === 200 && Array.isArray(apiRes.data)) {
+                    currentFieldData = apiRes.data;
+                }
+            } catch (err) { console.error('Error fetching fields:', err); }
         }
 
 
@@ -808,112 +868,73 @@
                 } catch (e) { Swal.fire('Error', 'Delete failed', 'error'); }
             }
         }
+        // ----------
+
+        const API_BASE = 'http://localhost:8080/api/v1/inventory';
+
+
+        let currentInventoryData = [];
+        let currentStaffData = [];
+        let currentFieldData = [];
+
 
         async function openEquipmentModal(id = null) {
-            const isEdit = id !== null;
+            // Refresh dropdown data before opening modal
+            await fetchStaffForDropdown();
+            await fetchFieldsForDropdown();
 
-            const item = isEdit
-                ? currentEquipmentData.find(e => e.equipmentId === id)
-                : {
-                    equipmentId: '',
-                    category: '',
-                    type: '',
-                    status: 'AVAILABLE',
-                    staffId: '',
-                    fieldId: ''
-                };
+            const isEdit = id !== null;
+            const item = isEdit ? currentEquipmentData.find(e => e.equipmentId === id) : { equipmentId: '', category: '', type: '', status: 'AVAILABLE', staffId: '', fieldId: '' };
+
+            const staffOptions = getStaffOptionsHtml(isEdit ? (item.staffId || '') : '');
+            const fieldOptions = getFieldOptionsHtml(isEdit ? (item.fieldId || '') : '');
 
             const { value: formData } = await Swal.fire({
                 title: '',
                 html: `
-<style>
-    .swal2-html-container { margin: 0; text-align: left; }
-    .modal-container { font-family: 'Segoe UI', sans-serif; padding: 10px; }
-    .modal-header {
-        display: flex; justify-content: space-between; align-items: center;
-        margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;
-    }
-    .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
-    .form-group label { font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #444; }
-    .input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-    .row { display: flex; gap: 15px; }
-    .row .form-group { flex: 1; }
-</style>
-
-<div class="modal-container">
-
-    <div class="modal-header">
-        <h3>${isEdit ? 'Edit Equipment' : 'Add Equipment'}</h3>
-    </div>
-
-        ${isEdit ? `
-<div class="form-group">
-    <label>Equipment ID</label>
-    <input class="input" value="${item.equipmentId}" disabled>
-</div>
-` : ''}
-
-    <div class="row">
-        <div class="form-group">
-            <label>Category *</label>
-            <input id="eq-cat" class="input"
-                value="${item.category || ''}"
-                placeholder="e.g., Vehicle">
-        </div>
-
-        <div class="form-group">
-            <label>Type *</label>
-            <input id="eq-type" class="input"
-                value="${item.type || ''}"
-                placeholder="e.g., Tractor">
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="form-group">
-            <label>Status</label>
-            <select id="eq-status" class="input">
-                <option value="AVAILABLE" ${item.status === 'AVAILABLE' ? 'selected' : ''}>Available</option>
-                <option value="UNDER_REPAIR" ${item.status === 'UNDER_REPAIR' ? 'selected' : ''}>Under Repair</option>
-                <option value="OUT_OF_SERVICE" ${item.status === 'OUT_OF_SERVICE' ? 'selected' : ''}>Out of Service</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label>Field ID</label>
-            <select id="eq-field" class="input">
-    <option value="">Select Field</option>
-</select>
-        </div>
-    </div>
-
-    <div class="form-group">
-        <label>Staff ID</label>
-        <select id="eq-staff" class="input">
-    <option value="">Select Staff</option>
-</select>
-    </div>
-
-</div>
-`,
+                <style>
+                    .swal2-html-container { margin: 0; text-align: left; }
+                    .modal-container { font-family: 'Segoe UI', sans-serif; padding: 10px; }
+                    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+                    .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+                    .form-group label { font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #444; }
+                    .input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; width: 100%; }
+                    .row { display: flex; gap: 15px; }
+                    .row .form-group { flex: 1; }
+                </style>
+                <div class="modal-container">
+                    <div class="modal-header"><h3>${isEdit ? 'Edit Equipment' : 'Add Equipment'}</h3></div>
+                    ${isEdit ? `<div class="form-group"><label>Equipment ID</label><input class="input" value="${item.equipmentId}" disabled></div>` : ''}
+                    <div class="row">
+                        <div class="form-group"><label>Category *</label><input id="eq-cat" class="input" value="${escapeHtml(item.category || '')}" placeholder="e.g., Tractor, Harvester"></div>
+                        <div class="form-group"><label>Type *</label><input id="eq-type" class="input" value="${escapeHtml(item.type || '')}" placeholder="e.g., John Deere 5050"></div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group"><label>Status</label><select id="eq-status" class="input">
+                            <option value="AVAILABLE" ${item.status === 'AVAILABLE' ? 'selected' : ''}>Available</option>
+                            <option value="UNDER_REPAIR" ${item.status === 'UNDER_REPAIR' ? 'selected' : ''}>Under Repair</option>
+                            <option value="OUT_OF_SERVICE" ${item.status === 'OUT_OF_SERVICE' ? 'selected' : ''}>Out of Service</option>
+                        </select></div>
+                        <div class="form-group"><label>Field ID</label><select id="eq-field" class="input">${fieldOptions}</select></div>
+                    </div>
+                    <div class="form-group"><label>Staff ID</label><select id="eq-staff" class="input">${staffOptions}</select></div>
+                </div>
+            `,
                 showCancelButton: true,
                 confirmButtonText: isEdit ? 'Update Equipment' : 'Save Equipment',
                 confirmButtonColor: '#16A34A',
                 cancelButtonColor: '#aaa',
                 focusConfirm: false,
-
                 preConfirm: () => {
-                    const category = document.getElementById('eq-cat')?.value;
-                    const type = document.getElementById('eq-type')?.value;
+                    const category = document.getElementById('eq-cat')?.value.trim();
+                    const type = document.getElementById('eq-type')?.value.trim();
                     const status = document.getElementById('eq-status')?.value;
                     const staffId = document.getElementById('eq-staff')?.value;
                     const fieldId = document.getElementById('eq-field')?.value;
-
                     if (!category || !type) {
                         Swal.showValidationMessage('Category and Type are required');
                         return false;
                     }
-
                     return {
                         ...(isEdit && { equipmentId: item.equipmentId }),
                         category,
@@ -927,17 +948,12 @@
 
             if (formData) {
                 const method = isEdit ? 'PUT' : 'POST';
-
                 try {
                     const res = await fetch(EQUIPMENT_API, {
                         method,
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`
-                        },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(formData)
                     });
-
                     if (res.ok) {
                         Swal.fire('Success', `Equipment ${isEdit ? 'updated' : 'saved'}`, 'success');
                         fetchEquipment();
