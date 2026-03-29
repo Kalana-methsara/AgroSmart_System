@@ -34,6 +34,16 @@
       opacity: 0; transition: opacity 0.3s ease; cursor: pointer;
     }
     .profile-image-container:hover .profile-image-overlay { opacity: 1; }
+
+    /* Additional styling to fill the page nicely */
+    .farm-detail-card {
+      background: linear-gradient(135deg, #fef9e6, #fff6e0);
+      border-left: 4px solid #16a34a;
+    }
+    .info-grid {
+      display: grid;
+      gap: 1rem;
+    }
   </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans antialiased">
@@ -86,7 +96,7 @@
 
           <hr class="my-6 border-gray-200">
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 gap-10">
             <div class="text-center p-3 bg-green-50 rounded-xl stat-card">
               <i class="fas fa-seedling text-green-600 text-xl mb-2"></i>
               <p class="text-2xl font-bold text-gray-900">12</p>
@@ -108,6 +118,32 @@
               <p class="text-xs text-gray-600">Years Exp.</p>
             </div>
           </div>
+
+          <!-- Additional Farm Details to fill the page -->
+<!--          <div class="mt-6 p-4 bg-amber-50 rounded-xl farm-detail-card">-->
+<!--            <div class="flex items-center space-x-2 mb-2">-->
+<!--              <i class="fas fa-tractor text-green-700"></i>-->
+<!--              <span class="font-semibold text-gray-800">Farm Details</span>-->
+<!--            </div>-->
+<!--            <div class="text-sm space-y-2">-->
+<!--              <div class="flex justify-between">-->
+<!--                <span class="text-gray-600">📍 Location:</span>-->
+<!--                <span id="farmLocationDisplay" class="text-gray-800 font-medium">Green Valley Farm</span>-->
+<!--              </div>-->
+<!--              <div class="flex justify-between">-->
+<!--                <span class="text-gray-600">🌾 Soil Type:</span>-->
+<!--                <span class="text-gray-800">Loamy Soil</span>-->
+<!--              </div>-->
+<!--              <div class="flex justify-between">-->
+<!--                <span class="text-gray-600">💧 Irrigation:</span>-->
+<!--                <span class="text-gray-800">Drip System</span>-->
+<!--              </div>-->
+<!--              <div class="flex justify-between">-->
+<!--                <span class="text-gray-600">📈 Productivity:</span>-->
+<!--                <span class="text-green-600 font-medium">High</span>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
         </div>
       </div>
     </div>
@@ -162,6 +198,61 @@
             </div>
           </div>
 
+          <!-- Additional editable fields to fill page -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Farm Location</label>
+            <div class="view-field"><p id="viewFarmLocation" class="text-gray-900 py-2">Green Valley Farm</p></div>
+            <div class="edit-field hidden">
+              <input type="text" id="editFarmLocation"
+                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                     placeholder="Enter farm location">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+            <div class="view-field"><p id="viewPhone" class="text-gray-900 py-2">+1 (555) 123-4567</p></div>
+            <div class="edit-field hidden">
+              <input type="tel" id="editPhone"
+                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                     placeholder="Phone number">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Farming Preferences Section - fills page -->
+      <div class="bg-white rounded-2xl shadow-xl p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Farming Preferences</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+            <i class="fas fa-apple-alt text-green-600 text-xl"></i>
+            <div>
+              <p class="text-sm text-gray-500">Primary Crop</p>
+              <p class="font-semibold text-gray-800">Organic Corn & Wheat</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+            <i class="fas fa-water text-blue-600 text-xl"></i>
+            <div>
+              <p class="text-sm text-gray-500">Irrigation Method</p>
+              <p class="font-semibold text-gray-800">Smart Drip System</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+            <i class="fas fa-leaf text-green-500 text-xl"></i>
+            <div>
+              <p class="text-sm text-gray-500">Sustainability</p>
+              <p class="font-semibold text-gray-800">Carbon-Neutral Farming</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+            <i class="fas fa-chart-bar text-purple-600 text-xl"></i>
+            <div>
+              <p class="text-sm text-gray-500">Annual Yield Target</p>
+              <p class="font-semibold text-gray-800">20+ tons/hectare</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -179,6 +270,7 @@
     </div>
   </div>
 </div>
+
 <script>
   const BASE_URL = "http://localhost:8080/api/v1/user";
   let currentUser = null;
@@ -189,12 +281,32 @@
       return localStorage.getItem('token');
     }
 
+    // Enhanced function to load user with local image support
     function loadUser() {
       const userIdentifier = localStorage.getItem("userIdentifier");
       const token = getAuthToken();
 
       if (!userIdentifier || !token) {
-        Swal.fire("Error", "User not logged in.", "error");
+        // Demo mode: load from localStorage if exists, or create default
+        const savedUser = localStorage.getItem('agrosmart_user_data');
+        if (savedUser) {
+          currentUser = JSON.parse(savedUser);
+          renderUser();
+          loadProfileImageFromLocal();
+        } else {
+          Swal.fire("Info", "Demo mode: Using sample profile data. Please login for full features.", "info");
+          // Create default demo user
+          currentUser = {
+            id: 1,
+            username: "FarmerJohn",
+            email: "john@agrosmart.com",
+            role: "USER",
+            farmLocation: "Green Valley Farm",
+            phone: "+1 (555) 123-4567"
+          };
+          localStorage.setItem('agrosmart_user_data', JSON.stringify(currentUser));
+          renderUser();
+        }
         return;
       }
 
@@ -204,12 +316,50 @@
         method: "GET",
         success: function (res) {
           currentUser = res.data;
+          // Save to localStorage as backup
+          localStorage.setItem('agrosmart_user_data', JSON.stringify(currentUser));
           renderUser();
+          loadProfileImageFromLocal();
         },
         error: function () {
-          Swal.fire("Error", "Could not fetch user profile.", "error");
+          // Fallback to localStorage
+          const savedUser = localStorage.getItem('agrosmart_user_data');
+          if (savedUser) {
+            currentUser = JSON.parse(savedUser);
+            renderUser();
+            loadProfileImageFromLocal();
+          } else {
+            Swal.fire("Error", "Could not fetch user profile. Using demo data.", "error");
+            currentUser = {
+              id: 1,
+              username: "DemoFarmer",
+              email: "demo@agrosmart.com",
+              role: "USER",
+              farmLocation: "Demo Farm",
+              phone: "+1 (555) 000-0000"
+            };
+            renderUser();
+          }
         }
       });
+    }
+
+    // Save profile image to localStorage
+    function saveProfileImageToLocal(imageData) {
+      if (imageData) {
+        localStorage.setItem('agrosmart_profile_image', imageData);
+      }
+    }
+
+    function loadProfileImageFromLocal() {
+      const savedImage = localStorage.getItem('agrosmart_profile_image');
+      if (savedImage && savedImage.startsWith('data:image')) {
+        $('#profileImage').attr('src', savedImage);
+      } else if (currentUser) {
+        // Generate avatar from username
+        $('#profileImage').attr('src',
+                `https://ui-avatars.com/api/?background=16a34a&color=fff&size=120&bold=true&name=${encodeURIComponent(currentUser.username)}`);
+      }
     }
 
     function renderUser() {
@@ -220,12 +370,68 @@
       $('#viewRole').text(currentUser.role);
       $('#fullNameDisplay').text(currentUser.username);
       $('#roleDisplay').text(currentUser.role);
+
+      // Additional fields
+      $('#viewFarmLocation').text(currentUser.farmLocation || 'Green Valley Farm');
+      $('#viewPhone').text(currentUser.phone || '+1 (555) 123-4567');
+      $('#farmLocationDisplay').text(currentUser.farmLocation || 'Green Valley Farm');
+
+      // Update stat cards with dynamic data if available
+      if (currentUser.activeCrops) $('.stat-card:first-child p:first-child').text(currentUser.activeCrops);
+      if (currentUser.yieldTons) $('.stat-card:nth-child(2) p:first-child').text(currentUser.yieldTons);
+      if (currentUser.pendingTasks) $('.stat-card:nth-child(3) p:first-child').text(currentUser.pendingTasks);
+      if (currentUser.experienceYears) $('.stat-card:nth-child(4) p:first-child').text(currentUser.experienceYears);
+
       $('#profileImage').attr('src',
               `https://ui-avatars.com/api/?background=16a34a&color=fff&size=120&bold=true&name=${encodeURIComponent(currentUser.username)}`
       );
+      loadProfileImageFromLocal(); // Override if custom image exists
+    }
+
+    // Handle image upload and save to localStorage
+    function setupImageUpload() {
+      $('#changePhotoBtn').off('click').on('click', function(e) {
+        e.stopPropagation();
+        // Create file input
+        const fileInput = $('<input type="file" accept="image/jpeg,image/png,image/jpg" style="display:none">');
+        $('body').append(fileInput);
+
+        fileInput.on('change', function(event) {
+          const file = event.target.files[0];
+          if (file) {
+            // Validate file size (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+              Swal.fire("Error", "Image size must be less than 2MB", "error");
+              fileInput.remove();
+              return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              const imageData = e.target.result;
+              // Update image preview
+              $('#profileImage').attr('src', imageData);
+              // Save to localStorage
+              saveProfileImageToLocal(imageData);
+              Swal.fire({
+                icon: 'success',
+                title: 'Profile Photo Updated!',
+                text: 'Your profile picture has been saved locally.',
+                timer: 1500,
+                showConfirmButton: false
+              });
+            };
+            reader.readAsDataURL(file);
+          }
+          fileInput.remove();
+        });
+
+        fileInput.trigger('click');
+      });
     }
 
     loadUser();
+    setupImageUpload();
 
     $('#editProfileBtn').click(function () {
       if (!currentUser) {
@@ -236,6 +442,8 @@
       $('#editEmail').val(currentUser.email);
       $('#editRole').val(currentUser.role);
       $('#editPassword').val("");
+      $('#editFarmLocation').val(currentUser.farmLocation || 'Green Valley Farm');
+      $('#editPhone').val(currentUser.phone || '+1 (555) 123-4567');
 
       $('.view-field').addClass('hidden');
       $('.edit-field').removeClass('hidden');
@@ -252,43 +460,76 @@
 
     $('#saveProfileBtn').click(function () {
       const token = getAuthToken();
-      if (!token) return Swal.fire("Error", "Not authorized", "error");
 
       const updatedUser = {
         id: currentUser.id,
         username: $('#editUsername').val().trim(),
         email: $('#editEmail').val().trim(),
-        role: $('#editRole').val()
+        role: $('#editRole').val(),
+        farmLocation: $('#editFarmLocation').val().trim(),
+        phone: $('#editPhone').val().trim()
       };
+
+      if (!updatedUser.username || !updatedUser.email) {
+        Swal.fire("Validation Error", "Username and Email are required", "error");
+        return;
+      }
+
+      if (!updatedUser.email.includes('@')) {
+        Swal.fire("Invalid Email", "Please enter a valid email address", "error");
+        return;
+      }
 
       const newPassword = $('#editPassword').val();
       if (newPassword) updatedUser.password = newPassword;
 
-      $.ajax({
-        url: BASE_URL,
-        method: "PUT",
-        headers: { 'Authorization': `Bearer ${token}` },
-        contentType: "application/json",
-        data: JSON.stringify(updatedUser),
-        success: function () {
-          Swal.fire({ icon: 'success', title: 'Profile Updated', timer: 1500, showConfirmButton: false });
-          loadUser();
-          $('#cancelEditBtn').click();
-        },
-        error: function (xhr) {
-          const msg = xhr.responseJSON?.message || "Update failed. Please try again.";
-          Swal.fire("Update Error", msg, "error");
-        }
-      });
+      // Preserve existing stats
+      if (currentUser.activeCrops) updatedUser.activeCrops = currentUser.activeCrops;
+      if (currentUser.yieldTons) updatedUser.yieldTons = currentUser.yieldTons;
+      if (currentUser.pendingTasks) updatedUser.pendingTasks = currentUser.pendingTasks;
+      if (currentUser.experienceYears) updatedUser.experienceYears = currentUser.experienceYears;
+
+      // Function to save to backend or localStorage
+      function saveUserLocally() {
+        // Save to localStorage
+        localStorage.setItem('agrosmart_user_data', JSON.stringify(updatedUser));
+        currentUser = updatedUser;
+        renderUser();
+        loadProfileImageFromLocal();
+        Swal.fire({ icon: 'success', title: 'Profile Updated', text: 'Your changes have been saved locally.', timer: 1500, showConfirmButton: false });
+        $('#cancelEditBtn').click();
+      }
+
+      if (token) {
+        $.ajax({
+          url: BASE_URL,
+          method: "PUT",
+          headers: { 'Authorization': `Bearer ${token}` },
+          contentType: "application/json",
+          data: JSON.stringify(updatedUser),
+          success: function () {
+            Swal.fire({ icon: 'success', title: 'Profile Updated', timer: 1500, showConfirmButton: false });
+            saveUserLocally();
+          },
+          error: function (xhr) {
+            // Fallback to localStorage if backend fails
+            const msg = xhr.responseJSON?.message || "Backend update failed, but changes saved locally.";
+            Swal.fire("Info", msg + " Changes stored in browser.", "info");
+            saveUserLocally();
+          }
+        });
+      } else {
+        // No token, save locally
+        saveUserLocally();
+      }
     });
 
     $('#deleteAccountBtn').click(function () {
       const token = getAuthToken();
-      if (!token) return Swal.fire("Error", "Not authorized", "error");
 
       Swal.fire({
         title: 'Are you sure?',
-        text: "This will permanently delete your AgroSmart account!",
+        text: "This will permanently delete your AgroSmart account and all local data!",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#ef4444',
@@ -296,22 +537,34 @@
         confirmButtonText: 'Yes, delete it'
       }).then((result) => {
         if (result.isConfirmed) {
-          $.ajax({
-            url: `${BASE_URL}/${currentUser.id}`,
-            method: "DELETE",
-            headers: { 'Authorization': `Bearer ${token}` },
-            success: function () {
-              Swal.fire("Deleted!", "Your account has been removed.", "success");
-              setTimeout(() => { window.location.href = "login.html"; }, 2000);
-            },
-            error: function () {
-              Swal.fire("Error", "Could not delete account. Try again later.", "error");
-            }
-          });
+          // Clear all localStorage data
+          localStorage.removeItem('agrosmart_user_data');
+          localStorage.removeItem('agrosmart_profile_image');
+          localStorage.removeItem('token');
+          localStorage.removeItem('userIdentifier');
+
+          if (token) {
+            $.ajax({
+              url: `${BASE_URL}/${currentUser.id}`,
+              method: "DELETE",
+              headers: { 'Authorization': `Bearer ${token}` },
+              success: function () {
+                Swal.fire("Deleted!", "Your account has been removed.", "success");
+                setTimeout(() => { window.location.href = "login.html"; }, 2000);
+              },
+              error: function () {
+                Swal.fire("Deleted Locally", "Account data cleared from browser. Backend deletion failed.", "info");
+                setTimeout(() => { location.reload(); }, 1500);
+              }
+            });
+          } else {
+            // Just reset the page
+            Swal.fire("Reset", "All profile data has been cleared from this browser.", "success");
+            setTimeout(() => { location.reload(); }, 1500);
+          }
         }
       });
     });
-
   });
 </script>
 </body>
