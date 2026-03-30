@@ -163,8 +163,8 @@
         </div>
     </div>
 
-
-    <div class="grid grid-cols-1 md:grid-cols-[60%_40%] gap-4">    <!-- Log Cultivation Activity Card -->
+    <div class="grid grid-cols-1 md:grid-cols-[60%_40%] gap-4">
+        <!-- Log Cultivation Activity Card -->
     <div class="card-soft p-6">
         <h2 class="text-xl font-bold flex gap-2 items-center mb-4">
             <i class="fas fa-clipboard-list text-green-700"></i> Log Your Cultivation Activity
@@ -196,14 +196,6 @@
             <div>
                 <label class="block text-sm font-medium text-gray-600 mb-2">Assign Staff Members</label>
                 <div id="staffList" class="flex flex-wrap gap-2">
-                    <label class="flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-xl cursor-pointer hover:border-green-500">
-                        <input type="checkbox" name="staff" value="ST-001" class="rounded text-green-600">
-                        <span class="text-sm">Kamal Silva (Manager)</span>
-                    </label>
-                    <label class="flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-xl cursor-pointer hover:border-green-500">
-                        <input type="checkbox" name ="staff" value="ST-002" class="rounded text-green-600">
-                        <span class="text-sm">Nimal Perera (Laborer)</span>
-                    </label>
                 </div>
             </div>
 
@@ -258,12 +250,14 @@
 </main>
 
 <script>
-    // ======================= GLOBAL STATE =======================
     let allFields = [];
     let currentLocationFilter = "colombo";
     let selectedField = null;
     let allCrops = [];
+    let currentStaffData = []
     const CROP_API = 'http://localhost:8080/api/v1/crop';
+    const STAFF_API = 'http://localhost:8080/api/v1/staff';
+
 
     // 2. Fetch all crops from Backend
     async function fetchCrops() {
@@ -292,48 +286,90 @@
             console.error('Fetch error:', err);
         }
     }
+    async function fetchStaff() {
+        try {
+            const res = await fetch(`${STAFF_API}/all`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            const apiRes = await res.json();
+
+            if (apiRes.code === 200 && Array.isArray(apiRes.data)) {
+                currentStaffData = apiRes.data;
+                renderStaffList(); // 👈 IMPORTANT
+            }
+
+        } catch (err) {
+            console.error('Error fetching staff:', err);
+        }
+    }
+
+    function renderStaffList() {
+        let html = '';
+
+        currentStaffData.forEach(staff => {
+            html += `
+        <label class="flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-xl cursor-pointer hover:border-green-500">
+            <input type="checkbox" name="staff" value="${staff.staffId}" class="rounded text-green-600">
+            <span class="text-sm">
+                ${staff.staffId || ''} ${staff.fullName || ''}
+                (${staff.role || 'Staff'})
+            </span>
+        </label>
+        `;
+        });
+
+        $('#staffList').html(html);
+    }
+
 
     function addCropRow() {
         const rowId = Date.now();
 
         let cropOptions = '<option value="">-- Select crop --</option>';
 
-        if (allCrops && allCrops.length > 0) {
+        if (allCrops.length > 0) {
             cropOptions += allCrops.map(c =>
-                `<option value="${c.cropCode}">${c.commonName}</option>`
+                `<option value="${c.cropId}">
+    ${c.cropId} - ${c.commonName} (${c.growthDurationDays} days)
+</option>`
             ).join('');
-        } else {
-            cropOptions += '<option disabled>Loading crops...</option>';
         }
 
         const html = `
-    <div class="flex gap-2 items-center mb-3 crop-data-row" id="crop-row-${rowId}">
-        <div class="flex-1">
-            <select class="input-simple crop-select w-full" required>
-                ${cropOptions}
-            </select>
-        </div>
-        <div class="w-24">
-            <input type="number" class="input-simple crop-area w-full" placeholder="Acres" step="0.1">
-        </div>
-        <button type="button" onclick="$('#crop-row-${rowId}').remove()" class="text-red-500 px-2">
+    <div class="flex gap-2 items-center mb-3 crop-data-row">
+        <select class="input-simple crop-select w-full">
+            ${cropOptions}
+        </select>
+
+        <input type="number" class="input-simple crop-area w-24" placeholder="Acres">
+
+        <button type="button" onclick="$(this).parent().remove()" class="text-red-500">
             <i class="fas fa-trash"></i>
         </button>
     </div>`;
 
         $('#cropRowsContainer').append(html);
     }
-
     // 2. Comprehensive Save Logic
-    window.saveFarmingLog = function() {
+    window.saveFarmingLog = async function () {
+
         const fieldId = $('#selectedFieldId').val();
-        const details = $('#details').val();
         const totalLand = $('#landSize').val();
+        const details = $('#details').val();
 
         const crops = [];
-        $('#cropRowsContainer > div').each(function() {
+
+        $('#cropRowsContainer .crop-data-row').each(function () {
+
             const cropCode = $(this).find('.crop-select').val();
+            console.log(cropCode);
             const cropArea = $(this).find('.crop-area').val();
+            console.log(cropArea);
+
+            console.log("Crop Row ->", cropCode, cropArea);
 
             if (cropCode) {
                 crops.push({
@@ -343,43 +379,64 @@
             }
         });
 
-        const selectedStaff = [];
-        $('input[name="staff"]:checked').each(function() {
-            selectedStaff.push($(this).val());
+        console.log("CROPS ARRAY:", crops);
+
+        const staffIds = [];
+        $('input[name="staff"]:checked').each(function () {
+            staffIds.push($(this).val());
         });
 
         if (!fieldId) {
-            Swal.fire("Field required", "Please select a field first", "warning");
+            Swal.fire("Error", "Select a field first", "warning");
             return;
         }
 
         if (crops.length === 0) {
-            Swal.fire("Crops required", "Please add at least one crop", "warning");
+            Swal.fire("Error", "Add at least one crop", "warning");
             return;
         }
 
         const payload = {
-            fieldId: fieldId,
-            totalLand: totalLand,
-            crops: crops,
-            staffIds: selectedStaff,
-            details: details,
+            fieldId,
+            totalLand: parseFloat(totalLand) || 0,
+            crops,
+            staffIds,
+            details,
             timestamp: new Date().toISOString()
         };
 
-        console.log("Payload to Spring Boot:", payload);
+        console.log("FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
 
-        Swal.fire({
-            title: "Log Recorded!",
-            text: `Saved ${crops.length} crops successfully.`,
-            icon: "success",
-            confirmButtonColor: '#166534'
-        });
+        try {
+            const token = localStorage.getItem('token') || 'demo-mode';
 
-        // Reset
-        $('#cropRowsContainer').empty();
-        $('input[name="staff"]').prop('checked', false);
-        addCropRow();
+            const res = await fetch('http://localhost:8080/api/v1/farming-log', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                console.error(res.message);
+                throw new Error("Save failed");
+            }
+            const data = await res.json();
+            console.log("SERVER RESPONSE:", data);
+
+            Swal.fire("Success", "Saved successfully!", "success");
+
+            $('#cropRowsContainer').empty();
+            addCropRow();
+            $('input[name="staff"]').prop('checked', false);
+            $('#details').val('');
+
+        } catch (err) {
+            console.error(err);
+            Swal.fire("Error", "Failed to save data", "error");
+        }
     };
     // 4. Update Initialization
     $(document).ready(async function() {
@@ -387,6 +444,7 @@
 
         await fetchAllFields();
         await fetchCrops();
+        await fetchStaff();
 
         currentLocationFilter = "colombo";
         $('#locationSelect').val('colombo');
@@ -721,13 +779,15 @@
     });
 
     // Initialize
-    $(document).ready(async function() {
+    $(document).ready(async function () {
+        showLoading(true);
+
+        await fetchCrops();
         await fetchAllFields();
-        fetchWeatherForZone('colombo');
-        currentLocationFilter = "colombo";
-        $('#locationSelect').val('colombo');
-        updateFieldSelectorDropdown();
-        renderSelectedField();
+
+        addCropRow();         // THEN render dropdown
+
+        showLoading(false);
     });
 
     // Listen for change on dynamically added crop rows
