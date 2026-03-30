@@ -1,5 +1,6 @@
 package lk.ijse.agrosmart_systembackend.service;
 
+import lk.ijse.agrosmart_systembackend.entity.Crop;
 import lk.ijse.agrosmart_systembackend.entity.FieldCrop;
 
 public interface TaskService {

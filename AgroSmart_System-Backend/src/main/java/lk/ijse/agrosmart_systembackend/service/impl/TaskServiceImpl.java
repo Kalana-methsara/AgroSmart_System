@@ -1,6 +1,7 @@
 package lk.ijse.agrosmart_systembackend.service.impl;
 
 import jakarta.transaction.Transactional;
+import lk.ijse.agrosmart_systembackend.entity.Crop;
 import lk.ijse.agrosmart_systembackend.entity.CropTaskTemplate;
 import lk.ijse.agrosmart_systembackend.entity.FieldCrop;
 import lk.ijse.agrosmart_systembackend.entity.PlantingTask;
@@ -16,6 +17,7 @@ import java.util.UUID;
 @Service
 @Transactional
 @RequiredArgsConstructor
+
 public class TaskServiceImpl implements TaskService {
 
     private final PlantingTaskRepository plantingTaskRepo;
@@ -23,33 +25,31 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public void generateTasksForFieldCrop(FieldCrop fieldCrop, Double plantingArea) {
-        // Multiplier එක අක්කර ප්‍රමාණය අනුව (e.g., 4.6 -> 5)
         int multiplier = (int) Math.round(plantingArea);
         if (multiplier < 1) multiplier = 1;
 
-        // DB එකෙන් අදාළ බෝගයට (Crop) අයිති templates list එක ගන්නවා
+        // ✅ fieldCrop.getCrop().getCropId() — correct, Crop entity has getCropId()
         List<CropTaskTemplate> templates = templateRepo.findByCropId(fieldCrop.getCrop().getCropId());
 
-        for (CropTaskTemplate template : templates) {
+        double finalMultiplier = multiplier;
+        List<PlantingTask> tasks = templates.stream().map(template -> {
             PlantingTask task = new PlantingTask();
-
-            // Task ID generate කිරීම
             task.setTaskId("TASK-" + UUID.randomUUID().toString().substring(0, 5));
             task.setTaskName(template.getTaskName());
 
-            // Assigned Date එකට template එකේ startDay එකතු කර dueDate එක සෑදීම
+            // ✅ fieldCrop has assignedDate
             if (fieldCrop.getAssignedDate() != null) {
                 task.setDueDate(fieldCrop.getAssignedDate().plusDays(template.getStartDay()));
             }
 
-            // කාලය = standard_duration * multiplier
-            task.setCalculatedDuration(template.getStandardDuration() * multiplier);
-
+            task.setCalculatedDuration(template.getStandardDuration() * finalMultiplier);
             task.setStatus("PENDING");
             task.setFieldCrop(fieldCrop);
+            return task;
+        }).toList();
 
-            plantingTaskRepo.save(task);
-        }
+        // ✅ saveAll instead of save() in a loop
+        plantingTaskRepo.saveAll(tasks);
     }
 
     @Override

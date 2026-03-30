@@ -16,14 +16,22 @@ import java.time.LocalDate;
 @Setter
 @Builder
 public class FieldCrop implements Serializable {
+
     @Id
     private String fieldCropId;
-    @ManyToOne
-    @JoinColumn(name = "field_id", referencedColumnName = "fieldId")
-    private Field field;
-    @ManyToOne
-    @JoinColumn(name = "crop_id", referencedColumnName = "cropId")
-    private Crop crop;
-    private LocalDate assignedDate;
 
+    @ManyToOne
+    @JoinColumn(name = "field_id")
+    private Field field;
+
+    @ManyToOne
+    @JoinColumn(name = "crop_id")
+    private Crop crop;
+
+    @ManyToOne
+    @JoinColumn(name = "log_id")
+    private Log log;
+
+    private LocalDate assignedDate;
+    private Double area;
 }

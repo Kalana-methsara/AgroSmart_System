@@ -33,6 +33,5 @@
         private Vehicle vehicleId;
         @OneToMany(mappedBy = "staff", cascade = CascadeType.ALL)
         private List<FieldStaff> fieldStaff = new ArrayList<>();
-        @OneToMany(mappedBy = "staff", cascade = CascadeType.ALL)
-        private List<StaffLog> staffLog = new ArrayList<>();
+
     }
