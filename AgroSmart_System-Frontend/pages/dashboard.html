@@ -381,6 +381,7 @@
     }
 
     $(document).ready(async function() {
+        loadWeatherData();
         const token = localStorage.getItem('token');
         if (!token) { window.location.replace("../index.html"); return; }
 
@@ -1487,6 +1488,37 @@
             chatInput.val($(this).text());
             sendMessage();
         });
+        function loadWeatherData() {
+            $.ajax({
+                url: 'http://localhost:8080/api/v1/weather',
+                type: 'GET',
+                headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+                success: function(response) {
+                    const weather = response.data;
+ console.log(weather);
+                    // කාලගුණ විස්තර පෙන්වීම
+                    $('#tempDisplay').text(weather.temp + "°C");
+                    $('#weatherDesc').text(weather.condition);
+
+                    // වැසි සහිත නම් විශේෂ Alert එකක් පෙන්වීම
+                    if(weather.condition === 'Rain') {
+                        $('#weatherAlert').html(`
+                    <div class="alert alert-info shadow-sm" role="alert">
+                        <i class="fa-solid fa-cloud-rain mr-2"></i>
+                        <strong>Smart Tip:</strong> ${weather.recommendation}
+                    </div>
+                `);
+                    } else {
+                        $('#weatherAlert').html(`
+                    <div class="alert alert-success shadow-sm" role="alert">
+                        <i class="fa-solid fa-sun mr-2"></i>
+                        ${weather.recommendation}
+                    </div>
+                `);
+                    }
+                }
+            });
+        }
 
 
         $('[data-section-mobile]').click(function(e){ e.preventDefault(); let section=$(this).data('section-mobile'); $(`.sidebar-item[data-section="${section}"]`).click(); $('#mobileMenu').addClass('hidden'); });

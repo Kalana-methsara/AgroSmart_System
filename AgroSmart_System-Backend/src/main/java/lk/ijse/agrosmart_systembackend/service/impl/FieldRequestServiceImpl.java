@@ -103,7 +103,7 @@ public class FieldRequestServiceImpl implements FieldRequestService {
     }
 
     private String generateLogID() {
-        String maxId = logRepository.findMaxLogId(); // custom query
+        String maxId = logRepository.findMaxLogId();
         if (maxId == null) return "L001";
         return String.format("L%03d", Integer.parseInt(maxId.substring(1)) + 1);
     }
