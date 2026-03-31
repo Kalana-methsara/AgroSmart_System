@@ -11,9 +11,12 @@ import java.util.Map;
 @Service
 public class WeatherServiceImpl implements WeatherService {
 
-    private final String API_KEY = "36ae79b3c48ce2a5e18f45a589b503cd&units";
-    private final String CITY = "Anuradhapura";
-    private final String URL = "https://api.openweathermap.org/data/2.5/weather?q=" + CITY + "&appid=" + API_KEY + "&units=metric";
+    private final String API_KEY = "36ae79b3c48ce2a5e18f45a589b503cd"; // Key එක පමණක් තියන්න
+    private final String CITY = "Galle";
+
+    private final String URL = "https://api.openweathermap.org/data/2.5/weather?q="
+            + CITY + "&appid=" + API_KEY + "&units=metric";
+
 
     private final RestTemplate restTemplate = new RestTemplate();
 

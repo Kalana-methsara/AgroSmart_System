@@ -3,371 +3,505 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>AgroSmart · Precision Inventory & Farm Command</title>
+  <title>AgroSmart · Vehicle Management</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    * { transition: all 0.2s ease; }
-    .sidebar-item { transition: all 0.2s; border-radius: 12px; margin: 4px 8px; padding: 10px 16px; }
-    .sidebar-item:hover:not(.active) { background-color: rgba(34, 197, 94, 0.12); color: #15803d; transform: translateX(4px); }
-    .sidebar-item.active { background: linear-gradient(95deg, #166534, #22c55e); color: white; box-shadow: 0 6px 12px -6px rgba(34,197,94,0.3); }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-    ::-webkit-scrollbar-thumb { background: #bbf7d0; border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: #4ade80; }
-    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 20px 25px -12px rgba(0,0,0,0.08); transition: all 0.25s; }
-    .stat-card { background: white; border-radius: 1.5rem; transition: all 0.2s; border: 1px solid #eef2ff; }
-    .stat-card:hover { border-color: #86efac; box-shadow: 0 8px 20px rgba(34,197,94,0.08); }
-    .inventory-table-row:hover { background-color: #fefce8; transition: 0.1s; }
-    .blur-loading { backdrop-filter: blur(3px); background-color: rgba(255,255,245,0.85); }
-    .status-badge { font-weight: 500; letter-spacing: -0.2px; }
-    input:focus, select:focus { ring: none; outline: none; border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
-    button:active { transform: scale(0.97); }
+    body {
+      background: #f3f4f6;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    .card-hover {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.1);
+    }
+    .status-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+    .status-available {
+      background-color: #dcfce7;
+      color: #15803d;
+    }
+    .status-out {
+      background-color: #fee2e2;
+      color: #b91c1c;
+    }
+    .status-maintenance {
+      background-color: #fff3e3;
+      color: #b45309;
+    }
+    .action-btn {
+      transition: all 0.2s;
+    }
+    .action-btn:hover {
+      transform: scale(1.05);
+    }
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .vehicle-row {
+      animation: fadeSlide 0.25s ease-out;
+    }
+    .modal-backdrop {
+      backdrop-filter: blur(3px);
+    }
+    .stat-card {
+      background: linear-gradient(135deg, #ffffff 0%, #fef9e6 100%);
+      border-left: 5px solid #2563eb;
+    }
   </style>
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans antialiased">
+<body class="bg-gray-50">
 
-  <main class="flex-1 overflow-y-auto bg-gray-50/40 relative">
+<div class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Header with summary stats -->
+  <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+        <i class="fa-solid fa-tractor text-blue-600 text-3xl"></i>
+        Vehicle Manager
+      </h1>
+      <p class="text-gray-500 mt-1 text-sm">Monitor, maintain, and manage your agricultural fleet</p>
+    </div>
+    <button id="openAddVehicleModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl shadow-md transition flex items-center gap-2 font-medium">
+      <i class="fa-solid fa-plus-circle"></i> Register New Vehicle
+    </button>
+  </div>
 
-    <!-- INVENTORY SECTION (ACTIVE) -->
-    <div id="inventory-section" class="section-content p-6 md:p-8">
-      <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
-        <div><h1 class="text-2xl font-extrabold text-gray-800"><i class="fa-solid fa-clipboard-list text-green-600 mr-2"></i>Inventory Core</h1><p class="text-sm text-gray-500">Manage seeds, fertilizers & equipment</p></div>
-        <button id="addItemBtn" class="bg-green-700 hover:bg-green-800 text-white px-6 py-2.5 rounded-xl font-bold shadow-md flex items-center gap-2 transition-all"><i class="fa-solid fa-plus-circle"></i> Add New Stock</button>
-      </div>
-
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="p-5 border-b border-gray-100 flex flex-wrap justify-between items-center gap-3">
-          <h3 class="font-bold text-gray-700"><i class="fa-solid fa-warehouse mr-2 text-green-600"></i>Stock ledger</h3>
-          <div class="relative"><i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" id="inventorySearch" placeholder="Search by name..." class="pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm w-64 focus:border-green-400"></div>
+  <!-- KPI Stats Row -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
+    <div class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 card-hover">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 text-sm">Total Fleet</p>
+          <h3 class="text-2xl font-bold text-gray-800" id="totalVehiclesCount">0</h3>
+          <p class="text-xs text-green-600 mt-1"><i class="fa-regular fa-check-circle"></i> active units</p>
         </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left">
-            <thead class="bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
-            <tr><th class="px-6 py-4">Item Name</th><th class="px-6 py-4">Category</th><th class="px-6 py-4">Qty</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Actions</th></tr>
-            </thead>
-            <tbody id="inventoryTableBody" class="divide-y divide-gray-100"></tbody>
-          </table>
+        <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
+          <i class="fa-solid fa-truck text-blue-600 text-xl"></i>
         </div>
       </div>
     </div>
+    <div class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 card-hover">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 text-sm">Available Now</p>
+          <h3 class="text-2xl font-bold text-green-600" id="availableCount">0</h3>
+        </div>
+        <div class="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
+          <i class="fa-solid fa-check-double text-green-600 text-xl"></i>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 card-hover">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 text-sm">Under Service</p>
+          <h3 class="text-2xl font-bold text-amber-600" id="outCount">0</h3>
+        </div>
+        <div class="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center">
+          <i class="fa-solid fa-wrench text-amber-600 text-xl"></i>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 card-hover">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 text-sm">Diesel Fleet %</p>
+          <h3 class="text-2xl font-bold text-gray-800" id="dieselPercent">0%</h3>
+        </div>
+        <div class="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center">
+          <i class="fa-solid fa-gas-pump text-purple-600 text-xl"></i>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  </main>
+  <!-- Vehicles Table Section -->
+  <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+    <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-list-check text-blue-500 mr-2"></i> Fleet Registry</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Manage vehicle details, status, and fuel type</p>
+      </div>
+      <div class="relative">
+        <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input type="text" id="searchVehicleInput" placeholder="Search by plate, category, ID..." class="pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm w-64 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200">
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plate Number</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fuel Type</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
+          <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+        </tr>
+        </thead>
+        <tbody id="vehicleTableBody" class="bg-white divide-y divide-gray-100">
+        <tr>
+          <td colspan="7" class="px-6 py-12 text-center text-gray-400">
+            <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 block"></i>
+            Loading vehicle data...
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500">
+      <span><i class="fa-regular fa-clock"></i> Real-time fleet status</span>
+      <span><i class="fa-solid fa-database"></i> AgroSmart IoT Sync</span>
+    </div>
+  </div>
+</div>
 
-  <script>
-  const API_BASE = 'http://localhost:8080/api/v1/inventory';
-  let currentInventoryData = [];
+<script>
+  // ---------- API CONFIGURATION ----------
+  const VEHICLE_API = 'http://localhost:8080/api/v1/vehicle';
+  let currentVehicles = [];
+  let token = localStorage.getItem('token') || '';
 
+  // Helper: format datetime (optional)
+  function getLocalDateTime() {
+    const now = new Date();
+    return now.getFullYear() + '-' +
+            String(now.getMonth() + 1).padStart(2, '0') + '-' +
+            String(now.getDate()).padStart(2, '0') + 'T' +
+            String(now.getHours()).padStart(2, '0') + ':' +
+            String(now.getMinutes()).padStart(2, '0') + ':' +
+            String(now.getSeconds()).padStart(2, '0');
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+
+  // Render status badge with icon
+  function renderStatusBadge(status) {
+    const statusUpper = (status || '').toUpperCase();
+    if (statusUpper === 'AVAILABLE') {
+      return `<span class="status-badge status-available"><i class="fa-regular fa-circle-check"></i> Available</span>`;
+    } else if (statusUpper === 'OUT_OF_SERVICE') {
+      return `<span class="status-badge status-out"><i class="fa-solid fa-triangle-exclamation"></i> Out of Service</span>`;
+    } else {
+      return `<span class="status-badge status-maintenance"><i class="fa-solid fa-screwdriver-wrench"></i> Under Repair</span>`;
+    }
+  }
+
+  // Update statistics counters
+  function updateStats(vehicles) {
+    const total = vehicles.length;
+    const available = vehicles.filter(v => v.status === 'AVAILABLE').length;
+    const outOfService = vehicles.filter(v => v.status === 'OUT_OF_SERVICE').length;
+    const dieselCount = vehicles.filter(v => (v.fuelType || '').toUpperCase() === 'DIESEL').length;
+    const dieselPercent = total === 0 ? 0 : Math.round((dieselCount / total) * 100);
+
+    $('#totalVehiclesCount').text(total);
+    $('#availableCount').text(available);
+    $('#outCount').text(outOfService);
+    $('#dieselPercent').text(`${dieselPercent}%`);
+  }
+
+  // Render table
+  function renderVehicleTable(vehicles) {
+    const tbody = $('#vehicleTableBody');
+    if (!vehicles || vehicles.length === 0) {
+      tbody.html(`
+                <tr>
+                    <td colspan="7" class="px-6 py-12 text-center text-gray-400">
+                        <i class="fa-solid fa-tractor text-3xl mb-3 opacity-30"></i>
+                        <p>No vehicles registered. Click "Register New Vehicle" to add your fleet.</p>
+                    </td>
+                </tr>
+            `);
+      updateStats([]);
+      return;
+    }
+
+    let rows = '';
+    vehicles.forEach(vehicle => {
+      const id = vehicle.vehicleId || vehicle.id || '—';
+      const category = vehicle.category || '—';
+      const plate = vehicle.numberPlate || vehicle.plateNumber || '—';
+      const fuel = vehicle.fuelType || '—';
+      const status = vehicle.status || 'UNKNOWN';
+      const remarks = vehicle.remarks || '—';
+
+      rows += `
+                <tr class="vehicle-row hover:bg-gray-50 transition" data-id="${escapeHtml(id)}">
+                    <td class="px-6 py-4 text-sm font-mono text-gray-600 font-medium">${escapeHtml(id)}</td>
+                    <td class="px-6 py-4 text-sm text-gray-700">${escapeHtml(category)}</td>
+                    <td class="px-6 py-4 text-sm font-semibold text-gray-800">${escapeHtml(plate)}</td>
+                    <td class="px-6 py-4 text-sm">
+                        <span class="inline-flex items-center gap-1 ${fuel === 'Diesel' ? 'text-amber-700' : 'text-sky-600'}">
+                            <i class="fa-solid ${fuel === 'Diesel' ? 'fa-oil-can' : 'fa-gas-pump'} text-xs"></i>
+                            ${escapeHtml(fuel)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">${renderStatusBadge(status)}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">${escapeHtml(remarks)}</td>
+                    <td class="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                        <button class="edit-vehicle-btn text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg px-3 py-1.5 text-sm transition action-btn" data-id="${escapeHtml(id)}">
+                            <i class="fa-regular fa-pen-to-square"></i> Edit
+                        </button>
+                        <button class="delete-vehicle-btn text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 rounded-lg px-3 py-1.5 text-sm transition action-btn ml-1" data-id="${escapeHtml(id)}">
+                            <i class="fa-regular fa-trash-can"></i> Del
+                        </button>
+                    </td>
+                </tr>
+            `;
+    });
+    tbody.html(rows);
+    updateStats(vehicles);
+  }
+
+  // ---------- API CRUD OPERATIONS ----------
+  async function fetchVehicles() {
+    try {
+      const res = await fetch(`${VEHICLE_API}/all`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const apiRes = await res.json();
+      if (apiRes.code === 200 && Array.isArray(apiRes.data)) {
+        currentVehicles = apiRes.data;
+        renderVehicleTable(currentVehicles);
+      } else {
+        console.warn("Unexpected vehicle response", apiRes);
+        currentVehicles = [];
+        renderVehicleTable([]);
+      }
+    } catch (err) {
+      console.error('Fetch vehicles error:', err);
+      Swal.fire('Connection Error', 'Could not load vehicles. Ensure backend is running.', 'error');
+      renderVehicleTable([]);
+    }
+  }
+
+  async function deleteVehicle(vehicleId) {
+    const result = await Swal.fire({
+      title: 'Delete Vehicle?',
+      text: `Remove vehicle ID: ${vehicleId} permanently? This action cannot be undone.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete'
+    });
+    if (!result.isConfirmed) return;
+
+    try {
+      const res = await fetch(`${VEHICLE_API}/${vehicleId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        Swal.fire('Deleted!', 'Vehicle has been removed from fleet.', 'success');
+        fetchVehicles();
+      } else {
+        const errText = await res.text();
+        throw new Error(errText || 'Delete failed');
+      }
+    } catch (err) {
+      Swal.fire('Error', err.message || 'Could not delete vehicle', 'error');
+    }
+  }
+
+  // Modal for Add/Edit vehicle
+  async function openVehicleModal(vehicleId = null) {
+    const isEdit = vehicleId !== null;
+    let vehicleData = null;
+    if (isEdit) {
+      vehicleData = currentVehicles.find(v => (v.vehicleId || v.id) === vehicleId);
+      if (!vehicleData) {
+        Swal.fire('Error', 'Vehicle not found', 'error');
+        return;
+      }
+    }
+
+    const defaultData = {
+      category: vehicleData?.category || '',
+      numberPlate: vehicleData?.numberPlate || '',
+      fuelType: vehicleData?.fuelType || 'Diesel',
+      status: vehicleData?.status || 'AVAILABLE',
+      remarks: vehicleData?.remarks || ''
+    };
+
+    const { value: formData } = await Swal.fire({
+      title: isEdit ? '✏️ Edit Vehicle' : '🚜 Register New Vehicle',
+      html: `
+                <style>
+                    .swal2-html-container { margin: 0; text-align: left; }
+                    .form-grid { display: flex; flex-direction: column; gap: 1rem; }
+                    .field-group { display: flex; flex-direction: column; gap: 0.3rem; }
+                    .field-group label { font-weight: 600; font-size: 0.85rem; color: #1f2937; text-align: left; }
+                    .field-input { padding: 0.6rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 0.75rem; font-size: 0.9rem; width: 100%; outline: none; transition: 0.2s; }
+                    .field-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
+                    .row-2col { display: flex; gap: 1rem; }
+                    .row-2col > div { flex: 1; }
+                    hr { margin: 0.5rem 0; }
+                </style>
+                <div class="form-grid">
+                    <div class="row-2col">
+                        <div class="field-group">
+                            <label><i class="fa-solid fa-tag"></i> Category *</label>
+                            <input id="modal-category" class="field-input" placeholder="e.g., Tractor, Harvester, Sprayer" value="${escapeHtml(defaultData.category)}">
+                        </div>
+                        <div class="field-group">
+                            <label><i class="fa-solid fa-plate-wheat"></i> Plate Number *</label>
+                            <input id="modal-plate" class="field-input" placeholder="WP ABC-1234" value="${escapeHtml(defaultData.numberPlate)}">
+                        </div>
+                    </div>
+                    <div class="row-2col">
+                        <div class="field-group">
+                            <label><i class="fa-solid fa-gas-pump"></i> Fuel Type</label>
+                            <select id="modal-fuel" class="field-input">
+                                <option value="Diesel" ${defaultData.fuelType === 'Diesel' ? 'selected' : ''}>Diesel</option>
+                                <option value="Petrol" ${defaultData.fuelType === 'Petrol' ? 'selected' : ''}>Petrol</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label><i class="fa-solid fa-chart-simple"></i> Status</label>
+                            <select id="modal-status" class="field-input">
+                                <option value="AVAILABLE" ${defaultData.status === 'AVAILABLE' ? 'selected' : ''}>Available</option>
+                                <option value="OUT_OF_SERVICE" ${defaultData.status === 'OUT_OF_SERVICE' ? 'selected' : ''}>Out of Service</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label><i class="fa-regular fa-note-sticky"></i> Remarks (optional)</label>
+                        <textarea id="modal-remarks" class="field-input" rows="2" placeholder="Maintenance notes, last service, etc.">${escapeHtml(defaultData.remarks)}</textarea>
+                    </div>
+                </div>
+            `,
+      showCancelButton: true,
+      confirmButtonText: isEdit ? 'Update Vehicle' : 'Save Vehicle',
+      confirmButtonColor: '#2563eb',
+      cancelButtonColor: '#9ca3af',
+      focusConfirm: false,
+      preConfirm: () => {
+        const category = document.getElementById('modal-category')?.value.trim();
+        const numberPlate = document.getElementById('modal-plate')?.value.trim();
+        if (!category || !numberPlate) {
+          Swal.showValidationMessage('Category and Plate Number are required');
+          return false;
+        }
+        return {
+          ...(isEdit && { vehicleId: vehicleData.vehicleId || vehicleData.id }),
+          category: category,
+          numberPlate: numberPlate,
+          fuelType: document.getElementById('modal-fuel').value,
+          status: document.getElementById('modal-status').value,
+          remarks: document.getElementById('modal-remarks').value || ''
+        };
+      }
+    });
+
+    if (formData) {
+      try {
+        const url = VEHICLE_API;
+        const method = isEdit ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(formData)
+        });
+
+        if (res.ok) {
+          Swal.fire({
+            icon: 'success',
+            title: isEdit ? 'Vehicle updated' : 'Vehicle registered',
+            text: isEdit ? 'Fleet details saved.' : 'New vehicle added to fleet.',
+            toast: false,
+            timer: 2000,
+            showConfirmButton: true
+          });
+          fetchVehicles();  // refresh list
+        } else {
+          const errorMsg = await res.text();
+          throw new Error(errorMsg || 'Operation failed');
+        }
+      } catch (err) {
+        Swal.fire('Error', err.message || 'Could not save vehicle', 'error');
+      }
+    }
+  }
+
+  // Search filter
+  function filterVehicles() {
+    const searchTerm = $('#searchVehicleInput').val().toLowerCase();
+    if (!searchTerm) {
+      renderVehicleTable(currentVehicles);
+      return;
+    }
+    const filtered = currentVehicles.filter(v => {
+      const idMatch = (v.vehicleId || v.id || '').toLowerCase().includes(searchTerm);
+      const plateMatch = (v.numberPlate || '').toLowerCase().includes(searchTerm);
+      const catMatch = (v.category || '').toLowerCase().includes(searchTerm);
+      return idMatch || plateMatch || catMatch;
+    });
+    renderVehicleTable(filtered);
+  }
+
+  // ---------- EVENT LISTENERS & INIT ----------
   $(document).ready(async function() {
-  const token = localStorage.getItem('token');
-  if (!token) { window.location.replace("../index.html"); return; }
+    token = localStorage.getItem('token');
+    if (!token) {
+      Swal.fire('Session expired', 'Please login again', 'error').then(() => {
+        window.location.href = '../index.html';
+      });
+      return;
+    }
 
-  $('#loadingOverlay').removeClass('hidden').addClass('flex');
-  const now = new Date();
-  $('#currentDate').text(now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
-  const userIdentifier = localStorage.getItem('userIdentifier') || 'rajesh.farmer@agrosmart.com';
-  const firstName = userIdentifier.split('@')[0].split('.')[0];
-  const displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
-  $('#welcomeName, #userDisplayName').text(displayName);
-  $('#userInitials').text(displayName.charAt(0).toUpperCase());
-  $('#profileName').text(displayName);
-  $('#profileEmail').text(userIdentifier);
+    // Initial load
+    await fetchVehicles();
 
-  // Mock data for non-inventory sections
-  const fieldsData = [{ name: "North Field", crop: "Wheat", acres: 85, health: 92, irrigation: "2 days ago", nextTask: "Fertilize" },{ name: "South Field", crop: "Corn", acres: 110, health: 78, irrigation: "Yesterday", nextTask: "Irrigate" },{ name: "East Field", crop: "Soybeans", acres: 50, health: 88, irrigation: "3 days ago", nextTask: "Pest control" }];
-  const cropsData = [{ name: "Wheat", stage: "Flowering", health: "Excellent", estYield: "5.2 t/ha" },{ name: "Corn", stage: "Silking", health: "Good", estYield: "8.1 t/ha" },{ name: "Soybeans", stage: "Pod development", health: "Good", estYield: "3.4 t/ha" }];
-  let tasks = [{ name: "Irrigate North Field", time: "10:00 AM", priority: "High", done: false },{ name: "Check soil sensors", time: "2:00 PM", priority: "Medium", done: false },{ name: "Order fertilizer", time: "5:00 PM", priority: "Low", done: false }];
-  function renderTasks(){ let html = ''; tasks.forEach((t,idx)=>{ html += `<div class="flex items-center justify-between p-3 ${t.priority==='High'?'bg-yellow-50':t.priority==='Medium'?'bg-green-50':'bg-blue-50'} rounded-lg"><div class="flex items-center space-x-3"><input type="checkbox" class="task-check w-5 h-5 rounded" data-idx="${idx}" ${t.done?'checked':''}><div><p class="font-medium text-gray-800">${t.name}</p><p class="text-xs text-gray-500">Due: ${t.time}</p></div></div><span class="text-xs px-2 py-1 rounded-full ${t.priority==='High'?'bg-yellow-100 text-yellow-700':t.priority==='Medium'?'bg-green-100 text-green-700':'bg-blue-100 text-blue-700'}">${t.priority}</span></div>`; }); $('#tasksListContainer').html(html); $('#allTasksPanel').html(html + '<p class="text-center text-gray-400 mt-4">Stay productive!</p>'); $('.task-check').change(function(){ let idx=$(this).data('idx'); tasks[idx].done=$(this).is(':checked'); renderTasks(); Swal.fire({title:'Great!',text:'Task updated',icon:'success',toast:true,timer:1500,showConfirmButton:false}); }); }
-  renderTasks();
-  function renderFields() { let html=''; fieldsData.forEach(f=>{ html+=`<div class="bg-white rounded-xl shadow-md p-6"><div class="flex justify-between"><div><h3 class="font-bold">${f.name}</h3><p class="text-sm text-gray-500">${f.crop} · ${f.acres} acres</p></div><span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Active</span></div><div class="mt-3"><div class="flex justify-between text-sm"><span>Soil Health</span><span class="font-semibold">${f.health}%</span></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-green-600 h-2 rounded-full" style="width: ${f.health}%"></div></div><div class="flex justify-between text-sm mt-2"><span>Last Irrigation</span><span>${f.irrigation}</span></div></div></div>`; }); $('#dynamicFieldsGrid').html(html); }
-  renderFields();
-  function renderCrops() { let html=''; cropsData.forEach(c=>{ html+=`<div class="bg-white rounded-xl shadow p-5 flex justify-between"><div><h3 class="font-bold text-xl">${c.name}</h3><p class="text-gray-500">Stage: ${c.stage}</p><p class="text-sm text-green-600">Health: ${c.health}</p></div><div class="text-right"><p class="text-2xl font-bold">${c.estYield}</p><p class="text-xs text-gray-400">Est. yield</p></div></div>`; }); $('#cropsGrid').html(html); }
-  renderCrops();
-  const aiMessages = ["🌾 Optimal time to irrigate North Field based on soil moisture", "🐛 Possible pest activity detected in South Field", "📈 Harvest forecast: 15% above average"];
-  function refreshAiInsights(){ let html=''; aiMessages.slice(0,3).forEach(m=>{ html+=`<div class="flex items-start space-x-3"><i class="fa-solid fa-lightbulb text-yellow-300 mt-1"></i><p class="text-sm text-green-100">${m}</p></div>`; }); $('#aiInsightsContainer').html(html); }
-  refreshAiInsights();
-  const forecast = [['Mon','sun',25],['Tue','cloud-sun',23],['Wed','cloud-rain',19],['Thu','cloud-sun',22],['Fri','sun',26]];
-  function updateForecast(){ let fc=''; forecast.forEach(f=>{ let iconClass=f[1]==='sun'?'fa-solid fa-sun text-yellow-500':f[1]==='cloud-sun'?'fa-solid fa-cloud-sun text-gray-500':'fa-solid fa-cloud-rain text-blue-500'; fc+=`<div class="text-center"><p class="text-xs">${f[0]}</p><i class="${iconClass} my-2 text-xl"></i><p class="text-sm font-semibold">${f[2]}°</p></div>`; }); $('#forecastContainer').html(fc); }
-  updateForecast();
-  if(typeof Chart !== 'undefined'){ new Chart(document.getElementById('yieldChart'), { type: 'line', data: { labels: ['Jan','Feb','Mar','Apr','May','Jun'], datasets: [{ label: 'Yield (kg/acre)', data: [320, 345, 380, 410, 470, 520], borderColor: '#22c55e', tension: 0.3 }] }, options: { responsive: true } }); }
+    // Add Vehicle Button (global)
+    $('#openAddVehicleModalBtn').click(() => openVehicleModal(null));
 
-  // INVENTORY CRUD Functions (Backend integration)
-  async function fetchInventory() {
-  try {
-  const res = await fetch(`${API_BASE}/all`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
-  const apiRes = await res.json();
-  if (apiRes.code === 200 && Array.isArray(apiRes.data)) {
-  currentInventoryData = apiRes.data;
-  renderInventoryTable(currentInventoryData);
-  } else {
-  console.warn("Unexpected inventory format", apiRes);
-  renderInventoryTable([]);
-  }
-  } catch (err) { console.error(err); renderInventoryTable([]); Swal.fire('Error','Could not load inventory','error'); }
-  }
+    // Edit & Delete using dynamic event delegation
+    $(document).on('click', '.edit-vehicle-btn', function() {
+      const vehicleId = $(this).data('id');
+      if (vehicleId) openVehicleModal(vehicleId);
+    });
 
-  function renderInventoryTable(items) {
-  const tbody = $('#inventoryTableBody');
-  if (!items || items.length === 0) {
-  tbody.html('<tr><td colspan="5" class="text-center py-8 text-gray-400"><i class="fa-solid fa-database"></i> No inventory items found. Add one!</td></tr>');
-  return;
-  }
-  let rows = '';
-  items.forEach(item => {
-  const id = item.id || item.inventoryId;
-  const name = item.name || item.itemName || 'Unnamed';
-  const category = item.category || 'General';
-  const quantity = item.quantity || 0;
-  const status = (quantity < 20) ? 'Low Stock' : (quantity > 200 ? 'High Stock' : 'In Stock');
-  const statusClass = status === 'Low Stock' ? 'bg-red-100 text-red-700' : (status === 'High Stock' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700');
-  rows += `<tr>
-    <td class="px-6 py-4 font-medium text-gray-900">${escapeHtml(name)}</td>
-    <td class="px-6 py-4 text-gray-500">${escapeHtml(category)}</td>
-    <td class="px-6 py-4 text-gray-500">${quantity} ${item.unit || 'units'}</td>
-    <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass}">${status}</span></td>
-    <td class="px-6 py-4 text-right space-x-2">
-      <button class="text-blue-600 hover:text-blue-800 edit-inv-btn" data-id="${id}"><i class="fa-regular fa-pen-to-square"></i> Edit</button>
-      <button class="text-red-600 hover:text-red-800 delete-inv-btn ml-2" data-id="${id}"><i class="fa-regular fa-trash-can"></i> Del</button>
-    </td>
-  </tr>`;
+    $(document).on('click', '.delete-vehicle-btn', function() {
+      const vehicleId = $(this).data('id');
+      if (vehicleId) deleteVehicle(vehicleId);
+    });
+
+    // Real-time search
+    $('#searchVehicleInput').on('input', filterVehicles);
+
+    setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchVehicles();
+      }
+    }, 60000);
   });
-  tbody.html(rows);
-  $('.edit-inv-btn').click(async function() { const id = $(this).data('id'); await openEditModal(id); });
-  $('.delete-inv-btn').click(async function() { const id = $(this).data('id'); await deleteInventoryItem(id); });
-  }
-
-  function escapeHtml(str) { if(!str) return ''; return String(str).replace(/[&<>]/g, function(m){ if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m;}); }
-
-  async function deleteInventoryItem(id) {
-  const confirm = await Swal.fire({ title: 'Delete Item?', text: "This action cannot be undone.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' });
-  if (!confirm.isConfirmed) return;
-  try {
-  const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
-  const data = await res.json();
-  if (data.code === 200) { Swal.fire('Deleted!','Item removed','success'); fetchInventory(); }
-  else throw new Error(data.message);
-  } catch(e) { Swal.fire('Error','Could not delete','error'); }
-  }
-
-  async function openEditModal(id) {
-  const item = currentInventoryData.find(i => (i.id || i.inventoryId) === id);
-  if (!item) return;
-
-  const { value: updatedItem } = await Swal.fire({
-  title: '',
-  html: `
-  <style>
-    .swal2-html-container { margin: 0; text-align: left; }
-    .modal-container { font-family: 'Segoe UI', sans-serif; padding: 10px; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-    .header-title { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: bold; }
-    .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
-    .form-group label { font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #444; }
-    .inventory-input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-    .row { display: flex; gap: 15px; }
-    .row .form-group { flex: 1; }
-  </style>
-
-  <div class="modal-container">
-    <div class="modal-header">
-      <h3>Edit Inventory Item</h3>
-    </div>
-
-    <div class="form-group">
-      <label>Item Name *</label>
-      <input id="swal-name" class="inventory-input" value="${escapeHtml(item.name || item.itemName)}">
-    </div>
-
-    <div class="form-group">
-      <label>Category</label>
-      <select id="swal-category" class="inventory-input">
-        <option value="Equipment" ${item.category === 'Equipment' ? 'selected' : ''}>Equipment</option>
-        <option value="Seeds" ${item.category === 'Seeds' ? 'selected' : ''}>Seeds</option>
-        <option value="Fertilizer" ${item.category === 'Fertilizer' ? 'selected' : ''}>Fertilizer</option>
-      </select>
-    </div>
-
-    <div class="row">
-      <div class="form-group">
-        <label>Quantity *</label>
-        <input id="swal-quantity" type="number" class="inventory-input" value="${item.quantity}">
-      </div>
-      <div class="form-group">
-        <label>Unit</label>
-        <input id="swal-unit" class="inventory-input" value="${item.unit || ''}">
-      </div>
-    </div>
-  </div>`,
-
-  showCancelButton: true,
-  confirmButtonText: 'Update Item',
-  confirmButtonColor: '#2563EB', // Blue for update
-  cancelButtonColor: '#aaa',
-  focusConfirm: false,
-
-  preConfirm: () => {
-  const name = document.getElementById('swal-name').value;
-  const quantity = document.getElementById('swal-quantity').value;
-
-  if (!name || !quantity) {
-  Swal.showValidationMessage('Item Name and Quantity are required');
-  return false;
-  }
-
-  return {
-  ...item,
-  name: name,
-  category: document.getElementById('swal-category').value,
-  quantity: parseFloat(quantity),
-  unit: document.getElementById('swal-unit').value || 'units'
-  };
-  }
-  });
-
-  if (updatedItem) {
-  try {
-  const res = await fetch(API_BASE, {
-  method: 'PUT',
-  headers: {
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${localStorage.getItem('token')}`
-  },
-  body: JSON.stringify(updatedItem)
-  });
-
-  const result = await res.json();
-
-  if (res.ok || result.code === 200) {
-  Swal.fire('Updated!', 'Inventory updated successfully', 'success');
-  fetchInventory();
-  } else {
-  throw new Error(result.message || 'Update failed');
-  }
-  } catch (e) {
-  Swal.fire('Error', e.message || 'Could not update', 'error');
-  }
-  }
-  }
-
-  async function addNewInventory() {
-  const { value: newItem } = await Swal.fire({
-  title: '', // Left blank because your custom HTML has a header
-  html: `
-  <style>
-    .swal2-html-container { margin: 0; text-align: left; }
-    .modal-container { font-family: 'Segoe UI', sans-serif; padding: 10px; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-    .header-title { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: bold; }
-    .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
-    .form-group label { font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #444; }
-    .inventory-input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-    .row { display: flex; gap: 15px; }
-    .row .form-group { flex: 1; }
-    .info-alert { background-color: #e0f7fa; color: #006064; padding: 10px; border-radius: 8px; font-size: 12px; margin-top: 10px; }
-  </style>
-
-  <div class="modal-container">
-    <div class="modal-header">
-      <h3>Add Inventory Item</div>
-  </div>
-
-  <div class="form-group">
-    <label>Item Name *</label>
-    <input id="swal-name" class="inventory-input" placeholder="e.g., Urea Fertilizer">
-  </div>
-
-  <div class="form-group">
-    <label>Category</label>
-    <select id="swal-category" class="inventory-input">
-      <option value="Equipment">Equipment</option>
-      <option value="Seeds">Seeds</option>
-      <option value="Fertilizer">Fertilizer</option>
-    </select>
-  </div>
-
-  <div class="row">
-    <div class="form-group">
-      <label>Quantity *</label>
-      <input id="swal-quantity" type="number" class="inventory-input" value="0">
-    </div>
-    <div class="form-group">
-      <label>Unit</label>
-      <input id="swal-unit" class="inventory-input" placeholder="kg, liters, pieces">
-    </div>
-  </div>
-
-
-  </div>`,
-  showCancelButton: true,
-  confirmButtonText: 'Save Item',
-  confirmButtonColor: '#16A34A', // Matches your Forest Green
-  cancelButtonColor: '#aaa',
-  focusConfirm: false,
-  preConfirm: () => {
-  const name = document.getElementById('swal-name').value;
-  const quantity = document.getElementById('swal-quantity').value;
-
-  if (!name || !quantity) {
-  Swal.showValidationMessage('Item Name and Quantity are required');
-  return false;
-  }
-
-  return {
-  name: name,
-  category: document.getElementById('swal-category').value,
-  quantity: parseFloat(quantity),
-  unit: document.getElementById('swal-unit').value || 'units',
-  unit_price: parseFloat(document.getElementById('swal-price').value) || 0,
-  expiry_date: document.getElementById('swal-expiry').value
-  };
-  }
-  });
-
-  if (newItem) {
-  try {
-  const res = await fetch(API_BASE, {
-  method: 'POST',
-  headers: {
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${localStorage.getItem('token')}`
-  },
-  body: JSON.stringify(newItem)
-  });
-
-  const result = await res.json();
-  if (res.ok || result.code === 201) {
-  Swal.fire('Created!', 'New item added', 'success');
-  fetchInventory();
-  } else {
-  throw new Error(result.message || 'Failed to save');
-  }
-  } catch (e) {
-  Swal.fire('Error', e.message || 'Could not save', 'error');
-  }
-  }
-  }
-  // Navigation with inventory fetch when needed
-  $('.sidebar-item[data-section]').click(function(e){ e.preventDefault(); let section=$(this).data('section'); $('.sidebar-item').removeClass('active'); $(this).addClass('active'); $('.section-content').addClass('hidden'); $(`#${section}-section`).removeClass('hidden'); $('#currentSection').text($(this).find('span').text().trim()); if(section === 'inventory') fetchInventory(); if(section === 'weather') $('#weatherDetailed').html(`<p><i class="fa-solid fa-temperature-high"></i> Current: ${$('#currentTemp').text()}, sunny. Humidity ${$('#humidity').text()}. Next days: mild rain expected.</p>`); if(section === 'tasks') renderTasks(); if(section === 'notifications') $('#notificationsList').html(`<div class="p-4 border-b"><p class="font-semibold">⚠️ Irrigation Reminder</p><p class="text-sm text-gray-500">North field moisture low</p></div><div class="p-4"><p class="font-semibold">🌦️ Weather Alert</p><p class="text-sm text-gray-500">Heavy rain expected Thursday</p></div>`); });
-  $('[data-section-mobile]').click(function(e){ e.preventDefault(); let section=$(this).data('section-mobile'); $(`.sidebar-item[data-section="${section}"]`).click(); $('#mobileMenu').addClass('hidden'); });
-  $('#userMenuButton').click(e=>{ e.stopPropagation(); $('#userDropdown').toggleClass('hidden'); });
-  $(document).click(e=>{ if(!$(e.target).closest('#userMenu').length) $('#userDropdown').addClass('hidden'); });
-  $('#mobileMenuBtn').click(()=>$('#mobileMenu').removeClass('hidden'));
-  $('#closeMobileMenu').click(()=>$('#mobileMenu').addClass('hidden'));
-  function logoutAction(){ Swal.fire({ title:'Logout', text:'Are you sure?', icon:'question', showCancelButton:true, confirmButtonColor:'#059669' }).then(res=>{ if(res.isConfirmed){ localStorage.clear(); window.location.href='../index.html'; } }); }
-  $('#logoutBtn, #dropdownLogout, #mobileLogout').click(logoutAction);
-  $('#desktopNotifications, #mobileNotifications').click(()=>{ Swal.fire({ title:'Notifications', html:`<div><div class="p-2"><b>Irrigation Alert</b><br>North Field needs watering</div><div class="p-2 mt-2"><b>Weather Update</b><br>Rain expected tomorrow</div></div>`, confirmButtonColor:'#059669' }); });
-  $('#quickAddField').click(()=> Swal.fire('Feature','Field addition coming soon','info'));
-  $('#quickPlantCrop').click(()=> Swal.fire('AI recommendation','Plant Wheat this season','success'));
-  $('#viewAllTasksBtn').click(()=>{ $('[data-section="tasks"]').click(); });
-  $('#editProfileMock').click(()=> Swal.fire('Edit Profile','Update your farm details.','info'));
-  $('#addItemBtn').click(()=> addNewInventory());
-  setInterval(()=>{ let soil = Math.floor(70+Math.random()*15); $('.bg-blue-100').closest('.card-hover').find('h4').first().text(soil+'%'); refreshAiInsights(); }, 45000);
-  setTimeout(()=>{ $('#loadingOverlay').addClass('hidden'); }, 500);
-  fetchInventory(); // initial fetch in background but only when inventory section is first visited? but keep warm.
-  });
-  </script>
+</script>
 </body>
 </html>

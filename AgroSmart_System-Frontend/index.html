@@ -24,6 +24,15 @@
             line-height: 2.5rem;
         }
     </style>
+    <script>
+        // Check if coming back from Google login
+        if (window.location.search.includes('login=success')) {
+            // Remove the URL parameter
+            window.history.replaceState({}, document.title, window.location.pathname);
+            alert('Google login successful!');
+            window.location.href = '/dashboard.html';
+        }
+    </script>
 </head>
 <body class="bg-gray-50 antialiased font-sans">
 
@@ -138,7 +147,11 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
-                        <button type="button" class="flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition text-gray-700"><i class="fa-brands fa-google text-red-500"></i> Google</button>
+                        <button type="button"
+                                class="flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition text-gray-700"
+                                onclick="handleGoogleLogin()">
+                            <i class="fa-brands fa-google text-red-500"></i> Google
+                        </button>
                         <button type="button" class="flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition text-gray-700"><i class="fa-brands fa-apple text-gray-900"></i> Apple ID</button>
                     </div>
                 </form>
@@ -164,6 +177,84 @@
 <script src="https://cdn.tailwindcss.com"></script>
 
 <script>
+    function handleGoogleLogin() {
+        // Store the current page to return after OAuth
+        localStorage.setItem('oauthRedirectUrl', window.location.href);
+        // Redirect to Google OAuth endpoint
+        window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+    }
+
+    $(document).ready(function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        localStorage.setItem('urlParams', urlParams);
+
+        if (urlParams.get('login') === 'success') {
+            console.log("aasa")
+            localStorage.setItem('assa', urlParams.get('login'));
+
+            // Remove the URL parameter
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            console.log('OAuth callback detected, fetching token...');
+
+            Swal.fire({
+                title: 'Completing login...',
+                text: 'Please wait while we verify your Google account',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // First, check if we have a session by making a test request
+            fetch('http://localhost:8080/api/v1/auth/oauth/token', {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Response data:', data);
+                    Swal.close();
+
+                    if (data.code === 200 && data.data && data.data.accessToken) {
+                        // Store the token
+                        localStorage.setItem('token', data.data.accessToken);
+                        localStorage.setItem('tokenType', data.data.tokenType);
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Google Login Successful',
+                            text: 'Redirecting to dashboard...',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.href = 'pages/dashboard.html';
+                        });
+                    } else {
+                        console.error('Invalid response structure:', data);
+                        throw new Error(data.message || 'Failed to get authentication token');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error details:', error);
+                    Swal.close();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Login Failed',
+                        text: 'Could not complete Google login. Please try again.\nError: ' + error.message,
+                        confirmButtonColor: '#059669'
+                    });
+                });
+        }
+
+    });
     $(document).ready(function() {
         // Toggle password visibility
         $('.togglePassword').click(function() {
