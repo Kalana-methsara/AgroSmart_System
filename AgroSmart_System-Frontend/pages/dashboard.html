@@ -179,54 +179,6 @@
 
             <!-- ==================== OVERVIEW SECTION ==================== -->
             <div id="overview-section" class="section-content">
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-                    <!-- Weather Card -->
-                    <div class="lg:col-span-5">
-                        <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 card-hover">
-                            <div class="p-5 flex items-center justify-between">
-                                <div class="flex items-center space-x-4">
-                                    <div class="weather-icon-container bg-amber-50 w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner">
-                                        <i id="weatherIcon" class="fa-solid fa-cloud-sun fa-3x text-amber-500"></i>
-                                    </div>
-                                    <div>
-                                        <span class="text-3xl font-extrabold text-gray-800" id="tempDisplay" style="color: rgb(217 119 6 / var(--tw-text-opacity, 1));">--°C</span>
-                                        <p class="text-sm font-medium text-gray-600 capitalize" id="weatherDesc" style="color: darkgreen">Loading weather...</p>
-                                        <div class="flex items-center gap-3 mt-1">
-                                            <span class="text-xs text-gray-500" style="color: blue"><i class="fa-solid fa-droplet"></i> <span id="humidityVal">--</span>%</span>
-                                            <span class="text-xs text-gray-500" style="color: green"><i class="fa-solid fa-wind"></i> <span id="windVal">--</span> km/h</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="hidden md:block">
-                                    <span class="weather-chip"><i class="fa-regular fa-calendar-alt"></i> Real-time</span>
-                                </div>
-                            </div>
-                            <div class="border-t border-gray-100 px-5 py-3 bg-gray-50 flex justify-between text-sm">
-                                <span class="text-gray-600"><i class="fa-regular fa-clock"></i> Last update: <span id="weatherUpdateTime">--</span></span>
-                                <span class="text-green-600 font-medium">📍 Central Farm</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Smart Alert -->
-                    <div class="lg:col-span-7">
-                        <div id="weatherAlert" class="rounded-2xl shadow-sm overflow-hidden transition-all duration-300 h-full">
-                            <div class="alert-smart p-5 h-full flex items-center">
-                                <div class="flex items-start space-x-4">
-                                    <div class="bg-blue-100 p-3 rounded-full"><i class="fa-solid fa-microchip text-blue-600 text-xl"></i></div>
-                                    <div>
-                                        <h4 class="font-bold text-gray-800 text-lg">AgroSmart Insight</h4>
-                                        <p id="smartInsightText" class="text-gray-600 text-sm leading-relaxed">Loading farm intelligence...</p>
-                                        <div class="mt-2 flex gap-2">
-                                            <span class="inline-flex items-center text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full"><i class="fa-regular fa-thumbs-up mr-1"></i> AI-driven</span>
-                                            <span class="inline-flex items-center text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full" style="color: firebrick"><i class="fa-solid fa-map" style="padding-right: 3px"></i> Field specific</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- KPI Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -378,6 +330,24 @@
 
                     <!-- Right Column -->
                     <div class="space-y-8">
+                        <div class="lg:col-span-7">
+                            <div id="weatherAlert" class="rounded-2xl shadow-sm overflow-hidden transition-all duration-300 h-full">
+                                <div class="alert-smart p-5 h-full flex items-center">
+                                    <div class="flex items-start space-x-4">
+                                        <div class="bg-blue-100 p-3 rounded-full"><i class="fa-solid fa-microchip text-blue-600 text-xl"></i></div>
+                                        <div>
+                                            <h4 class="font-bold text-gray-800 text-lg">AgroSmart Insight</h4>
+                                            <p id="smartInsightText" class="text-gray-600 text-sm leading-relaxed">Loading farm intelligence...</p>
+                                            <div class="mt-2 flex gap-2">
+                                                <span class="inline-flex items-center text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full"><i class="fa-regular fa-thumbs-up mr-1"></i> AI-driven</span>
+                                                <span class="inline-flex items-center text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full" style="color: firebrick"><i class="fa-solid fa-map" style="padding-right: 3px"></i> Field specific</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Predictive Alerts -->
                         <div class="bg-white rounded-xl shadow-md p-6">
                             <div class="flex items-center justify-between mb-4">

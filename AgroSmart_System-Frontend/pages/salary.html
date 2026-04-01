@@ -493,46 +493,60 @@
   }
 
 
-  function renderRecords(records) {
+  async function renderRecords(records) {
     const body = document.getElementById('salaryTableBody');
     document.getElementById('recordCount').textContent = records.length + ' record' + (records.length !== 1 ? 's' : '');
+
     if (!records.length) {
       body.innerHTML = `<tr><td colspan="8" class="px-6 py-12 text-center text-gray-400"><i class="fas fa-inbox text-3xl mb-3 block opacity-30"></i>No records found</td></tr>`;
       return;
     }
 
-    const colors = ['blue','green','purple','amber','teal','indigo','rose'];
-    body.innerHTML = records.map((r, i) => {
-      const s =  api('/staff/' + r.staffId);
+    const colors = ['blue', 'green', 'purple', 'amber', 'teal', 'indigo', 'rose'];
 
-      const color   = colors[i % colors.length];
-      const name    = r.fullName || r.fullName || '—';
-      const staffId = r.staffId   || '—';
-      const detail  = [r.designation, r.role].filter(Boolean).join(' · ') || r.designation || '';
+    // 1. මුලින්ම හැම record එකකටම අදාළ staff data ටික fetch කරගන්නවා (Asynchronous map)
+    const detailedRecords = await Promise.all(records.map(async (r) => {
+      try {
+        const staffInfo = await api('/staff/' + r.staffId);
+        return { ...r, staffInfo }; // මුල් record එකට අලුත් staffInfo එකතු කරනවා
+      } catch (error) {
+        console.error("Error fetching staff:", error);
+        return { ...r, staffInfo: null };
+      }
+    }));
+
+    // 2. දැන් දත්ත ලැබුණු පසුව table එක render කරනවා
+    body.innerHTML = detailedRecords.map((r, i) => {
+      const color = colors[i % colors.length];
+
+      // staffInfo තිබේ නම් එහි නම ගන්න, නැත්නම් default අගයක් දාන්න
+      const name = r.staffInfo ? r.staffInfo.fullName : '—';
+      const staffId = r.staffId || '—';
+      const detail = [r.designation, r.role].filter(Boolean).join(' · ') || r.designation || '';
+
       return `<tr class="hover:bg-gray-50">
-        <td class="px-6 py-4"><div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-full bg-${color}-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-user text-${color}-600 text-sm"></i></div>
-          <div>
-            <p class="text-sm font-semibold text-gray-900">${escapeHtml(name)}</p>
-            <p class="text-xs text-gray-400 mono">${escapeHtml(staffId)}</p>
-            ${detail ? `<p class="text-xs text-gray-400">${escapeHtml(detail)}</p>` : ''}
-          </div>
-        </div></td>
-        <td class="px-6 py-4 text-sm text-gray-700">${fmt(r.basicSalary)}</td>
-        <td class="px-6 py-4 text-sm text-green-700">+${fmt(r.allowances)}</td>
-        <td class="px-6 py-4 text-sm text-red-600">-${fmt(r.deductions)}</td>
-        <td class="px-6 py-4 text-sm font-semibold text-gray-900">${fmt(r.netSalary)}</td>
-        <td class="px-6 py-4 text-xs text-gray-500">${months[r.payrollMonth]} ${r.payrollYear}</td>
-        <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${r.status==='PAID'?'badge-paid':'badge-pending'}">${r.status==='PAID'?'Paid':'Pending'}</span></td>
-        <td class="px-6 py-4"><div class="flex gap-3">
-          <button onclick="viewRecord(${r.id})" class="text-blue-500 hover:text-blue-700"><i class="fas fa-eye"></i></button>
-          <button onclick="editRecord(${r.id})" class="text-amber-500 hover:text-amber-700"><i class="fas fa-edit"></i></button>
-          <button onclick="deleteRecord(${r.id},'${escapeHtml(name)}')" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
-        </div></td>
-      </tr>`;
+      <td class="px-6 py-4"><div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-full bg-${color}-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-user text-${color}-600 text-sm"></i></div>
+        <div>
+          <p class="text-sm font-semibold text-gray-900">${escapeHtml(name)}</p>
+          <p class="text-xs text-gray-400 mono">${escapeHtml(staffId)}</p>
+          ${detail ? `<p class="text-xs text-gray-400">${escapeHtml(detail)}</p>` : ''}
+        </div>
+      </div></td>
+      <td class="px-6 py-4 text-sm text-gray-700">${fmt(r.basicSalary)}</td>
+      <td class="px-6 py-4 text-sm text-green-700">+${fmt(r.allowances)}</td>
+      <td class="px-6 py-4 text-sm text-red-600">-${fmt(r.deductions)}</td>
+      <td class="px-6 py-4 text-sm font-semibold text-gray-900">${fmt(r.netSalary)}</td>
+      <td class="px-6 py-4 text-xs text-gray-500">${months[r.payrollMonth]} ${r.payrollYear}</td>
+      <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${r.status === 'PAID' ? 'badge-paid' : 'badge-pending'}">${r.status === 'PAID' ? 'Paid' : 'Pending'}</span></td>
+      <td class="px-6 py-4"><div class="flex gap-3">
+        <button onclick="viewRecord(${r.id})" class="text-blue-500 hover:text-blue-700"><i class="fas fa-eye"></i></button>
+        <button onclick="editRecord(${r.id})" class="text-amber-500 hover:text-amber-700"><i class="fas fa-edit"></i></button>
+        <button onclick="deleteRecord(${r.id},'${escapeHtml(name)}')" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+      </div></td>
+    </tr>`;
     }).join('');
   }
-
   async function viewRecord(id) {
     openModal('viewModal');
     try {
