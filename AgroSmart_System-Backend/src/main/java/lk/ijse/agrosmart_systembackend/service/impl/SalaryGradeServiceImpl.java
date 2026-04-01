@@ -44,7 +44,7 @@ public class SalaryGradeServiceImpl implements SalaryGradeService {
         // Using Builder pattern for creation
         SalaryGrade grade = SalaryGrade.builder()
                 .grade(dto.getGrade())
-                .position(dto.getPosition())
+                .role(dto.getRole())
                 .minSalary(dto.getMinSalary())
                 .maxSalary(dto.getMaxSalary())
                 .build();
@@ -65,7 +65,7 @@ public class SalaryGradeServiceImpl implements SalaryGradeService {
 
         // Updating fields manually
         existingGrade.setGrade(dto.getGrade());
-        existingGrade.setPosition(dto.getPosition());
+        existingGrade.setRole(dto.getRole());
         existingGrade.setMinSalary(dto.getMinSalary());
         existingGrade.setMaxSalary(dto.getMaxSalary());
 

@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -17,90 +17,48 @@
       --red-light: #fef2f2;
       --amber: #92400e;
       --amber-light: #fef3c7;
-      --gray-50: #f8fafc;
-      --gray-100: #f1f5f9;
-      --gray-200: #e2e8f0;
-      --gray-500: #64748b;
-      --gray-700: #334155;
-      --gray-900: #0f172a;
     }
     * { box-sizing: border-box; }
     body { font-family: 'DM Sans', sans-serif; background: #f0f9ff; margin: 0; }
     code, .mono { font-family: 'DM Mono', monospace; }
 
-    /* Status badges */
     .badge-paid    { background: #dcfce7; color: #166534; }
     .badge-pending { background: #fef3c7; color: #92400e; }
 
-    /* Tab buttons */
     .tab-btn { padding: 0.6rem 1.25rem; border-radius: 0.5rem; font-weight: 500; font-size: 0.875rem; transition: all 0.2s; cursor: pointer; border: none; background: transparent; }
     .tab-btn.active { background: var(--blue); color: white; }
     .tab-btn:hover:not(.active) { background: #eff6ff; color: var(--blue); }
 
-    /* Modals */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; visibility: hidden; transition: all 0.25s; }
     .modal-overlay.open { opacity: 1; visibility: visible; }
     .modal-box { background: white; border-radius: 1rem; width: 100%; max-width: 42rem; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.25); transform: translateY(-16px); transition: transform 0.25s; }
     .modal-overlay.open .modal-box { transform: translateY(0); }
 
-    /* Cards */
     .stat-card { background: white; border-radius: 0.75rem; padding: 1.25rem; border: 1px solid #e2e8f0; }
 
-    /* Table */
     #salaryTableBody tr { transition: background 0.15s; }
     #salaryTableBody tr:hover { background: #f8fafc; }
 
-    /* Loading spinner */
     .spinner { border: 3px solid #e2e8f0; border-top-color: var(--blue); border-radius: 50%; width: 24px; height: 24px; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Toast */
     #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 100; padding: 0.875rem 1.25rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.15); transition: all 0.3s; transform: translateY(100px); opacity: 0; }
     #toast.show { transform: translateY(0); opacity: 1; }
     #toast.success { background: #166534; color: white; }
     #toast.error   { background: #b91c1c; color: white; }
     #toast.info    { background: #1d4ed8; color: white; }
 
-    /* Input focus */
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(29,78,216,0.15); }
 
-    /* Pulse */
-    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
     .pulse { animation: pulse 2s infinite; }
-
-    /* Skeleton */
-    .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 0.375rem; }
-    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-<!-- Toast -->
 <div id="toast"></div>
 
-<!-- Header -->
-<header class="bg-white border-b border-gray-200 sticky top-0 z-40">
-  <div class="max-w-full mx-auto px-6 py-3 flex justify-between items-center">
-    <div class="flex items-center gap-3">
-      <div class="w-9 h-9 bg-blue-700 rounded-lg flex items-center justify-center">
-        <i class="fas fa-train text-white text-sm"></i>
-      </div>
-      <div>
-        <h1 class="text-lg font-bold text-gray-900 leading-none">RailLanka Pro</h1>
-        <p class="text-xs text-gray-500 mt-0.5">Salary Management</p>
-      </div>
-    </div>
-    <div class="flex items-center gap-3">
-      <span id="apiStatus" class="flex items-center gap-1.5 text-xs text-gray-400">
-        <span class="w-2 h-2 rounded-full bg-gray-300 inline-block" id="apiDot"></span>
-        Connecting…
-      </span>
-      <span class="text-xs text-gray-400 mono" id="headerTime"></span>
-    </div>
-  </div>
-</header>
 
-<!-- Tabs -->
 <div class="bg-white border-b border-gray-200 px-6">
   <div class="flex gap-1 py-3">
     <button class="tab-btn active" data-tab="salary-records"><i class="fas fa-list mr-1.5"></i>Salary Records</button>
@@ -109,17 +67,13 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════ -->
-<!--  TAB 1 — SALARY RECORDS                    -->
-<!-- ═══════════════════════════════════════════ -->
+<!-- TAB 1 — SALARY RECORDS -->
 <div id="tab-salary-records" class="tab-content px-6 py-5 flex-1">
-
-  <!-- Action bar -->
   <div class="bg-white rounded-xl border border-gray-200 px-5 py-4 mb-4">
     <div class="flex flex-wrap justify-between items-center gap-3">
       <div class="flex flex-wrap gap-2">
         <div class="relative">
-          <input id="filterSearch" type="text" placeholder="Search employees…"
+          <input id="filterSearch" type="text" placeholder="Search staff…"
                  class="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-52" />
           <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
         </div>
@@ -140,29 +94,25 @@
         </button>
       </div>
       <div class="flex gap-2">
-        <button id="addSalaryBtn"
-                class="px-4 py-2 bg-green-700 text-white rounded-lg text-sm hover:bg-green-800 transition flex items-center gap-1.5">
+        <button id="addSalaryBtn" class="px-4 py-2 bg-green-700 text-white rounded-lg text-sm hover:bg-green-800 transition flex items-center gap-1.5">
           <i class="fas fa-plus"></i>Add Record
         </button>
-        <button id="exportPdfBtn"
-                class="px-4 py-2 bg-blue-700 text-white rounded-lg text-sm hover:bg-blue-800 transition flex items-center gap-1.5">
+        <button id="exportPdfBtn" class="px-4 py-2 bg-blue-700 text-white rounded-lg text-sm hover:bg-blue-800 transition flex items-center gap-1.5">
           <i class="fas fa-file-pdf"></i>Export PDF
         </button>
-        <button id="refreshBtn"
-                class="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200 transition">
+        <button id="refreshBtn" class="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200 transition">
           <i class="fas fa-sync-alt"></i>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Table -->
   <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-100">
         <thead class="bg-gray-50">
         <tr>
-          <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Employee</th>
+          <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Staff</th>
           <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Basic Salary</th>
           <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Allowances</th>
           <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Deductions</th>
@@ -173,7 +123,6 @@
         </tr>
         </thead>
         <tbody id="salaryTableBody" class="bg-white divide-y divide-gray-100">
-        <!-- Skeleton rows -->
         <tr><td colspan="8" class="px-6 py-10 text-center">
           <div class="flex justify-center"><div class="spinner"></div></div>
           <p class="text-gray-400 text-sm mt-3">Loading salary records…</p>
@@ -181,247 +130,132 @@
         </tbody>
       </table>
     </div>
-    <div id="tableFooter" class="px-6 py-3 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
+    <div class="px-6 py-3 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
       <span id="recordCount">— records</span>
-      <span>RailLanka Pro Salary Management</span>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════ -->
-<!--  TAB 2 — SALARY SETTINGS                   -->
-<!-- ═══════════════════════════════════════════ -->
+<!-- TAB 2 — SALARY SETTINGS -->
 <div id="tab-salary-settings" class="tab-content px-6 py-5 flex-1 hidden">
   <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-
-    <!-- Allowances -->
     <div class="bg-white rounded-xl border border-gray-200 p-5">
       <div class="flex items-center justify-between mb-4">
         <h3 class="font-semibold text-gray-800 flex items-center gap-2">
-          <span class="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center">
-            <i class="fas fa-plus-circle text-green-600 text-xs"></i>
-          </span>Allowances
+          <span class="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center"><i class="fas fa-plus-circle text-green-600 text-xs"></i></span>Allowances
         </h3>
-        <button onclick="openAddSetting('ALLOWANCE')"
-                class="px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-lg text-xs hover:bg-green-100 transition">
-          <i class="fas fa-plus mr-1"></i>Add
-        </button>
+        <button onclick="openAddSetting('ALLOWANCE')" class="px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-lg text-xs hover:bg-green-100 transition"><i class="fas fa-plus mr-1"></i>Add</button>
       </div>
-      <div id="allowancesList" class="space-y-3">
-        <div class="flex justify-center py-4"><div class="spinner"></div></div>
-      </div>
+      <div id="allowancesList" class="space-y-3"><div class="flex justify-center py-4"><div class="spinner"></div></div></div>
     </div>
-
-    <!-- Deductions -->
     <div class="bg-white rounded-xl border border-gray-200 p-5">
       <div class="flex items-center justify-between mb-4">
         <h3 class="font-semibold text-gray-800 flex items-center gap-2">
-          <span class="w-7 h-7 bg-red-100 rounded-lg flex items-center justify-center">
-            <i class="fas fa-minus-circle text-red-600 text-xs"></i>
-          </span>Deductions
+          <span class="w-7 h-7 bg-red-100 rounded-lg flex items-center justify-center"><i class="fas fa-minus-circle text-red-600 text-xs"></i></span>Deductions
         </h3>
-        <button onclick="openAddSetting('DEDUCTION')"
-                class="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-lg text-xs hover:bg-red-100 transition">
-          <i class="fas fa-plus mr-1"></i>Add
-        </button>
+        <button onclick="openAddSetting('DEDUCTION')" class="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-lg text-xs hover:bg-red-100 transition"><i class="fas fa-plus mr-1"></i>Add</button>
       </div>
-      <div id="deductionsList" class="space-y-3">
-        <div class="flex justify-center py-4"><div class="spinner"></div></div>
-      </div>
+      <div id="deductionsList" class="space-y-3"><div class="flex justify-center py-4"><div class="spinner"></div></div></div>
     </div>
   </div>
 
-  <!-- Tax -->
   <div class="bg-white rounded-xl border border-gray-200 p-5 mb-5">
     <h3 class="font-semibold text-gray-800 flex items-center gap-2 mb-4">
-      <span class="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center">
-        <i class="fas fa-percent text-purple-600 text-xs"></i>
-      </span>Tax Settings
+      <span class="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center"><i class="fas fa-percent text-purple-600 text-xs"></i></span>Tax Settings
     </h3>
-    <div id="taxList" class="space-y-3">
-      <div class="flex justify-center py-4"><div class="spinner"></div></div>
-    </div>
-    <button onclick="openAddSetting('TAX')"
-            class="mt-3 px-4 py-2 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg text-sm hover:bg-purple-100 transition">
-      <i class="fas fa-plus mr-1.5"></i>Add Tax Rule
-    </button>
+    <div id="taxList" class="space-y-3"><div class="flex justify-center py-4"><div class="spinner"></div></div></div>
+    <button onclick="openAddSetting('TAX')" class="mt-3 px-4 py-2 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg text-sm hover:bg-purple-100 transition"><i class="fas fa-plus mr-1.5"></i>Add Tax Rule</button>
   </div>
 
-  <!-- Grades -->
   <div class="bg-white rounded-xl border border-gray-200 p-5">
     <div class="flex items-center justify-between mb-4">
       <h3 class="font-semibold text-gray-800 flex items-center gap-2">
-        <span class="w-7 h-7 bg-amber-100 rounded-lg flex items-center justify-center">
-          <i class="fas fa-chart-line text-amber-600 text-xs"></i>
-        </span>Salary Grades
+        <span class="w-7 h-7 bg-amber-100 rounded-lg flex items-center justify-center"><i class="fas fa-chart-line text-amber-600 text-xs"></i></span>Salary Grades
       </h3>
-      <button onclick="openAddGrade()"
-              class="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-xs hover:bg-blue-100 transition">
-        <i class="fas fa-plus mr-1"></i>Add Grade
-      </button>
+      <button onclick="openAddGrade()" class="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-xs hover:bg-blue-100 transition"><i class="fas fa-plus mr-1"></i>Add Grade</button>
     </div>
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-100">
         <thead class="bg-gray-50">
         <tr>
           <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Grade</th>
-          <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Position</th>
+          <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Role</th>
           <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Salary Range</th>
           <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
         </tr>
         </thead>
         <tbody id="gradesTableBody" class="divide-y divide-gray-100">
-        <tr><td colspan="4" class="px-4 py-6 text-center">
-          <div class="flex justify-center"><div class="spinner"></div></div>
-        </td></tr>
+        <tr><td colspan="4" class="px-4 py-6 text-center"><div class="flex justify-center"><div class="spinner"></div></div></td></tr>
         </tbody>
       </table>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════ -->
-<!--  TAB 3 — PAYROLL PROCESSING                -->
-<!-- ═══════════════════════════════════════════ -->
+<!-- TAB 3 — PAYROLL PROCESSING -->
 <div id="tab-payroll-processing" class="tab-content px-6 py-5 flex-1 hidden">
   <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-
-    <!-- Period selector -->
     <div class="bg-white rounded-xl border border-gray-200 p-5">
-      <h3 class="font-semibold text-gray-800 flex items-center gap-2 mb-4">
-        <span class="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center">
-          <i class="fas fa-calendar-alt text-blue-600 text-xs"></i>
-        </span>Payroll Period
-      </h3>
+      <h3 class="font-semibold text-gray-800 flex items-center gap-2 mb-4"><span class="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center"><i class="fas fa-calendar-alt text-blue-600 text-xs"></i></span>Payroll Period</h3>
       <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Month</label>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Month</label>
           <select id="payrollMonth" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-            <option value="1">January</option><option value="2">February</option>
-            <option value="3">March</option><option value="4">April</option>
-            <option value="5" selected>May</option><option value="6">June</option>
-            <option value="7">July</option><option value="8">August</option>
-            <option value="9">September</option><option value="10">October</option>
-            <option value="11">November</option><option value="12">December</option>
+            <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+            <option value="4">April</option><option value="5" selected>May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+            <option value="10">October</option><option value="11">November</option><option value="12">December</option>
           </select>
         </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Year</label>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1">Year</label>
           <select id="payrollYear" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
             <option value="2023">2023</option><option value="2024" selected>2024</option><option value="2025">2025</option>
           </select>
         </div>
-        <button id="loadSummaryBtn"
-                class="w-full py-2 bg-blue-700 text-white rounded-lg text-sm hover:bg-blue-800 transition flex items-center justify-center gap-2">
-          <i class="fas fa-sync-alt"></i>Load Summary
-        </button>
+        <button id="loadSummaryBtn" class="w-full py-2 bg-blue-700 text-white rounded-lg text-sm hover:bg-blue-800 transition flex items-center justify-center gap-2"><i class="fas fa-sync-alt"></i>Load Summary</button>
       </div>
     </div>
-
-    <!-- Controls -->
     <div class="bg-white rounded-xl border border-gray-200 p-5">
-      <h3 class="font-semibold text-gray-800 flex items-center gap-2 mb-4">
-        <span class="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center">
-          <i class="fas fa-cogs text-green-600 text-xs"></i>
-        </span>Process Controls
-      </h3>
+      <h3 class="font-semibold text-gray-800 flex items-center gap-2 mb-4"><span class="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center"><i class="fas fa-cogs text-green-600 text-xs"></i></span>Process Controls</h3>
       <div class="space-y-3">
-        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-          <div>
-            <p class="text-sm font-medium text-gray-800">Calculate Salaries</p>
-            <p class="text-xs text-gray-500">Auto-generate PENDING records for active employees</p>
-          </div>
-          <button id="calculateBtn"
-                  class="px-3 py-1.5 bg-blue-700 text-white rounded-lg text-sm hover:bg-blue-800 transition whitespace-nowrap">
-            Calculate
-          </button>
-        </div>
-        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-          <div>
-            <p class="text-sm font-medium text-gray-800">Generate Payslips</p>
-            <p class="text-xs text-gray-500">Download payroll report PDF</p>
-          </div>
-          <button id="generateBtn"
-                  class="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition whitespace-nowrap">
-            Generate
-          </button>
-        </div>
-        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-          <div>
-            <p class="text-sm font-medium text-gray-800">Process Payments</p>
-            <p class="text-xs text-gray-500">Mark all PENDING → PAID, set payment date today</p>
-          </div>
-          <button id="processBtn"
-                  class="px-3 py-1.5 bg-green-700 text-white rounded-lg text-sm hover:bg-green-800 transition whitespace-nowrap">
-            Process
-          </button>
-        </div>
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"><div><p class="text-sm font-medium text-gray-800">Calculate Salaries</p><p class="text-xs text-gray-500">Auto-generate PENDING records for active staff</p></div><button id="calculateBtn" class="px-3 py-1.5 bg-blue-700 text-white rounded-lg text-sm hover:bg-blue-800 transition">Calculate</button></div>
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"><div><p class="text-sm font-medium text-gray-800">Generate Payslips</p><p class="text-xs text-gray-500">Download payroll report PDF</p></div><button id="generateBtn" class="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition">Generate</button></div>
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"><div><p class="text-sm font-medium text-gray-800">Process Payments</p><p class="text-xs text-gray-500">Mark all PENDING → PAID, set payment date today</p></div><button id="processBtn" class="px-3 py-1.5 bg-green-700 text-white rounded-lg text-sm hover:bg-green-800 transition">Process</button></div>
       </div>
     </div>
   </div>
-
-  <!-- Summary cards -->
   <div class="bg-white rounded-xl border border-gray-200 p-5">
-    <h3 class="font-semibold text-gray-800 flex items-center gap-2 mb-4">
-      <span class="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center">
-        <i class="fas fa-file-invoice-dollar text-purple-600 text-xs"></i>
-      </span>
-      Payroll Summary – <span id="summaryLabel" class="text-blue-700 ml-1">May 2024</span>
-    </h3>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5" id="summaryCards">
-      <div class="stat-card text-center"><p class="text-xs text-gray-500 mb-1">Total Employees</p><p id="sumTotal" class="text-2xl font-bold text-gray-800">—</p></div>
+    <h3 class="font-semibold text-gray-800 flex items-center gap-2 mb-4"><span class="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center"><i class="fas fa-file-invoice-dollar text-purple-600 text-xs"></i></span>Payroll Summary – <span id="summaryLabel" class="text-blue-700 ml-1">May 2024</span></h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+      <div class="stat-card text-center"><p class="text-xs text-gray-500 mb-1">Total Staff</p><p id="sumTotal" class="text-2xl font-bold text-gray-800">—</p></div>
       <div class="stat-card text-center"><p class="text-xs text-gray-500 mb-1">Total Basic</p><p id="sumBasic" class="text-2xl font-bold text-gray-800">—</p></div>
       <div class="stat-card text-center"><p class="text-xs text-gray-500 mb-1">Total Deductions</p><p id="sumDeductions" class="text-2xl font-bold text-gray-800">—</p></div>
-      <div class="stat-card text-center border-green-200 bg-green-50">
-        <p class="text-xs text-green-600 mb-1">Net Payroll</p>
-        <p id="sumNet" class="text-2xl font-bold text-green-700">—</p>
-      </div>
+      <div class="stat-card text-center border-green-200 bg-green-50"><p class="text-xs text-green-600 mb-1">Net Payroll</p><p id="sumNet" class="text-2xl font-bold text-green-700">—</p></div>
     </div>
     <div class="flex justify-between items-center border-t border-gray-100 pt-4">
       <div class="flex gap-4 text-xs">
         <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>Paid: <strong id="sumPaid">—</strong></span>
         <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>Pending: <strong id="sumPending">—</strong></span>
       </div>
-      <div class="flex gap-2">
-        <button id="exportReportBtn"
-                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition">
-          <i class="fas fa-download mr-1.5"></i>Export Report
-        </button>
-      </div>
+      <button id="exportReportBtn" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition"><i class="fas fa-download mr-1.5"></i>Export Report</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════ -->
-<!--  MODAL: VIEW SALARY DETAILS                 -->
-<!-- ═══════════════════════════════════════════ -->
+<!-- MODAL: VIEW SALARY DETAILS -->
 <div id="viewModal" class="modal-overlay" onclick="if(event.target===this)closeModal('viewModal')">
   <div class="modal-box">
     <div class="bg-gradient-to-r from-blue-700 to-blue-900 p-6 text-white relative">
-      <button onclick="closeModal('viewModal')" class="absolute top-4 right-4 text-white/70 hover:text-white text-xl transition">
-        <i class="fas fa-times"></i>
-      </button>
+      <button onclick="closeModal('viewModal')" class="absolute top-4 right-4 text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
       <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center">
-          <i class="fas fa-money-bill-wave text-xl"></i>
-        </div>
-        <div>
-          <h2 class="text-xl font-bold">Salary Details</h2>
-          <p class="text-blue-200 text-sm">Complete salary information</p>
-        </div>
+        <div class="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center"><i class="fas fa-money-bill-wave text-xl"></i></div>
+        <div><h2 class="text-xl font-bold">Salary Details</h2><p class="text-blue-200 text-sm">Complete salary information</p></div>
       </div>
     </div>
     <div class="p-6 max-h-[72vh] overflow-y-auto space-y-4">
-
-      <!-- Employee info -->
       <div class="flex items-center gap-4 pb-4 border-b border-gray-100">
         <div class="relative">
-          <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-            <i class="fas fa-user text-blue-600 text-2xl"></i>
-          </div>
-          <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow">
-            <div id="vStatusDot" class="w-3 h-3 rounded-full bg-green-500 pulse"></div>
-          </div>
+          <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center"><i class="fas fa-user text-blue-600 text-2xl"></i></div>
+          <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow"><div id="vStatusDot" class="w-3 h-3 rounded-full bg-green-500 pulse"></div></div>
         </div>
         <div>
           <h3 id="vName" class="text-lg font-bold text-gray-900">—</h3>
@@ -432,13 +266,8 @@
           <p class="text-xs text-gray-500 mt-1"><i class="fas fa-id-badge mr-1"></i>ID: <span id="vEmpId" class="mono">—</span></p>
         </div>
       </div>
-
-      <!-- Breakdown -->
       <div class="bg-gray-50 rounded-xl p-4">
-        <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <i class="fas fa-receipt text-blue-600"></i>Salary Breakdown
-          <span id="vPeriod" class="text-gray-400 font-normal text-xs"></span>
-        </h4>
+        <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><i class="fas fa-receipt text-blue-600"></i>Salary Breakdown <span id="vPeriod" class="text-gray-400 font-normal text-xs"></span></h4>
         <div class="grid grid-cols-2 gap-3">
           <div><p class="text-xs text-gray-400 uppercase mb-0.5">Basic</p><p id="vBasic" class="font-semibold text-gray-900">—</p></div>
           <div><p class="text-xs text-gray-400 uppercase mb-0.5">Allowances</p><p id="vAllow" class="font-semibold text-green-600">—</p></div>
@@ -446,12 +275,8 @@
           <div class="bg-blue-50 rounded-lg p-2"><p class="text-xs text-gray-400 uppercase mb-0.5">Net Salary</p><p id="vNet" class="font-bold text-blue-700">—</p></div>
         </div>
       </div>
-
-      <!-- Payment info -->
       <div class="bg-gray-50 rounded-xl p-4">
-        <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <i class="fas fa-credit-card text-purple-600"></i>Payment Information
-        </h4>
+        <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><i class="fas fa-credit-card text-purple-600"></i>Payment Information</h4>
         <div class="grid grid-cols-2 gap-3 text-sm">
           <div><p class="text-xs text-gray-400 uppercase mb-0.5">Payment Date</p><p id="vPayDate" class="font-medium text-gray-800">—</p></div>
           <div><p class="text-xs text-gray-400 uppercase mb-0.5">Method</p><p id="vPayMethod" class="font-medium text-gray-800">—</p></div>
@@ -459,138 +284,74 @@
           <div><p class="text-xs text-gray-400 uppercase mb-0.5">Account</p><p id="vAccount" class="font-medium text-gray-800 mono">—</p></div>
         </div>
       </div>
-
-      <!-- Notes -->
-      <div id="vNotesBox" class="hidden bg-amber-50 border border-amber-100 rounded-xl p-4 text-sm text-amber-800">
-        <i class="fas fa-sticky-note mr-1.5"></i><span id="vNotes"></span>
-      </div>
-
-      <!-- Actions -->
-      <div class="flex gap-2">
-        <button id="vDownloadBtn"
-                class="flex-1 py-2 bg-blue-700 text-white rounded-lg text-sm hover:bg-blue-800 transition flex items-center justify-center gap-2">
-          <i class="fas fa-file-pdf"></i>Download Payslip
-        </button>
-      </div>
+      <div id="vNotesBox" class="hidden bg-amber-50 border border-amber-100 rounded-xl p-4 text-sm text-amber-800"><i class="fas fa-sticky-note mr-1.5"></i><span id="vNotes"></span></div>
+      <button id="vDownloadBtn" class="w-full py-2 bg-blue-700 text-white rounded-lg text-sm hover:bg-blue-800 transition flex items-center justify-center gap-2"><i class="fas fa-file-pdf"></i>Download Payslip</button>
     </div>
     <div class="bg-gray-50 px-6 py-3 flex justify-end border-t border-gray-100">
-      <button onclick="closeModal('viewModal')"
-              class="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition">
-        Close
-      </button>
+      <button onclick="closeModal('viewModal')" class="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition">Close</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════ -->
-<!--  MODAL: ADD / EDIT SALARY RECORD           -->
-<!-- ═══════════════════════════════════════════ -->
+<!-- MODAL: ADD / EDIT SALARY RECORD -->
 <div id="editModal" class="modal-overlay" onclick="if(event.target===this)closeModal('editModal')">
   <div class="modal-box">
     <div class="bg-gradient-to-r from-blue-700 to-blue-900 p-6 text-white relative">
-      <button onclick="closeModal('editModal')" class="absolute top-4 right-4 text-white/70 hover:text-white text-xl transition">
-        <i class="fas fa-times"></i>
-      </button>
+      <button onclick="closeModal('editModal')" class="absolute top-4 right-4 text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
       <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center">
-          <i class="fas fa-money-bill-wave text-xl"></i>
-        </div>
-        <div>
-          <h2 id="editModalTitle" class="text-xl font-bold">Add Salary Record</h2>
-          <p class="text-blue-200 text-sm">Fill in the salary details below</p>
-        </div>
+        <div class="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center"><i class="fas fa-money-bill-wave text-xl"></i></div>
+        <div><h2 id="editModalTitle" class="text-xl font-bold">Add Salary Record</h2><p class="text-blue-200 text-sm">Fill in the salary details below</p></div>
       </div>
     </div>
     <div class="p-6 max-h-[72vh] overflow-y-auto">
       <input type="hidden" id="editRecordId" />
       <div class="grid grid-cols-2 gap-4">
         <div class="col-span-2">
-          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Employee <span class="text-red-500">*</span></label>
-          <select id="editEmployee" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-            <option value="">— Select Employee —</option>
-          </select>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Staff <span class="text-red-500">*</span></label>
+          <select id="editEmployee" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"><option value="">— Select Staff —</option></select>
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Basic Salary (LKR) <span class="text-red-500">*</span></label>
-          <input id="editBasic" type="number" min="0" placeholder="0.00"
-                 class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Allowances (LKR)</label>
-          <input id="editAllowances" type="number" min="0" placeholder="0.00"
-                 class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Deductions (LKR)</label>
-          <input id="editDeductions" type="number" min="0" placeholder="0.00"
-                 class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Payment Date</label>
-          <input id="editPayDate" type="date"
-                 class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Payroll Month <span class="text-red-500">*</span></label>
+        <div><label class="block text-xs font-semibold text-gray-600 mb-1.5">Basic Salary (LKR) <span class="text-red-500">*</span></label><input id="editBasic" type="number" min="0" placeholder="0.00" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
+        <div><label class="block text-xs font-semibold text-gray-600 mb-1.5">Allowances (LKR)</label><input id="editAllowances" type="number" min="0" placeholder="0.00" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
+        <div><label class="block text-xs font-semibold text-gray-600 mb-1.5">Deductions (LKR)</label><input id="editDeductions" type="number" min="0" placeholder="0.00" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
+        <div><label class="block text-xs font-semibold text-gray-600 mb-1.5">Payment Date</label><input id="editPayDate" type="date" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
+        <div><label class="block text-xs font-semibold text-gray-600 mb-1.5">Payroll Month <span class="text-red-500">*</span></label>
           <select id="editMonth" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-            <option value="1">January</option><option value="2">February</option>
-            <option value="3">March</option><option value="4">April</option>
-            <option value="5">May</option><option value="6">June</option>
-            <option value="7">July</option><option value="8">August</option>
-            <option value="9">September</option><option value="10">October</option>
-            <option value="11">November</option><option value="12">December</option>
+            <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+            <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+            <option value="10">October</option><option value="11">November</option><option value="12">December</option>
           </select>
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Payroll Year <span class="text-red-500">*</span></label>
+        <div><label class="block text-xs font-semibold text-gray-600 mb-1.5">Payroll Year <span class="text-red-500">*</span></label>
           <select id="editYear" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
             <option value="2023">2023</option><option value="2024" selected>2024</option><option value="2025">2025</option>
           </select>
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Payment Method</label>
+        <div><label class="block text-xs font-semibold text-gray-600 mb-1.5">Payment Method</label>
           <select id="editPayMethod" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-            <option value="BANK_TRANSFER">Bank Transfer</option>
-            <option value="CASH">Cash</option>
-            <option value="CHEQUE">Cheque</option>
+            <option value="BANK_TRANSFER">Bank Transfer</option><option value="CASH">Cash</option><option value="CHEQUE">Cheque</option>
           </select>
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Status</label>
+        <div><label class="block text-xs font-semibold text-gray-600 mb-1.5">Status</label>
           <select id="editStatus" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-            <option value="PENDING">Pending</option>
-            <option value="PAID">Paid</option>
+            <option value="PENDING">Pending</option><option value="PAID">Paid</option>
           </select>
         </div>
-        <div class="col-span-2">
-          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Notes</label>
-          <textarea id="editNotes" rows="2" placeholder="Additional notes…"
-                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"></textarea>
-        </div>
+        <div class="col-span-2"><label class="block text-xs font-semibold text-gray-600 mb-1.5">Notes</label><textarea id="editNotes" rows="2" placeholder="Additional notes…" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"></textarea></div>
       </div>
-
-      <!-- Net preview -->
       <div class="mt-4 p-3 bg-blue-50 rounded-xl flex items-center justify-between">
         <span class="text-sm text-gray-600">Calculated Net Salary</span>
         <span id="netPreview" class="font-bold text-blue-700 text-lg">LKR 0.00</span>
       </div>
     </div>
     <div class="bg-gray-50 px-6 py-3 flex justify-end gap-3 border-t border-gray-100">
-      <button onclick="closeModal('editModal')"
-              class="px-4 py-2 text-gray-600 border border-gray-200 rounded-lg text-sm hover:bg-gray-100 transition">
-        Cancel
-      </button>
-      <button id="saveRecordBtn"
-              class="px-5 py-2 bg-blue-700 text-white rounded-lg text-sm hover:bg-blue-800 transition flex items-center gap-2">
-        <i class="fas fa-save"></i>Save Record
-      </button>
+      <button onclick="closeModal('editModal')" class="px-4 py-2 text-gray-600 border border-gray-200 rounded-lg text-sm hover:bg-gray-100 transition">Cancel</button>
+      <button id="saveRecordBtn" class="px-5 py-2 bg-blue-700 text-white rounded-lg text-sm hover:bg-blue-800 transition flex items-center gap-2"><i class="fas fa-save"></i>Save Record</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════ -->
-<!--  MODAL: ADD / EDIT SETTING                 -->
-<!-- ═══════════════════════════════════════════ -->
+<!-- MODAL: ADD / EDIT SETTING -->
 <div id="settingModal" class="modal-overlay" onclick="if(event.target===this)closeModal('settingModal')">
   <div class="modal-box max-w-md">
     <div class="bg-gradient-to-r from-blue-700 to-blue-900 p-5 text-white relative">
@@ -598,33 +359,18 @@
       <h2 id="settingModalTitle" class="font-bold text-lg">Add Allowance</h2>
     </div>
     <div class="p-5 space-y-3">
-      <input type="hidden" id="settingId" />
-      <input type="hidden" id="settingType" />
-      <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Name <span class="text-red-500">*</span></label>
-        <input id="settingName" type="text" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="e.g. Travel Allowance" />
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Description</label>
-        <input id="settingDesc" type="text" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="Short description" />
-      </div>
+      <input type="hidden" id="settingId" /><input type="hidden" id="settingType" />
+      <div><label class="block text-xs font-semibold text-gray-600 mb-1">Name <span class="text-red-500">*</span></label><input id="settingName" type="text" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="e.g. Travel Allowance" /></div>
+      <div><label class="block text-xs font-semibold text-gray-600 mb-1">Description</label><input id="settingDesc" type="text" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="Short description" /></div>
       <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Value <span class="text-red-500">*</span></label>
-          <input id="settingValue" type="number" min="0" step="0.01" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Value Type</label>
+        <div><label class="block text-xs font-semibold text-gray-600 mb-1">Value <span class="text-red-500">*</span></label><input id="settingValue" type="number" min="0" step="0.01" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" /></div>
+        <div><label class="block text-xs font-semibold text-gray-600 mb-1">Value Type</label>
           <select id="settingValueType" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
-            <option value="FIXED">Fixed (LKR)</option>
-            <option value="PERCENTAGE">Percentage (%)</option>
+            <option value="FIXED">Fixed (LKR)</option><option value="PERCENTAGE">Percentage (%)</option>
           </select>
         </div>
       </div>
-      <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-        <input id="settingActive" type="checkbox" checked class="w-4 h-4 rounded border-gray-300" />
-        Active
-      </label>
+      <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input id="settingActive" type="checkbox" checked class="w-4 h-4" /> Active</label>
     </div>
     <div class="bg-gray-50 px-5 py-3 flex justify-end gap-2 border-t border-gray-100">
       <button onclick="closeModal('settingModal')" class="px-4 py-2 text-gray-600 border border-gray-200 rounded-lg text-sm hover:bg-gray-100 transition">Cancel</button>
@@ -633,9 +379,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════ -->
-<!--  MODAL: ADD / EDIT GRADE                   -->
-<!-- ═══════════════════════════════════════════ -->
+<!-- MODAL: ADD / EDIT GRADE — fixed with role dropdown -->
 <div id="gradeModal" class="modal-overlay" onclick="if(event.target===this)closeModal('gradeModal')">
   <div class="modal-box max-w-md">
     <div class="bg-gradient-to-r from-blue-700 to-blue-900 p-5 text-white relative">
@@ -650,8 +394,14 @@
           <input id="gradeCode" type="text" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm mono" placeholder="G1" />
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Position <span class="text-red-500">*</span></label>
-          <input id="gradePosition" type="text" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="Station Master" />
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Role <span class="text-red-500">*</span></label>
+          <select id="gradeRole" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+            <option value="">— Select Role —</option>
+            <option value="ADMIN">Admin</option>
+            <option value="MANAGER">Manager</option>
+            <option value="SCIENTIST">Scientist</option>
+            <option value="USER">User</option>
+          </select>
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-600 mb-1">Min Salary (LKR) <span class="text-red-500">*</span></label>
@@ -670,19 +420,20 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════ -->
-<!--  SCRIPT                                    -->
-<!-- ═══════════════════════════════════════════ -->
 <script>
-  const API = 'http://localhost:8080/api';
-  let currentViewId = null;
-
-  // ─── Utils ───────────────────────────────────────────────────────────────
-
-  const fmt = v => 'LKR ' + Number(v || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const API = 'http://localhost:8080/api/v1';
+  const fmt = v => 'LKR ' + Number(v || 0).toLocaleString('en-LK', { minimumFractionDigits: 2 });
   const months = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
 
-  function toast(msg, type = 'info') {
+  // Role enum values — must match your backend Role enum exactly
+  const ROLES = [
+    { value: 'ADMIN',     label: 'Admin' },
+    { value: 'MANAGER',   label: 'Manager' },
+    { value: 'SCIENTIST', label: 'Scientist' },
+    { value: 'USER',      label: 'User' },
+  ];
+
+  function toast(msg, type='info') {
     const el = document.getElementById('toast');
     el.className = `show ${type}`;
     el.innerHTML = `<i class="fas ${type==='success'?'fa-check-circle':type==='error'?'fa-exclamation-circle':'fa-info-circle'}"></i> ${msg}`;
@@ -690,307 +441,234 @@
     el._t = setTimeout(() => el.classList.remove('show'), 3500);
   }
 
-  function openModal(id)  { document.getElementById(id).classList.add('open'); }
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
   async function api(path, opts = {}) {
-    const r = await fetch(API + path, {
-      headers: { 'Content-Type': 'application/json' },
-      ...opts
-    });
-    if (!r.ok) {
-      let msg = `HTTP ${r.status}`;
-      try { const j = await r.json(); msg = j.message || msg; } catch {}
+    const token = localStorage.getItem('token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const resp = await fetch(API + path, { headers, ...opts });
+    if (!resp.ok) {
+      let msg = `HTTP ${resp.status}`;
+      try { const err = await resp.json(); msg = err.message || err.error || msg; } catch {}
       throw new Error(msg);
     }
-    if (r.status === 204) return null;
-    const j = await r.json();
-    return j.data !== undefined ? j.data : j;
+    if (resp.status === 204) return null;
+    const data = await resp.json();
+    return data.data !== undefined ? data.data : data;
   }
 
-  // ─── API health check ────────────────────────────────────────────────────
-
-  async function checkApi() {
-    try {
-      await fetch(API + '/employees');
-      document.getElementById('apiDot').className = 'w-2 h-2 rounded-full bg-green-500 inline-block';
-      document.getElementById('apiStatus').innerHTML = '<span class="w-2 h-2 rounded-full bg-green-500 inline-block" id="apiDot"></span> API Connected';
-    } catch {
-      document.getElementById('apiDot').className = 'w-2 h-2 rounded-full bg-red-500 inline-block';
-      document.getElementById('apiStatus').innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500 inline-block" id="apiDot"></span> API Offline';
-      toast('Cannot reach API at ' + API, 'error');
-    }
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   }
 
-  // clock
-  setInterval(() => {
-    document.getElementById('headerTime').textContent = new Date().toLocaleTimeString('en-LK');
-  }, 1000);
 
-  // ─── Tabs ────────────────────────────────────────────────────────────────
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    document.getElementById('tab-' + tab).classList.remove('hidden');
+    if (tab === 'salary-settings') loadSettings();
+    if (tab === 'payroll-processing') loadSummary();
+  }));
 
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-      btn.classList.add('active');
-      const tab = btn.dataset.tab;
-      document.getElementById('tab-' + tab).classList.remove('hidden');
-      if (tab === 'salary-settings') loadSettings();
-      if (tab === 'payroll-processing') loadSummary();
-    });
-  });
-
-  // ─── SALARY RECORDS ──────────────────────────────────────────────────────
-
-  async function loadRecords(search = '', status = '', dept = '') {
+  // ==================== SALARY RECORDS ====================
+  async function loadRecords(search='', status='', dept='') {
     const body = document.getElementById('salaryTableBody');
-    body.innerHTML = `<tr><td colspan="8" class="px-6 py-10 text-center">
-      <div class="flex justify-center"><div class="spinner"></div></div>
-      <p class="text-gray-400 text-sm mt-3">Loading…</p>
-    </td></tr>`;
-
+    body.innerHTML = `<tr><td colspan="8" class="px-6 py-10 text-center"><div class="flex justify-center"><div class="spinner"></div></div><p class="text-gray-400 text-sm mt-3">Loading…</p></td></tr>`;
     try {
       const params = new URLSearchParams();
       if (search) params.set('search', search);
       if (status) params.set('status', status);
       if (dept)   params.set('department', dept);
-      const records = await api('/salary-records?' + params);
-      renderTable(records);
+      const records = await api('/salary-records' + (params.toString() ? '?' + params.toString() : ''));
+      renderRecords(records);
     } catch (e) {
-      body.innerHTML = `<tr><td colspan="8" class="px-6 py-10 text-center text-red-500">
-        <i class="fas fa-exclamation-triangle mr-2"></i>${e.message}
-      </td></tr>`;
+      body.innerHTML = `<tr><td colspan="8" class="px-6 py-10 text-center text-red-500"><i class="fas fa-exclamation-triangle mr-2"></i>${e.message}</td></tr>`;
     }
   }
 
-  function renderTable(records) {
+
+  function renderRecords(records) {
     const body = document.getElementById('salaryTableBody');
     document.getElementById('recordCount').textContent = records.length + ' record' + (records.length !== 1 ? 's' : '');
-
     if (!records.length) {
-      body.innerHTML = `<tr><td colspan="8" class="px-6 py-12 text-center text-gray-400">
-        <i class="fas fa-inbox text-3xl mb-3 block opacity-30"></i>No records found
-      </td></tr>`;
+      body.innerHTML = `<tr><td colspan="8" class="px-6 py-12 text-center text-gray-400"><i class="fas fa-inbox text-3xl mb-3 block opacity-30"></i>No records found</td></tr>`;
       return;
     }
 
-    const colors = ['blue','green','purple','amber','rose','teal','indigo','orange'];
+    const colors = ['blue','green','purple','amber','teal','indigo','rose'];
     body.innerHTML = records.map((r, i) => {
-      const color = colors[i % colors.length];
-      const isPaid = r.status === 'PAID';
-      return `<tr>
-        <td class="px-6 py-4">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-full bg-${color}-100 flex items-center justify-center flex-shrink-0">
-              <i class="fas fa-user text-${color}-600 text-sm"></i>
-            </div>
-            <div>
-              <p class="text-sm font-semibold text-gray-900">${r.employeeName}</p>
-              <p class="text-xs text-gray-400 mono">${r.employeeId}</p>
-            </div>
+      const s =  api('/staff/' + r.staffId);
+
+      const color   = colors[i % colors.length];
+      const name    = r.fullName || r.fullName || '—';
+      const staffId = r.staffId   || '—';
+      const detail  = [r.designation, r.role].filter(Boolean).join(' · ') || r.designation || '';
+      return `<tr class="hover:bg-gray-50">
+        <td class="px-6 py-4"><div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-${color}-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-user text-${color}-600 text-sm"></i></div>
+          <div>
+            <p class="text-sm font-semibold text-gray-900">${escapeHtml(name)}</p>
+            <p class="text-xs text-gray-400 mono">${escapeHtml(staffId)}</p>
+            ${detail ? `<p class="text-xs text-gray-400">${escapeHtml(detail)}</p>` : ''}
           </div>
-        </td>
+        </div></td>
         <td class="px-6 py-4 text-sm text-gray-700">${fmt(r.basicSalary)}</td>
         <td class="px-6 py-4 text-sm text-green-700">+${fmt(r.allowances)}</td>
-        <td class="px-6 py-4 text-sm text-red-600">−${fmt(r.deductions)}</td>
+        <td class="px-6 py-4 text-sm text-red-600">-${fmt(r.deductions)}</td>
         <td class="px-6 py-4 text-sm font-semibold text-gray-900">${fmt(r.netSalary)}</td>
         <td class="px-6 py-4 text-xs text-gray-500">${months[r.payrollMonth]} ${r.payrollYear}</td>
-        <td class="px-6 py-4">
-          <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${isPaid ? 'badge-paid' : 'badge-pending'}">
-            ${isPaid ? 'Paid' : 'Pending'}
-          </span>
-        </td>
-        <td class="px-6 py-4">
-          <div class="flex items-center gap-3">
-            <button onclick="viewRecord(${r.id})" title="View" class="text-blue-500 hover:text-blue-700 transition"><i class="fas fa-eye"></i></button>
-            <button onclick="editRecord(${r.id})" title="Edit" class="text-amber-500 hover:text-amber-700 transition"><i class="fas fa-edit"></i></button>
-            <button onclick="deleteRecord(${r.id},'${r.employeeName}')" title="Delete" class="text-red-400 hover:text-red-600 transition"><i class="fas fa-trash"></i></button>
-          </div>
-        </td>
+        <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${r.status==='PAID'?'badge-paid':'badge-pending'}">${r.status==='PAID'?'Paid':'Pending'}</span></td>
+        <td class="px-6 py-4"><div class="flex gap-3">
+          <button onclick="viewRecord(${r.id})" class="text-blue-500 hover:text-blue-700"><i class="fas fa-eye"></i></button>
+          <button onclick="editRecord(${r.id})" class="text-amber-500 hover:text-amber-700"><i class="fas fa-edit"></i></button>
+          <button onclick="deleteRecord(${r.id},'${escapeHtml(name)}')" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+        </div></td>
       </tr>`;
     }).join('');
   }
 
-  // Search
-  document.getElementById('filterBtn').addEventListener('click', () => {
-    loadRecords(
-            document.getElementById('filterSearch').value.trim(),
-            document.getElementById('filterStatus').value,
-            document.getElementById('filterDept').value
-    );
-  });
-  document.getElementById('filterSearch').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('filterBtn').click();
-  });
-  document.getElementById('refreshBtn').addEventListener('click', () => loadRecords());
-
-  // ─── VIEW record ─────────────────────────────────────────────────────────
-
   async function viewRecord(id) {
-    currentViewId = id;
     openModal('viewModal');
     try {
       const r = await api('/salary-records/' + id);
-      const isPaid = r.status === 'PAID';
-      document.getElementById('vName').textContent      = r.employeeName;
-      document.getElementById('vDept').textContent      = r.department;
-      document.getElementById('vEmpId').textContent     = r.employeeId;
-      document.getElementById('vBasic').textContent     = fmt(r.basicSalary);
-      document.getElementById('vAllow').textContent     = '+' + fmt(r.allowances);
-      document.getElementById('vDeduct').textContent    = '−' + fmt(r.deductions);
-      document.getElementById('vNet').textContent       = fmt(r.netSalary);
-      document.getElementById('vPayDate').textContent   = r.paymentDate ? new Date(r.paymentDate).toLocaleDateString('en-LK', {day:'numeric',month:'short',year:'numeric'}) : '—';
-      document.getElementById('vPayMethod').textContent = (r.paymentMethod || '').replace(/_/g,' ');
-      document.getElementById('vBank').textContent      = r.bankName || '—';
-      document.getElementById('vAccount').textContent   = r.accountNumber || '—';
-      document.getElementById('vPeriod').textContent    = `(${months[r.payrollMonth]} ${r.payrollYear})`;
-
+      const s = await api('/staff/' + r.staffId);
+      document.getElementById('vName').textContent    = s.fullName || '—';
+      // Show designation + position together, fallback to department
+      const deptLabel = [s.designation, s.position].filter(Boolean).join(' · ') || s.role || '—';
+      document.getElementById('vDept').textContent    = deptLabel;
+      document.getElementById('vEmpId').textContent   = r.staffId || '—';
+      document.getElementById('vBasic').textContent = fmt(r.basicSalary);
+      document.getElementById('vAllow').textContent = '+' + fmt(r.allowances);
+      document.getElementById('vDeduct').textContent = '-' + fmt(r.deductions);
+      document.getElementById('vNet').textContent = fmt(r.netSalary);
+      document.getElementById('vPayDate').textContent = r.paymentDate ? new Date(r.paymentDate).toLocaleDateString('en-LK', {day:'numeric',month:'short',year:'numeric'}) : '—';
+      document.getElementById('vPayMethod').textContent = (r.paymentMethod || '').replace(/_/g, ' ');
+      document.getElementById('vBank').textContent = s.bankName || '—';
+      document.getElementById('vAccount').textContent = s.accountNumber || '—';
+      document.getElementById('vPeriod').textContent = `(${months[r.payrollMonth]} ${r.payrollYear})`;
       const statusEl = document.getElementById('vStatus');
-      statusEl.textContent = isPaid ? 'Paid' : 'Pending';
-      statusEl.className = `px-2 py-0.5 rounded-full text-xs font-medium ${isPaid ? 'badge-paid' : 'badge-pending'}`;
-      document.getElementById('vStatusDot').className = `w-3 h-3 rounded-full pulse ${isPaid ? 'bg-green-500' : 'bg-amber-400'}`;
-
+      statusEl.textContent = r.status === 'PAID' ? 'Paid' : 'Pending';
+      statusEl.className = `px-2 py-0.5 rounded-full text-xs font-medium ${r.status==='PAID'?'badge-paid':'badge-pending'}`;
+      document.getElementById('vStatusDot').className = `w-3 h-3 rounded-full pulse ${r.status==='PAID'?'bg-green-500':'bg-amber-400'}`;
       const notesBox = document.getElementById('vNotesBox');
       if (r.notes) { document.getElementById('vNotes').textContent = r.notes; notesBox.classList.remove('hidden'); }
       else notesBox.classList.add('hidden');
-
-      document.getElementById('vDownloadBtn').onclick = () => downloadPayslip(id);
-    } catch (e) {
-      toast(e.message, 'error');
-    }
+      document.getElementById('vDownloadBtn').onclick = () => window.open(API + '/salary-records/' + id + '/payslip', '_blank');
+    } catch (e) { toast(e.message, 'error'); }
   }
 
-  function downloadPayslip(id) {
-    window.open(API + '/salary-records/' + id + '/payslip', '_blank');
+  async function loadStaffDropdown() {
+    try {
+      const list = await api('/staff/active');
+      const sel = document.getElementById('editEmployee');
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">— Select Staff —</option>' +
+              list.map(s => {
+                // StaffDTO fields: staffId, fullName, designation, position, role
+                const label = escapeHtml(s.fullName || '—');
+                const id    = escapeHtml(s.staffId  || '');
+                // Show designation (job title) and position (free-text) if available
+                const detail = [s.designation, s.position].filter(Boolean).map(escapeHtml).join(' · ');
+                return `<option value="${id}">${label} (${id})${detail ? ' — ' + detail : ''}</option>`;
+              }).join('');
+      if (cur) sel.value = cur;
+    } catch (e) { toast('Failed to load staff: ' + e.message, 'error'); }
   }
 
-  // ─── ADD record ──────────────────────────────────────────────────────────
+  function updateNetPreview() {
+    const b = parseFloat(document.getElementById('editBasic').value) || 0;
+    const a = parseFloat(document.getElementById('editAllowances').value) || 0;
+    const d = parseFloat(document.getElementById('editDeductions').value) || 0;
+    document.getElementById('netPreview').textContent = fmt(b + a - d);
+  }
+  ['editBasic','editAllowances','editDeductions'].forEach(id => document.getElementById(id).addEventListener('input', updateNetPreview));
 
   document.getElementById('addSalaryBtn').addEventListener('click', async () => {
     document.getElementById('editModalTitle').textContent = 'Add Salary Record';
     document.getElementById('editRecordId').value = '';
-    document.getElementById('editEmployee').value = '';
-    document.getElementById('editBasic').value = '';
-    document.getElementById('editAllowances').value = '';
-    document.getElementById('editDeductions').value = '';
+    ['editBasic','editAllowances','editDeductions','editNotes'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('editPayDate').value = '';
     document.getElementById('editMonth').value = new Date().getMonth() + 1;
     document.getElementById('editYear').value = new Date().getFullYear();
     document.getElementById('editPayMethod').value = 'BANK_TRANSFER';
     document.getElementById('editStatus').value = 'PENDING';
-    document.getElementById('editNotes').value = '';
     updateNetPreview();
-    await loadEmployeeDropdown();
+    await loadStaffDropdown();
     openModal('editModal');
   });
 
   async function editRecord(id) {
     document.getElementById('editModalTitle').textContent = 'Edit Salary Record';
-    await loadEmployeeDropdown();
+    await loadStaffDropdown();
     try {
       const r = await api('/salary-records/' + id);
-      document.getElementById('editRecordId').value   = id;
-      document.getElementById('editEmployee').value   = r.employeeId;
-      document.getElementById('editBasic').value      = r.basicSalary;
+      document.getElementById('editRecordId').value = id;
+      document.getElementById('editEmployee').value = r.staffId;
+      document.getElementById('editBasic').value = r.basicSalary;
       document.getElementById('editAllowances').value = r.allowances;
       document.getElementById('editDeductions').value = r.deductions;
-      document.getElementById('editPayDate').value    = r.paymentDate || '';
-      document.getElementById('editMonth').value      = r.payrollMonth;
-      document.getElementById('editYear').value       = r.payrollYear;
-      document.getElementById('editPayMethod').value  = r.paymentMethod;
-      document.getElementById('editStatus').value     = r.status;
-      document.getElementById('editNotes').value      = r.notes || '';
+      document.getElementById('editPayDate').value = r.paymentDate || '';
+      document.getElementById('editMonth').value = r.payrollMonth;
+      document.getElementById('editYear').value = r.payrollYear;
+      document.getElementById('editPayMethod').value = r.paymentMethod;
+      document.getElementById('editStatus').value = r.status;
+      document.getElementById('editNotes').value = r.notes || '';
       updateNetPreview();
       openModal('editModal');
-    } catch (e) {
-      toast(e.message, 'error');
-    }
+    } catch (e) { toast(e.message, 'error'); }
   }
 
-  async function loadEmployeeDropdown() {
-    try {
-      const employees = await api('/employees?activeOnly=true');
-      const sel = document.getElementById('editEmployee');
-      const cur = sel.value;
-      sel.innerHTML = '<option value="">— Select Employee —</option>' +
-              employees.map(e => `<option value="${e.employeeId}">${e.name} (${e.employeeId}) – ${e.department}</option>`).join('');
-      if (cur) sel.value = cur;
-    } catch {}
-  }
-
-  // Net preview
-  function updateNetPreview() {
-    const basic  = parseFloat(document.getElementById('editBasic').value) || 0;
-    const allow  = parseFloat(document.getElementById('editAllowances').value) || 0;
-    const deduct = parseFloat(document.getElementById('editDeductions').value) || 0;
-    document.getElementById('netPreview').textContent = fmt(basic + allow - deduct);
-  }
-  ['editBasic','editAllowances','editDeductions'].forEach(id =>
-          document.getElementById(id).addEventListener('input', updateNetPreview));
-
-  // Save
   document.getElementById('saveRecordBtn').addEventListener('click', async () => {
-    const empId = document.getElementById('editEmployee').value;
+    const staffId = document.getElementById('editEmployee').value;
     const basic = document.getElementById('editBasic').value;
-    if (!empId) { toast('Please select an employee', 'error'); return; }
-    if (!basic)  { toast('Basic salary is required', 'error'); return; }
-
+    if (!staffId) { toast('Please select a staff member', 'error'); return; }
+    if (!basic)   { toast('Basic salary is required', 'error'); return; }
     const id = document.getElementById('editRecordId').value;
-    const body = {
-      employeeId:    empId,
-      basicSalary:   parseFloat(basic),
-      allowances:    parseFloat(document.getElementById('editAllowances').value) || 0,
-      deductions:    parseFloat(document.getElementById('editDeductions').value) || 0,
-      paymentDate:   document.getElementById('editPayDate').value || null,
-      payrollMonth:  parseInt(document.getElementById('editMonth').value),
-      payrollYear:   parseInt(document.getElementById('editYear').value),
+    const payload = {
+      staffId, basicSalary: parseFloat(basic),
+      allowances: parseFloat(document.getElementById('editAllowances').value) || 0,
+      deductions: parseFloat(document.getElementById('editDeductions').value) || 0,
+      paymentDate: document.getElementById('editPayDate').value || null,
+      payrollMonth: parseInt(document.getElementById('editMonth').value),
+      payrollYear: parseInt(document.getElementById('editYear').value),
       paymentMethod: document.getElementById('editPayMethod').value,
-      status:        document.getElementById('editStatus').value,
-      notes:         document.getElementById('editNotes').value || null,
+      status: document.getElementById('editStatus').value,
+      notes: document.getElementById('editNotes').value || null,
     };
-
     const btn = document.getElementById('saveRecordBtn');
     btn.disabled = true; btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px"></div> Saving…';
     try {
-      if (id) {
-        await api('/salary-records/' + id, { method: 'PUT', body: JSON.stringify(body) });
-        toast('Record updated successfully', 'success');
-      } else {
-        await api('/salary-records', { method: 'POST', body: JSON.stringify(body) });
-        toast('Record created successfully', 'success');
-      }
-      closeModal('editModal');
-      loadRecords();
-    } catch (e) {
-      toast(e.message, 'error');
-    } finally {
-      btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Save Record';
-    }
+      if (id) { await api('/salary-records/' + id, { method: 'PUT', body: JSON.stringify(payload) }); toast('Record updated', 'success'); }
+      else    { await api('/salary-records',        { method: 'POST', body: JSON.stringify(payload) }); toast('Record created', 'success'); }
+      closeModal('editModal'); loadRecords();
+    } catch (e) { toast(e.message, 'error'); }
+    finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Save Record'; }
   });
 
-  // Delete
   async function deleteRecord(id, name) {
-    if (!confirm(`Delete salary record for ${name}? This cannot be undone.`)) return;
-    try {
-      await api('/salary-records/' + id, { method: 'DELETE' });
-      toast('Record deleted', 'success');
-      loadRecords();
-    } catch (e) {
-      toast(e.message, 'error');
-    }
+    if (!confirm(`Delete salary record for ${name}?`)) return;
+    try { await api('/salary-records/' + id, { method: 'DELETE' }); toast('Record deleted', 'success'); loadRecords(); }
+    catch (e) { toast(e.message, 'error'); }
   }
 
-  // Export PDF (current period payroll report)
+  document.getElementById('filterBtn').addEventListener('click', () =>
+          loadRecords(document.getElementById('filterSearch').value.trim(), document.getElementById('filterStatus').value, document.getElementById('filterDept').value));
+  document.getElementById('filterSearch').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('filterBtn').click(); });
+  document.getElementById('refreshBtn').addEventListener('click', () => loadRecords());
   document.getElementById('exportPdfBtn').addEventListener('click', () => {
-    const m = document.getElementById('payrollMonth')?.value || new Date().getMonth() + 1;
+    const m = document.getElementById('payrollMonth')?.value || (new Date().getMonth() + 1);
     const y = document.getElementById('payrollYear')?.value || new Date().getFullYear();
     window.open(`${API}/payroll/report?month=${m}&year=${y}`, '_blank');
-    toast('Generating payroll report PDF…', 'info');
+    toast('Generating PDF…', 'info');
   });
 
-  // ─── SALARY SETTINGS ─────────────────────────────────────────────────────
-
+  // ==================== SALARY SETTINGS ====================
   async function loadSettings() {
     try {
       const settings = await api('/salary-settings');
@@ -998,223 +676,187 @@
       renderSettingList('deductionsList', settings.filter(s => s.type === 'DEDUCTION'), 'red');
       renderSettingList('taxList',        settings.filter(s => s.type === 'TAX'),       'purple');
       renderGrades();
-    } catch (e) {
-      toast(e.message, 'error');
-    }
+    } catch (e) { toast(e.message, 'error'); }
   }
 
   function renderSettingList(containerId, items, color) {
     const el = document.getElementById(containerId);
-    if (!items.length) {
-      el.innerHTML = `<p class="text-xs text-gray-400 py-2 text-center">No items yet</p>`;
-      return;
-    }
+    if (!items.length) { el.innerHTML = '<p class="text-xs text-gray-400 py-2 text-center">No items yet</p>'; return; }
     el.innerHTML = items.map(s => `
       <div class="flex items-center justify-between p-3 bg-${color}-50 rounded-lg border border-${color}-100">
-        <div>
-          <p class="text-sm font-medium text-gray-800">${s.name}</p>
-          <p class="text-xs text-gray-500">${s.description || ''}</p>
-        </div>
+        <div><p class="text-sm font-medium text-gray-800">${escapeHtml(s.name)}</p><p class="text-xs text-gray-500">${escapeHtml(s.description||'')}</p></div>
         <div class="text-right">
-          <p class="text-sm font-semibold text-gray-800">
-            ${s.valueType === 'PERCENTAGE' ? s.value + '%' : fmt(s.value)}
-          </p>
-          ${s.valueType === 'PERCENTAGE' ? '<p class="text-xs text-gray-400">of basic</p>' : ''}
+          <p class="text-sm font-semibold text-gray-800">${s.valueType==='PERCENTAGE'?s.value+'%':fmt(s.value)}</p>
           <div class="flex gap-2 mt-1 justify-end">
             <button onclick="openEditSetting(${s.id})" class="text-blue-500 hover:text-blue-700 text-xs"><i class="fas fa-edit"></i></button>
-            <button onclick="deleteSetting(${s.id},'${s.name}')" class="text-red-400 hover:text-red-600 text-xs"><i class="fas fa-trash"></i></button>
+            <button onclick="deleteSetting(${s.id},'${escapeHtml(s.name)}')" class="text-red-400 hover:text-red-600 text-xs"><i class="fas fa-trash"></i></button>
           </div>
         </div>
       </div>`).join('');
   }
 
-  async function renderGrades() {
-    try {
-      const grades = await api('/salary-settings/grades');
-      const tbody = document.getElementById('gradesTableBody');
-      if (!grades.length) {
-        tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-6 text-center text-xs text-gray-400">No grades defined</td></tr>`;
-        return;
-      }
-      tbody.innerHTML = grades.map(g => `
-        <tr class="hover:bg-gray-50">
-          <td class="px-4 py-3 text-sm font-bold text-gray-900 mono">${g.grade}</td>
-          <td class="px-4 py-3 text-sm text-gray-600">${g.position}</td>
-          <td class="px-4 py-3 text-sm text-gray-800">${fmt(g.minSalary)} – ${fmt(g.maxSalary)}</td>
-          <td class="px-4 py-3">
-            <button onclick="openEditGrade(${g.id})" class="text-blue-500 hover:text-blue-700 mr-3 text-sm"><i class="fas fa-edit"></i></button>
-            <button onclick="deleteGrade(${g.id},'${g.grade}')" class="text-red-400 hover:text-red-600 text-sm"><i class="fas fa-trash"></i></button>
-          </td>
-        </tr>`).join('');
-    } catch (e) {
-      toast(e.message, 'error');
-    }
-  }
-
-  // Setting CRUD
-  function openAddSetting(type) {
-    document.getElementById('settingModalTitle').textContent = `Add ${type === 'TAX' ? 'Tax Rule' : type === 'ALLOWANCE' ? 'Allowance' : 'Deduction'}`;
+  window.openAddSetting = function(type) {
+    document.getElementById('settingModalTitle').textContent = `Add ${type==='TAX'?'Tax Rule':type==='ALLOWANCE'?'Allowance':'Deduction'}`;
     document.getElementById('settingId').value = '';
     document.getElementById('settingType').value = type;
     document.getElementById('settingName').value = '';
     document.getElementById('settingDesc').value = '';
     document.getElementById('settingValue').value = '';
-    document.getElementById('settingValueType').value = type === 'TAX' || type === 'DEDUCTION' ? 'PERCENTAGE' : 'FIXED';
+    document.getElementById('settingValueType').value = (type==='TAX'||type==='DEDUCTION') ? 'PERCENTAGE' : 'FIXED';
     document.getElementById('settingActive').checked = true;
     openModal('settingModal');
-  }
+  };
 
-  async function openEditSetting(id) {
+  window.openEditSetting = async function(id) {
     try {
       const s = await api('/salary-settings/' + id);
       document.getElementById('settingModalTitle').textContent = 'Edit Setting';
-      document.getElementById('settingId').value        = s.id;
-      document.getElementById('settingType').value      = s.type;
-      document.getElementById('settingName').value      = s.name;
-      document.getElementById('settingDesc').value      = s.description || '';
-      document.getElementById('settingValue').value     = s.value;
+      document.getElementById('settingId').value = s.id;
+      document.getElementById('settingType').value = s.type;
+      document.getElementById('settingName').value = s.name;
+      document.getElementById('settingDesc').value = s.description || '';
+      document.getElementById('settingValue').value = s.value;
       document.getElementById('settingValueType').value = s.valueType;
-      document.getElementById('settingActive').checked  = s.isActive;
+      document.getElementById('settingActive').checked = s.isActive !== undefined ? s.isActive : s.active;
       openModal('settingModal');
     } catch (e) { toast(e.message, 'error'); }
-  }
+  };
 
   document.getElementById('saveSettingBtn').addEventListener('click', async () => {
     const id = document.getElementById('settingId').value;
     const body = {
-      name:        document.getElementById('settingName').value,
+      name: document.getElementById('settingName').value,
       description: document.getElementById('settingDesc').value,
-      type:        document.getElementById('settingType').value,
-      value:       parseFloat(document.getElementById('settingValue').value),
-      valueType:   document.getElementById('settingValueType').value,
-      isActive:    document.getElementById('settingActive').checked,
+      type: document.getElementById('settingType').value,
+      value: parseFloat(document.getElementById('settingValue').value),
+      valueType: document.getElementById('settingValueType').value,
+      isActive: document.getElementById('settingActive').checked,
     };
-    if (!body.name || !body.value) { toast('Name and value are required', 'error'); return; }
+    if (!body.name || isNaN(body.value)) { toast('Name and value are required', 'error'); return; }
     try {
-      if (id) await api('/salary-settings/' + id, { method: 'PUT', body: JSON.stringify(body) });
-      else     await api('/salary-settings',        { method: 'POST', body: JSON.stringify(body) });
-      toast('Setting saved', 'success');
-      closeModal('settingModal');
-      loadSettings();
+      if (id) { body.id = parseInt(id); await api('/salary-settings', { method: 'PUT', body: JSON.stringify(body) }); }
+      else    { await api('/salary-settings', { method: 'POST', body: JSON.stringify(body) }); }
+      toast('Setting saved', 'success'); closeModal('settingModal'); loadSettings();
     } catch (e) { toast(e.message, 'error'); }
   });
 
-  async function deleteSetting(id, name) {
+  window.deleteSetting = async function(id, name) {
     if (!confirm(`Delete "${name}"?`)) return;
+    try { await api('/salary-settings/' + id, { method: 'DELETE' }); toast('Deleted', 'success'); loadSettings(); }
+    catch (e) { toast(e.message, 'error'); }
+  };
+
+  // ==================== GRADES — fixed ====================
+  async function renderGrades() {
     try {
-      await api('/salary-settings/' + id, { method: 'DELETE' });
-      toast('Setting deleted', 'success');
-      loadSettings();
+      const grades = await api('/salary-settings/grades');
+      const tbody = document.getElementById('gradesTableBody');
+      if (!grades.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-6 text-center text-xs text-gray-400">No grades defined</td></tr>';
+        return;
+      }
+      tbody.innerHTML = grades.map(g => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 text-sm font-bold text-gray-900 mono">${escapeHtml(g.grade)}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">
+            <span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">${escapeHtml(g.role || g.position || '—')}</span>
+          </td>
+          <td class="px-4 py-3 text-sm text-gray-800">${fmt(g.minSalary)} – ${fmt(g.maxSalary)}</td>
+          <td class="px-4 py-3">
+            <button onclick="openEditGrade(${g.id})" class="text-blue-500 hover:text-blue-700 mr-3"><i class="fas fa-edit"></i></button>
+            <button onclick="deleteGrade(${g.id},'${escapeHtml(g.grade)}')" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>`).join('');
     } catch (e) { toast(e.message, 'error'); }
   }
 
-  // Grade CRUD
-  function openAddGrade() {
+  window.openAddGrade = function() {
     document.getElementById('gradeModalTitle').textContent = 'Add Salary Grade';
     document.getElementById('gradeId').value = '';
     document.getElementById('gradeCode').value = '';
-    document.getElementById('gradePosition').value = '';
+    document.getElementById('gradeRole').value = '';
     document.getElementById('gradeMin').value = '';
     document.getElementById('gradeMax').value = '';
     openModal('gradeModal');
-  }
+  };
 
-  async function openEditGrade(id) {
+  window.openEditGrade = async function(id) {
     try {
       const g = await api('/salary-settings/grades/' + id);
       document.getElementById('gradeModalTitle').textContent = 'Edit Salary Grade';
-      document.getElementById('gradeId').value       = g.id;
-      document.getElementById('gradeCode').value     = g.grade;
-      document.getElementById('gradePosition').value = g.position;
-      document.getElementById('gradeMin').value      = g.minSalary;
-      document.getElementById('gradeMax').value      = g.maxSalary;
+      document.getElementById('gradeId').value = g.id;
+      document.getElementById('gradeCode').value = g.grade;
+      document.getElementById('gradeRole').value = g.role || g.position || '';
+      document.getElementById('gradeMin').value = g.minSalary;
+      document.getElementById('gradeMax').value = g.maxSalary;
       openModal('gradeModal');
     } catch (e) { toast(e.message, 'error'); }
-  }
+  };
 
   document.getElementById('saveGradeBtn').addEventListener('click', async () => {
     const id = document.getElementById('gradeId').value;
+    const role = document.getElementById('gradeRole').value;  // ✅ read from dropdown
+
+    if (!document.getElementById('gradeCode').value) { toast('Grade code is required', 'error'); return; }
+    if (!role) { toast('Please select a role', 'error'); return; }
+
     const body = {
-      grade:     document.getElementById('gradeCode').value,
-      position:  document.getElementById('gradePosition').value,
+      grade: document.getElementById('gradeCode').value,
+      role: role,            // ✅ sends "ADMIN" | "MANAGER" | "SCIENTIST" | "USER" to backend
       minSalary: parseFloat(document.getElementById('gradeMin').value),
       maxSalary: parseFloat(document.getElementById('gradeMax').value),
     };
-    if (!body.grade || !body.position) { toast('Grade code and position are required', 'error'); return; }
+
     try {
-      if (id) await api('/salary-settings/grades/' + id, { method: 'PUT', body: JSON.stringify(body) });
-      else     await api('/salary-settings/grades',        { method: 'POST', body: JSON.stringify(body) });
-      toast('Grade saved', 'success');
-      closeModal('gradeModal');
-      renderGrades();
+      if (id) { body.id = parseInt(id); await api('/salary-settings/grades/' + id, { method: 'PUT', body: JSON.stringify(body) }); }
+      else    { await api('/salary-settings/grades', { method: 'POST', body: JSON.stringify(body) }); }
+      toast('Grade saved', 'success'); closeModal('gradeModal'); renderGrades();
     } catch (e) { toast(e.message, 'error'); }
   });
 
-  async function deleteGrade(id, grade) {
+  window.deleteGrade = async function(id, grade) {
     if (!confirm(`Delete grade "${grade}"?`)) return;
-    try {
-      await api('/salary-settings/grades/' + id, { method: 'DELETE' });
-      toast('Grade deleted', 'success');
-      renderGrades();
-    } catch (e) { toast(e.message, 'error'); }
-  }
+    try { await api('/salary-settings/grades/' + id, { method: 'DELETE' }); toast('Grade deleted', 'success'); renderGrades(); }
+    catch (e) { toast(e.message, 'error'); }
+  };
 
-  // ─── PAYROLL PROCESSING ───────────────────────────────────────────────────
-
+  // ==================== PAYROLL PROCESSING ====================
   async function loadSummary() {
     const month = document.getElementById('payrollMonth').value;
-    const year  = document.getElementById('payrollYear').value;
+    const year = document.getElementById('payrollYear').value;
     document.getElementById('summaryLabel').textContent = `${months[month]} ${year}`;
-    ['sumTotal','sumBasic','sumDeductions','sumNet','sumPaid','sumPending'].forEach(id =>
-            document.getElementById(id).textContent = '…');
     try {
       const s = await api(`/payroll/summary?month=${month}&year=${year}`);
-      document.getElementById('sumTotal').textContent      = s.totalEmployees;
-      document.getElementById('sumBasic').textContent      = fmt(s.totalBasicSalary);
+      document.getElementById('sumTotal').textContent = s.totalEmployees || s.totalStaff || 0;
+      document.getElementById('sumBasic').textContent = fmt(s.totalBasicSalary);
       document.getElementById('sumDeductions').textContent = fmt(s.totalDeductions);
-      document.getElementById('sumNet').textContent        = fmt(s.netPayroll);
-      document.getElementById('sumPaid').textContent       = s.paidCount;
-      document.getElementById('sumPending').textContent    = s.pendingCount;
-    } catch (e) {
-      toast(e.message, 'error');
-      ['sumTotal','sumBasic','sumDeductions','sumNet','sumPaid','sumPending'].forEach(id =>
-              document.getElementById(id).textContent = '—');
-    }
+      document.getElementById('sumNet').textContent = fmt(s.netPayroll);
+      document.getElementById('sumPaid').textContent = s.paidCount || 0;
+      document.getElementById('sumPending').textContent = s.pendingCount || 0;
+    } catch (e) { toast(e.message, 'error'); }
   }
 
   document.getElementById('loadSummaryBtn').addEventListener('click', loadSummary);
-
   document.getElementById('calculateBtn').addEventListener('click', async () => {
     const month = document.getElementById('payrollMonth').value;
     const year  = document.getElementById('payrollYear').value;
-    if (!confirm(`Auto-calculate payroll for all active employees for ${months[month]} ${year}?`)) return;
-    try {
-      toast('Calculating payroll…', 'info');
-      const result = await api(`/payroll/calculate?month=${month}&year=${year}`, { method: 'POST' });
-      toast(`${result.length} record(s) calculated`, 'success');
-      loadSummary();
-    } catch (e) { toast(e.message, 'error'); }
+    if (!confirm(`Calculate payroll for ${months[month]} ${year}?`)) return;
+    try { toast('Calculating…', 'info'); await api(`/payroll/calculate?month=${month}&year=${year}`, { method: 'POST' }); toast('Payroll calculated', 'success'); loadSummary(); }
+    catch (e) { toast(e.message, 'error'); }
   });
-
   document.getElementById('generateBtn').addEventListener('click', () => {
     const month = document.getElementById('payrollMonth').value;
     const year  = document.getElementById('payrollYear').value;
     window.open(`${API}/payroll/report?month=${month}&year=${year}`, '_blank');
-    toast('Generating payroll PDF…', 'info');
+    toast('Generating PDF…', 'info');
   });
-
   document.getElementById('processBtn').addEventListener('click', async () => {
     const month = document.getElementById('payrollMonth').value;
     const year  = document.getElementById('payrollYear').value;
-    if (!confirm(`Process all PENDING payments for ${months[month]} ${year}? This will mark them as PAID.`)) return;
-    try {
-      toast('Processing payments…', 'info');
-      const result = await api(`/payroll/process?month=${month}&year=${year}`, { method: 'POST' });
-      toast(`${result.length} payment(s) processed`, 'success');
-      loadSummary();
-    } catch (e) { toast(e.message, 'error'); }
+    if (!confirm(`Process all PENDING payments for ${months[month]} ${year}?`)) return;
+    try { toast('Processing…', 'info'); await api(`/payroll/process?month=${month}&year=${year}`, { method: 'POST' }); toast('Payments processed', 'success'); loadSummary(); }
+    catch (e) { toast(e.message, 'error'); }
   });
-
   document.getElementById('exportReportBtn').addEventListener('click', () => {
     const month = document.getElementById('payrollMonth').value;
     const year  = document.getElementById('payrollYear').value;
@@ -1222,9 +864,7 @@
     toast('Downloading report…', 'info');
   });
 
-  // ─── INIT ─────────────────────────────────────────────────────────────────
 
-  checkApi();
   loadRecords();
 </script>
 </body>

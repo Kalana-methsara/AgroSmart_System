@@ -4,10 +4,7 @@ import lk.ijse.agrosmart_systembackend.dto.PayrollSummaryDTO;
 import lk.ijse.agrosmart_systembackend.entity.SalaryRecord;
 import lk.ijse.agrosmart_systembackend.entity.SalarySetting;
 import lk.ijse.agrosmart_systembackend.entity.Staff;
-import lk.ijse.agrosmart_systembackend.entity.enums.PaymentMethod;
-import lk.ijse.agrosmart_systembackend.entity.enums.SalaryStatus;
-import lk.ijse.agrosmart_systembackend.entity.enums.SettingType;
-import lk.ijse.agrosmart_systembackend.entity.enums.ValueType;
+import lk.ijse.agrosmart_systembackend.entity.enums.*;
 import lk.ijse.agrosmart_systembackend.repository.SalaryRecordRepository;
 import lk.ijse.agrosmart_systembackend.repository.SalarySettingRepository;
 import lk.ijse.agrosmart_systembackend.repository.StaffRepository;
@@ -69,7 +66,7 @@ public class PayrollServiceImpl implements PayrollService {
                 .filter(SalarySetting::getIsActive)
                 .toList();
 
-        List<Staff> activeEmployees = staffRepository.findByStatus(Staff.StaffStatus.ACTIVE);
+        List<Staff> activeEmployees = staffRepository.findByStatus(StaffStatus.ACTIVE);
         int createdCount = 0;
 
         for (Staff emp : activeEmployees) {

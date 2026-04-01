@@ -26,8 +26,7 @@
     .btn-transition {
       transition: all 0.2s ease;
     }
-    /* Custom style for select dropdown to match inputs */
-    .staff-select {
+    .staff-select, .staff-input {
       width: 100%;
       padding: 8px 12px;
       border: 1px solid #d1d5db;
@@ -35,12 +34,18 @@
       font-size: 14px;
       background-color: white;
       transition: all 0.2s;
-      cursor: pointer;
     }
-    .staff-select:focus {
+    .staff-select:focus, .staff-input:focus {
       outline: none;
       border-color: #16a34a;
       box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.1);
+    }
+    .card-hover {
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
     }
   </style>
 </head>
@@ -49,7 +54,7 @@
 <div class="min-h-screen">
   <div class="p-6">
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
       <div class="bg-white rounded-xl shadow-md p-6 card-hover border border-gray-100">
         <div class="flex items-center justify-between">
           <div>
@@ -58,6 +63,17 @@
           </div>
           <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
             <i class="fa-solid fa-users text-green-600 text-xl"></i>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-md p-6 card-hover border border-gray-100">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-500 mb-1">Active Staff</p>
+            <p class="text-2xl font-bold text-gray-800" id="activeStaffCount">0</p>
+          </div>
+          <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+            <i class="fa-solid fa-circle-check text-emerald-600 text-xl"></i>
           </div>
         </div>
       </div>
@@ -86,7 +102,7 @@
       <div class="bg-white rounded-xl shadow-md p-6 card-hover border border-gray-100">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-gray-500 mb-1">Staff</p>
+            <p class="text-sm text-gray-500 mb-1">Staff (USER)</p>
             <p class="text-2xl font-bold text-gray-800" id="staffCount">0</p>
           </div>
           <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
@@ -110,7 +126,7 @@
       </div>
       <div class="relative">
         <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-        <input type="text" id="searchStaff" placeholder="Search by name, designation, or email..." class="pl-9 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-200 text-sm w-72">
+        <input type="text" id="searchStaff" placeholder="Search by name, designation, position, bank..." class="pl-9 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-200 text-sm w-72">
       </div>
     </div>
 
@@ -120,20 +136,21 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff ID</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Designation</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle ID</th>
-            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff ID</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Designation</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bank / Account</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
           </tr>
           </thead>
           <tbody id="staffTableBody" class="divide-y divide-gray-200 bg-white">
           <tr>
-            <td colspan="9" class="text-center py-12 text-gray-400">
+            <td colspan="10" class="text-center py-12 text-gray-400">
               <i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading staff members...
             </td>
           </tr>
@@ -147,55 +164,13 @@
 <script>
   // ---------- API ENDPOINTS ----------
   const API_BASE = 'http://localhost:8080/api/v1/staff';
-  const VEHICLE_API = 'http://localhost:8080/api/v1/vehicle';
 
   let currentStaffData = [];
-  let currentVehicleData = [];    // global vehicle list (each vehicle should have vehicleId / numberPlate)
   let searchTimeout = null;
 
   // Helper: get auth token
   function getAuthToken() {
     return localStorage.getItem('token');
-  }
-
-  // ---------- VEHICLE API: fetch all vehicles (for dropdown) ----------
-  async function fetchVehicles() {
-    try {
-      const token = getAuthToken();
-      if (!token) return [];
-      const res = await fetch(`${VEHICLE_API}/all`, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-      });
-      const apiRes = await res.json();
-      if (apiRes.code === 200 && Array.isArray(apiRes.data)) {
-        currentVehicleData = apiRes.data;
-        return currentVehicleData;
-      } else {
-        currentVehicleData = [];
-        return [];
-      }
-    } catch (err) {
-      console.error('Error fetching vehicles:', err);
-      currentVehicleData = [];
-      return [];
-    }
-  }
-
-  // Helper: generate options html for vehicle dropdown (display numberPlate, value = vehicleId or numberPlate based on backend)
-  // The staff entity expects 'vehicleId' field. Assuming each vehicle object has `vehicleId` and `numberPlate`.
-  // We'll set value = vehicle.vehicleId, display text = numberPlate (or combined info)
-  function getVehicleOptionsHtml(selectedVehicleId = null) {
-    if (!currentVehicleData || currentVehicleData.length === 0) {
-      return '<option value="">-- No vehicles available --</option>';
-    }
-    let options = '<option value="">-- Select Vehicle (Optional) --</option>';
-    currentVehicleData.forEach(vehicle => {
-      const vehicleIdVal = vehicle.vehicleId || vehicle.id || '';
-      const displayText = vehicle.numberPlate ? `${vehicle.numberPlate} (${vehicleIdVal})` : vehicleIdVal;
-      const selectedAttr = (selectedVehicleId && selectedVehicleId === vehicleIdVal) ? 'selected' : '';
-      options += `<option value="${escapeHtml(vehicleIdVal)}" ${selectedAttr}>${escapeHtml(displayText)}</option>`;
-    });
-    return options;
   }
 
   // ---------- STAFF CRUD ----------
@@ -215,7 +190,6 @@
         renderStaffTable(currentStaffData);
         updateStats(currentStaffData);
       } else {
-        console.warn('Unexpected response format:', result);
         renderStaffTable([]);
         updateStats([]);
       }
@@ -229,13 +203,33 @@
 
   function updateStats(staffList) {
     const total = staffList.length;
+    const active = staffList.filter(s => s.status === 'ACTIVE').length;
     const managers = staffList.filter(s => s.role === 'MANAGER').length;
     const scientists = staffList.filter(s => s.role === 'SCIENTIST').length;
-    const staff = staffList.filter(s => s.role === 'USER').length;
+    const staffRole = staffList.filter(s => s.role === 'USER').length;
     $('#totalStaffCount').text(total);
+    $('#activeStaffCount').text(active);
     $('#managerCount').text(managers);
     $('#scientistCount').text(scientists);
-    $('#staffCount').text(staff);
+    $('#staffCount').text(staffRole);
+  }
+
+  function getStatusBadgeClass(status) {
+    switch(status) {
+      case 'ACTIVE': return 'bg-green-100 text-green-700';
+      case 'INACTIVE': return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  }
+
+  function getRoleBadgeClass(role) {
+    const roleColors = {
+      'ADMIN': 'bg-purple-100 text-purple-700',
+      'MANAGER': 'bg-blue-100 text-blue-700',
+      'SCIENTIST': 'bg-green-100 text-green-700',
+      'USER': 'bg-gray-100 text-gray-700'
+    };
+    return roleColors[role] || 'bg-gray-100 text-gray-700';
   }
 
   function renderStaffTable(staffList) {
@@ -243,7 +237,7 @@
     if (!staffList || staffList.length === 0) {
       tbody.html(`
         <tr>
-          <td colspan="9" class="text-center py-12 text-gray-400">
+          <td colspan="10" class="text-center py-12 text-gray-400">
             <i class="fa-solid fa-users-slash text-4xl mb-3 block"></i>
             No staff members found. Click "Add New Staff" to get started.
           </td>
@@ -254,32 +248,29 @@
 
     let rows = '';
     staffList.forEach(staff => {
-      const roleColors = {
-        'ADMIN': 'bg-purple-100 text-purple-700',
-        'MANAGER': 'bg-blue-100 text-blue-700',
-        'SCIENTIST': 'bg-green-100 text-green-700',
-        'USER': 'bg-gray-100 text-gray-700'
-      };
-      const roleClass = roleColors[staff.role] || 'bg-gray-100 text-gray-700';
+      const roleClass = getRoleBadgeClass(staff.role);
+      const statusClass = getStatusBadgeClass(staff.status);
+      const bankInfo = staff.bankName ? `${escapeHtml(staff.bankName)} / ${escapeHtml(staff.accountNumber || '—')}` : '—';
       const genderIcon = staff.gender === 'MALE' ? 'fa-mars' : (staff.gender === 'FEMALE' ? 'fa-venus' : 'fa-genderless');
       const genderColor = staff.gender === 'MALE' ? 'text-blue-600' : (staff.gender === 'FEMALE' ? 'text-pink-600' : 'text-gray-600');
 
       rows += `
         <tr class="hover:bg-gray-50 transition">
-          <td class="px-6 py-4"><span class="font-mono text-sm text-gray-600">${escapeHtml(staff.staffId || '—')}</span></td>
-          <td class="px-6 py-4">
+          <td class="px-4 py-4"><span class="font-mono text-sm text-gray-600">${escapeHtml(staff.staffId || '—')}</span></td>
+          <td class="px-4 py-4">
             <div class="flex items-center space-x-2">
-              <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center"><i class="fa-solid fa-user text-green-600 text-sm"></i></div>
+              <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center"><i class="fa-solid ${genderIcon} ${genderColor} text-sm"></i></div>
               <span class="font-medium text-gray-900">${escapeHtml(staff.fullName || '—')}</span>
             </div>
           </td>
-          <td class="px-6 py-4 text-gray-600">${escapeHtml(staff.designation || '—')}</td>
-          <td class="px-6 py-4"><div class="flex items-center space-x-1"><i class="fa-solid ${genderIcon} ${genderColor}"></i><span class="text-gray-600">${staff.gender || '—'}</span></div></td>
-          <td class="px-6 py-4"><div class="flex items-center space-x-1"><i class="fa-solid fa-phone text-gray-400 text-xs"></i><span class="text-gray-600">${escapeHtml(staff.contactNumber || '—')}</span></div></td>
-          <td class="px-6 py-4"><div class="flex items-center space-x-1"><i class="fa-solid fa-envelope text-gray-400 text-xs"></i><span class="text-gray-600 text-sm">${escapeHtml(staff.email || '—')}</span></div></td>
-          <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-medium ${roleClass}">${staff.role || '—'}</span></td>
-          <td class="px-6 py-4"><span class="font-mono text-sm text-gray-500">${staff.vehicleId ? escapeHtml(staff.vehicleId) : 'Not Assigned'}</span></td>
-          <td class="px-6 py-4 text-right space-x-2">
+          <td class="px-4 py-4 text-gray-600">${escapeHtml(staff.designation || '—')}</td>
+          <td class="px-4 py-4"><span class="text-gray-700 text-sm">${escapeHtml(staff.position || '—')}</span></td>
+          <td class="px-4 py-4"><div class="flex items-center space-x-1"><i class="fa-solid fa-phone text-gray-400 text-xs"></i><span class="text-gray-600">${escapeHtml(staff.contactNumber || '—')}</span></div></td>
+          <td class="px-4 py-4"><div class="flex items-center space-x-1"><i class="fa-solid fa-envelope text-gray-400 text-xs"></i><span class="text-gray-600 text-sm">${escapeHtml(staff.email || '—')}</span></div></td>
+          <td class="px-4 py-4"><span class="text-gray-600 text-sm">${bankInfo}</span></td>
+          <td class="px-4 py-4"><span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass}">${staff.status || 'ACTIVE'}</span></td>
+          <td class="px-4 py-4"><span class="px-2 py-1 rounded-full text-xs font-medium ${roleClass}">${staff.role || '—'}</span></td>
+          <td class="px-4 py-4 text-right space-x-2">
             <button class="text-blue-600 hover:text-blue-800 edit-staff-btn transition" data-id="${staff.staffId}"><i class="fa-regular fa-pen-to-square"></i> Edit</button>
             <button class="text-red-600 hover:text-red-800 delete-staff-btn transition ml-2" data-id="${staff.staffId}"><i class="fa-regular fa-trash-can"></i> Del</button>
           </td>
@@ -327,7 +318,7 @@
     }
   }
 
-  // ---------- OPEN MODAL WITH VEHICLE DROPDOWN (populated from fetched vehicles) ----------
+  // ---------- OPEN MODAL ----------
   async function openStaffModal(id = null) {
     const isEdit = id !== null;
     let staffData = null;
@@ -339,40 +330,39 @@
       }
     }
 
-    // Make sure vehicles are loaded before showing modal (refresh list in background)
-    await fetchVehicles(); // ensure latest vehicle data for dropdown
-
-    // Build dynamic vehicle dropdown options using global currentVehicleData
-    const selectedVehicleId = isEdit ? (staffData.vehicleId || '') : '';
-    const vehicleDropdownOptions = getVehicleOptionsHtml(selectedVehicleId);
-
     const modalHtml = `
       <style>
         .swal2-html-container { margin: 0; text-align: left; }
-        .form-group { margin-bottom: 15px; }
+        .form-group { margin-bottom: 14px; }
         .form-group label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 5px; color: #374151; text-align: left; }
-        .staff-input { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; transition: all 0.2s; background: white; }
-        .staff-input:focus { outline: none; border-color: #16a34a; box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.1); }
-        .row { display: flex; gap: 12px; margin-bottom: 15px; }
-        .row .form-group { flex: 1; margin-bottom: 0; }
-        .staff-select { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; background: white; }
+        .staff-input, .staff-select { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; background: white; }
+        .staff-input:focus, .staff-select:focus { border-color: #16a34a; box-shadow: 0 0 0 2px rgba(22,163,74,0.1); outline: none; }
+        .row-2col { display: flex; gap: 14px; margin-bottom: 14px; }
+        .row-2col .form-group { flex: 1; margin-bottom: 0; }
+        .grid-3col { display: flex; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+        .grid-3col .form-group { flex: 1; min-width: 120px; }
       </style>
-      <div style="max-height: 500px; overflow-y: auto; padding: 5px;">
-        ${isEdit ? `<div class="form-group"><label>Staff ID</label><input id="staff-id" class="staff-input" value="${staffData.staffId}" disabled style="background-color: #f3f4f6;"></div>` : ''}
-        <div class="form-group"><label>Full Name *</label><input id="full-name" class="staff-input" placeholder="e.g., John Doe" value="${isEdit ? escapeHtml(staffData.fullName) : ''}"></div>
-        <div class="row">
-          <div class="form-group"><label>Designation *</label><input id="designation" class="staff-input" placeholder="e.g., Farm Manager" value="${isEdit ? escapeHtml(staffData.designation) : ''}"></div>
-          <div class="form-group"><label>Gender</label><select id="gender" class="staff-select"><option value="MALE" ${isEdit && staffData.gender === 'MALE' ? 'selected' : ''}>Male</option><option value="FEMALE" ${isEdit && staffData.gender === 'FEMALE' ? 'selected' : ''}>Female</option><option value="OTHER" ${isEdit && staffData.gender === 'OTHER' ? 'selected' : ''}>Other</option></select></div>
+      <div style="max-height: 550px; overflow-y: auto; padding: 5px;">
+        ${isEdit ? `<div class="form-group"><label>Staff ID</label><input id="staff-id" class="staff-input" value="${staffData.staffId}" disabled style="background:#f3f4f6;"></div>` : ''}
+        <div class="form-group"><label>Full Name *</label><input id="full-name" class="staff-input" placeholder="e.g., Sampath Perera" value="${isEdit ? escapeHtml(staffData.fullName) : ''}"></div>
+        <div class="row-2col">
+          <div class="form-group"><label>Designation *</label><input id="designation" class="staff-input" placeholder="e.g., Field Officer" value="${isEdit ? escapeHtml(staffData.designation) : ''}"></div>
+          <div class="form-group"><label>Position</label><input id="position" class="staff-input" placeholder="e.g., Senior" value="${isEdit ? escapeHtml(staffData.position || '') : ''}"></div>
         </div>
-        <div class="row">
+        <div class="row-2col">
           <div class="form-group"><label>Contact Number *</label><input id="contact" class="staff-input" placeholder="e.g., +94 77 123 4567" value="${isEdit ? escapeHtml(staffData.contactNumber) : ''}"></div>
-          <div class="form-group"><label>Email</label><input id="email" type="email" class="staff-input" placeholder="e.g., john@example.com" value="${isEdit ? escapeHtml(staffData.email) : ''}"></div>
+          <div class="form-group"><label>Email</label><input id="email" type="email" class="staff-input" placeholder="email@example.com" value="${isEdit ? escapeHtml(staffData.email || '') : ''}"></div>
         </div>
-        <div class="row">
+        <div class="grid-3col">
+          <div class="form-group"><label>Gender</label><select id="gender" class="staff-select"><option value="MALE" ${isEdit && staffData.gender === 'MALE' ? 'selected' : ''}>Male</option><option value="FEMALE" ${isEdit && staffData.gender === 'FEMALE' ? 'selected' : ''}>Female</option><option value="OTHER" ${isEdit && staffData.gender === 'OTHER' ? 'selected' : ''}>Other</option></select></div>
           <div class="form-group"><label>Role *</label><select id="role" class="staff-select"><option value="ADMIN" ${isEdit && staffData.role === 'ADMIN' ? 'selected' : ''}>Admin</option><option value="MANAGER" ${isEdit && staffData.role === 'MANAGER' ? 'selected' : ''}>Manager</option><option value="SCIENTIST" ${isEdit && staffData.role === 'SCIENTIST' ? 'selected' : ''}>Scientist</option><option value="USER" ${isEdit && staffData.role === 'USER' ? 'selected' : ''}>Staff</option></select></div>
-          <div class="form-group"><label>Vehicle (Select from registered vehicles)</label><select id="vehicle-id" class="staff-select">${vehicleDropdownOptions}</select></div>
+          <div class="form-group"><label>Status</label><select id="status" class="staff-select"><option value="ACTIVE" ${isEdit && staffData.status === 'ACTIVE' ? 'selected' : ''}>Active</option><option value="INACTIVE" ${isEdit && staffData.status === 'INACTIVE' ? 'selected' : ''}>Inactive</option></select></div>
         </div>
-        <div class="text-xs text-gray-400 mt-1">* Vehicle dropdown shows number plates from vehicle registry. Optional field.</div>
+        <div class="row-2col">
+          <div class="form-group"><label>Bank Name</label><input id="bank-name" class="staff-input" placeholder="e.g., Bank of Ceylon" value="${isEdit ? escapeHtml(staffData.bankName || '') : ''}"></div>
+          <div class="form-group"><label>Account Number</label><input id="account-number" class="staff-input" placeholder="e.g., 1234567890" value="${isEdit ? escapeHtml(staffData.accountNumber || '') : ''}"></div>
+        </div>
+        <div class="text-xs text-gray-400 mt-1">* Fields with asterisk are mandatory. Position, Bank details are optional.</div>
       </div>
     `;
 
@@ -384,7 +374,7 @@
       confirmButtonColor: '#16a34a',
       cancelButtonColor: '#6c757d',
       focusConfirm: false,
-      width: '680px',
+      width: '780px',
       preConfirm: () => {
         const fullName = document.getElementById('full-name').value.trim();
         const designation = document.getElementById('designation').value.trim();
@@ -392,7 +382,10 @@
         const email = document.getElementById('email').value.trim();
         const gender = document.getElementById('gender').value;
         const role = document.getElementById('role').value;
-        const vehicleId = document.getElementById('vehicle-id').value;  // selected vehicleId (could be empty string)
+        const status = document.getElementById('status').value;
+        const position = document.getElementById('position').value.trim();
+        const bankName = document.getElementById('bank-name').value.trim();
+        const accountNumber = document.getElementById('account-number').value.trim();
 
         if (!fullName) { Swal.showValidationMessage('Full name is required'); return false; }
         if (!designation) { Swal.showValidationMessage('Designation is required'); return false; }
@@ -405,7 +398,10 @@
           contactNumber: contact,
           email: email || null,
           role,
-          vehicleId: vehicleId && vehicleId.trim() !== '' ? vehicleId.trim() : null
+          status,
+          position: position || null,
+          bankName: bankName || null,
+          accountNumber: accountNumber || null
         };
         if (isEdit) { staffPayload.staffId = id; }
         return staffPayload;
@@ -424,7 +420,7 @@
         });
         if (response.ok) {
           Swal.fire('Success', `Staff member ${isEdit ? 'updated' : 'added'} successfully!`, 'success');
-          fetchStaff();  // refresh staff table after operation
+          fetchStaff();
         } else {
           const errorData = await response.json();
           throw new Error(errorData.message || 'Operation failed');
@@ -447,7 +443,10 @@
       return (staff.fullName && staff.fullName.toLowerCase().includes(searchTerm)) ||
               (staff.designation && staff.designation.toLowerCase().includes(searchTerm)) ||
               (staff.email && staff.email.toLowerCase().includes(searchTerm)) ||
-              (staff.contactNumber && staff.contactNumber.includes(searchTerm));
+              (staff.contactNumber && staff.contactNumber.includes(searchTerm)) ||
+              (staff.position && staff.position.toLowerCase().includes(searchTerm)) ||
+              (staff.bankName && staff.bankName.toLowerCase().includes(searchTerm)) ||
+              (staff.status && staff.status.toLowerCase().includes(searchTerm));
     });
     renderStaffTable(filtered);
   }
@@ -459,23 +458,17 @@
       window.location.href = '../index.html';
       return;
     }
-    // Preload vehicles for dropdown so that when adding staff, vehicles are ready
-    await fetchVehicles();
-    // Load staff members
     await fetchStaff();
 
-    // Event handlers
     $('#addStaffBtn').click(() => openStaffModal());
-    $('#refreshBtn').click(() => { fetchStaff(); fetchVehicles(); });
-    $('#backToDashboardBtn').click(() => { window.location.href = 'index.html'; });
+    $('#refreshBtn').click(() => fetchStaff());
     $('#searchStaff').on('input', function() {
       if (searchTimeout) clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => searchStaff(), 300);
     });
-    // Auto-refresh staff list every 30 seconds, but also fetch vehicles in background to keep dropdown fresh
+    // Auto-refresh every 30 seconds
     setInterval(() => {
       fetchStaff();
-      fetchVehicles(); // keep vehicle list updated for future modals
     }, 30000);
   });
 </script>

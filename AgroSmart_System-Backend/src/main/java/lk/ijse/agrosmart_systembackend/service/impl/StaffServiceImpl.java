@@ -2,6 +2,7 @@ package lk.ijse.agrosmart_systembackend.service.impl;
 
 import lk.ijse.agrosmart_systembackend.dto.StaffDTO;
 import lk.ijse.agrosmart_systembackend.entity.Staff;
+import lk.ijse.agrosmart_systembackend.entity.enums.StaffStatus;
 import lk.ijse.agrosmart_systembackend.repository.StaffRepository;
 import lk.ijse.agrosmart_systembackend.service.StaffService;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ public class StaffServiceImpl implements StaffService {
 
     @Override
     public List<StaffDTO> findActive() {
-        List<Staff> activeStaff = staffRepository.findByStatus(Staff.StaffStatus.ACTIVE);
+        List<Staff> activeStaff = staffRepository.findByStatus(StaffStatus.ACTIVE);
         return modelMapper.map(activeStaff, new TypeToken<List<StaffDTO>>() {}.getType());
     }
 
@@ -40,17 +41,20 @@ public class StaffServiceImpl implements StaffService {
 
     @Override
     public String saveStaff(StaffDTO staffDTO) {
-        if (staffRepository.existsById(staffDTO.getStaffId())) {
-            throw new RuntimeException("Staff with ID " + staffDTO.getStaffId() + " already exists");
-        }
+//        if (staffRepository.existsById(staffDTO.getStaffId())) {
+//            throw new RuntimeException("Staff with ID " + staffDTO.getStaffId() + " already exists");
+//        }
         Staff staff = Staff.builder()
-                .staffId(staffDTO.getStaffId())
+                .staffId(generateStaffID())
                 .fullName(staffDTO.getFullName())
+                .contactNumber(staffDTO.getContactNumber())
+                .email(staffDTO.getEmail())
+                .role(staffDTO.getRole())
                 .designation(staffDTO.getDesignation())
                 .position(staffDTO.getPosition())
                 .bankName(staffDTO.getBankName())
                 .accountNumber(staffDTO.getAccountNumber())
-                .status(Staff.StaffStatus.ACTIVE)
+                .status(StaffStatus.ACTIVE)
                 .build();
 
         staffRepository.save(staff);
@@ -63,6 +67,9 @@ public class StaffServiceImpl implements StaffService {
                 .orElseThrow(() -> new RuntimeException("Staff with ID " + staffDTO.getStaffId() + " not found"));
 
         existingStaff.setFullName(staffDTO.getFullName());
+        existingStaff.setContactNumber(staffDTO.getContactNumber());
+        existingStaff.setEmail(staffDTO.getEmail());
+        existingStaff.setRole(staffDTO.getRole());
         existingStaff.setDesignation(staffDTO.getDesignation());
         existingStaff.setPosition(staffDTO.getPosition());
         existingStaff.setBankName(staffDTO.getBankName());
@@ -77,10 +84,26 @@ public class StaffServiceImpl implements StaffService {
         Staff staff = staffRepository.findById(staffId)
                 .orElseThrow(() -> new RuntimeException("Staff with ID " + staffId + " not found"));
 
-        // Soft delete logic as per your original code
-        staff.setStatus(Staff.StaffStatus.INACTIVE);
+        staff.setStatus(StaffStatus.INACTIVE);
         staffRepository.save(staff);
 
         return "Staff deleted successfully";
+    }
+
+    private String generateStaffID() {
+        List<Staff> staffList = staffRepository.findAll();
+
+        if (staffList.isEmpty()) {
+            return "STF-001";
+        }
+
+        String lastId = staffList.get(staffList.size() - 1).getStaffId();
+
+        // STF-001 → 001
+        String numberPart = lastId.split("-")[1];
+
+        int newId = Integer.parseInt(numberPart) + 1;
+
+        return String.format("STF-%03d", newId);
     }
 }

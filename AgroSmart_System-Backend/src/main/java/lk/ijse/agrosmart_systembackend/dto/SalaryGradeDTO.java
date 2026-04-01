@@ -4,6 +4,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lk.ijse.agrosmart_systembackend.entity.enums.Role;
 import lombok.*;
 
 import java.io.Serializable;
@@ -17,8 +18,8 @@ public class SalaryGradeDTO implements Serializable {
         @NotBlank
         @Size(max = 10)
         private String grade;
-        @NotBlank
-        private String position;
+        @NotNull
+        private Role role;
         @NotNull
         @DecimalMin("0.00")
         private BigDecimal minSalary;
