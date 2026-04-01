@@ -2,10 +2,11 @@ package lk.ijse.agrosmart_systembackend.dto;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.List;
 
 @Data
-public class FieldRequestDTO {
+public class FieldRequestDTO implements Serializable {
     private String fieldId;
     private String details;
     private String totalLand;

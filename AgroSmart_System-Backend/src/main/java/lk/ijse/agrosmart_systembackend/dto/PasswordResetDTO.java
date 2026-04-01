@@ -4,7 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-public class PasswordResetDTO {
+import java.io.Serializable;
+
+public class PasswordResetDTO implements Serializable {
 
     @Data
     @NoArgsConstructor

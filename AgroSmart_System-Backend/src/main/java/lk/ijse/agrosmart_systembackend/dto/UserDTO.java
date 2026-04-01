@@ -19,7 +19,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class UserDTO implements Serializable {
     @Id
-    private Long id; // important for frontend DELETE/UPDATE operations
+    private Long id;
 
     @NotBlank(message = "Username cannot be blank")
     @Size(max = 50, message = "Username must be at most 50 characters")

@@ -5,11 +5,9 @@ import lombok.*;
 
 import java.io.Serializable;
 
-@Getter
-@Setter
-@NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@NoArgsConstructor
+@Data
 public class StaffLogDTO implements Serializable {
 
     private String staffLogId;

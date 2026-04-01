@@ -5,722 +5,1227 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RailLanka Pro | Salary Management</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
   <style>
-    .status-paid { background-color: #dcfce7; color: #166534; }
-    .status-pending { background-color: #fef3c7; color: #92400e; }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
+    :root {
+      --blue: #1d4ed8;
+      --blue-light: #eff6ff;
+      --green: #15803d;
+      --green-light: #f0fdf4;
+      --red: #b91c1c;
+      --red-light: #fef2f2;
+      --amber: #92400e;
+      --amber-light: #fef3c7;
+      --gray-50: #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-500: #64748b;
+      --gray-700: #334155;
+      --gray-900: #0f172a;
     }
-    #viewStatusIndicator { animation: pulse 2s infinite; }
-    body { font-family: "Inter", sans-serif; background: #f0f9ff; overflow-x: hidden; }
-    .dashboard-card { transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    .dashboard-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
-    .modal { transition: all 0.3s ease; opacity: 0; visibility: hidden; }
-    .modal.active { opacity: 1; visibility: visible; }
-    .modal-content { transform: translateY(-20px); transition: transform 0.3s ease; }
-    .modal.active .modal-content { transform: translateY(0); }
-    .tab-button { padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 500; transition: all 0.3s ease; }
-    .tab-button.active { background-color: #3b82f6; color: white; }
-    .tab-button:hover:not(.active) { background-color: #eff6ff; }
+    * { box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: #f0f9ff; margin: 0; }
+    code, .mono { font-family: 'DM Mono', monospace; }
+
+    /* Status badges */
+    .badge-paid    { background: #dcfce7; color: #166534; }
+    .badge-pending { background: #fef3c7; color: #92400e; }
+
+    /* Tab buttons */
+    .tab-btn { padding: 0.6rem 1.25rem; border-radius: 0.5rem; font-weight: 500; font-size: 0.875rem; transition: all 0.2s; cursor: pointer; border: none; background: transparent; }
+    .tab-btn.active { background: var(--blue); color: white; }
+    .tab-btn:hover:not(.active) { background: #eff6ff; color: var(--blue); }
+
+    /* Modals */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; visibility: hidden; transition: all 0.25s; }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+    .modal-box { background: white; border-radius: 1rem; width: 100%; max-width: 42rem; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.25); transform: translateY(-16px); transition: transform 0.25s; }
+    .modal-overlay.open .modal-box { transform: translateY(0); }
+
+    /* Cards */
+    .stat-card { background: white; border-radius: 0.75rem; padding: 1.25rem; border: 1px solid #e2e8f0; }
+
+    /* Table */
+    #salaryTableBody tr { transition: background 0.15s; }
+    #salaryTableBody tr:hover { background: #f8fafc; }
+
+    /* Loading spinner */
+    .spinner { border: 3px solid #e2e8f0; border-top-color: var(--blue); border-radius: 50%; width: 24px; height: 24px; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast */
+    #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 100; padding: 0.875rem 1.25rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.15); transition: all 0.3s; transform: translateY(100px); opacity: 0; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { background: #166534; color: white; }
+    #toast.error   { background: #b91c1c; color: white; }
+    #toast.info    { background: #1d4ed8; color: white; }
+
+    /* Input focus */
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(29,78,216,0.15); }
+
+    /* Pulse */
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+    .pulse { animation: pulse 2s infinite; }
+
+    /* Skeleton */
+    .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 0.375rem; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
+<!-- Toast -->
+<div id="toast"></div>
+
 <!-- Header -->
-<header class="bg-white shadow-sm">
-  <div class="max-w-full mx-auto px-6 py-3">
-    <div class="flex justify-between items-center">
-      <div class="flex items-center space-x-4">
-        <div>
-          <h2 class="text-xl font-bold text-gray-800">Salary Management</h2>
-          <p class="text-gray-600 text-sm">Manage employee salaries and salary settings</p>
-        </div>
+<header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+  <div class="max-w-full mx-auto px-6 py-3 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 bg-blue-700 rounded-lg flex items-center justify-center">
+        <i class="fas fa-train text-white text-sm"></i>
       </div>
+      <div>
+        <h1 class="text-lg font-bold text-gray-900 leading-none">RailLanka Pro</h1>
+        <p class="text-xs text-gray-500 mt-0.5">Salary Management</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <span id="apiStatus" class="flex items-center gap-1.5 text-xs text-gray-400">
+        <span class="w-2 h-2 rounded-full bg-gray-300 inline-block" id="apiDot"></span>
+        Connecting…
+      </span>
+      <span class="text-xs text-gray-400 mono" id="headerTime"></span>
     </div>
   </div>
 </header>
 
-<!-- Tabs Navigation -->
-<div class="px-6 py-4 bg-white shadow-sm">
-  <div class="flex space-x-2 border-b border-gray-200">
-    <button class="tab-button active" data-tab="salary-records">
-      <i class="fas fa-list mr-2"></i>Salary Records
-    </button>
-    <button class="tab-button" data-tab="salary-settings">
-      <i class="fas fa-cog mr-2"></i>Salary Settings
-    </button>
-    <button class="tab-button" data-tab="payroll-processing">
-      <i class="fas fa-calculator mr-2"></i>Payroll Processing
-    </button>
+<!-- Tabs -->
+<div class="bg-white border-b border-gray-200 px-6">
+  <div class="flex gap-1 py-3">
+    <button class="tab-btn active" data-tab="salary-records"><i class="fas fa-list mr-1.5"></i>Salary Records</button>
+    <button class="tab-btn" data-tab="salary-settings"><i class="fas fa-cog mr-1.5"></i>Salary Settings</button>
+    <button class="tab-btn" data-tab="payroll-processing"><i class="fas fa-calculator mr-1.5"></i>Payroll Processing</button>
   </div>
 </div>
 
-<!-- Salary Records Tab Content -->
-<div id="salary-records" class="tab-content px-6 py-4 flex-1">
-  <!-- Action Bar -->
-  <div class="px-6 py-4 bg-white shadow-sm rounded-t-lg">
-    <div class="flex flex-wrap justify-between items-center gap-4">
-      <div class="flex items-center space-x-3">
-        <div class="relative">
-          <input id="filterSalary" type="text" placeholder="Search employees..."
-                 class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-          <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-        </div>
-        <div class="relative">
-          <select id="statusFilter" class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-            <option value="">All Status</option>
-            <option value="paid">Paid</option>
-            <option value="pending">Pending</option>
-          </select>
-          <i class="fas fa-filter absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-        </div>
-        <div class="relative">
-          <select id="departmentFilter" class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-            <option value="">All Departments</option>
-            <option value="Operations">Operations</option>
-            <option value="Administration">Administration</option>
-            <option value="Maintenance">Maintenance</option>
-            <option value="Customer Service">Customer Service</option>
-          </select>
-          <i class="fas fa-building absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-        </div>
-      </div>
+<!-- ═══════════════════════════════════════════ -->
+<!--  TAB 1 — SALARY RECORDS                    -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="tab-salary-records" class="tab-content px-6 py-5 flex-1">
 
-      <div class="flex space-x-3">
-        <button id="addSalaryBtn" class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-800 text-white rounded-lg hover:from-green-700 hover:to-green-900 transition flex items-center">
-          <i class="fas fa-plus mr-2"></i>Add Record
+  <!-- Action bar -->
+  <div class="bg-white rounded-xl border border-gray-200 px-5 py-4 mb-4">
+    <div class="flex flex-wrap justify-between items-center gap-3">
+      <div class="flex flex-wrap gap-2">
+        <div class="relative">
+          <input id="filterSearch" type="text" placeholder="Search employees…"
+                 class="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-52" />
+          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+        </div>
+        <select id="filterStatus" class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+          <option value="">All Status</option>
+          <option value="PAID">Paid</option>
+          <option value="PENDING">Pending</option>
+        </select>
+        <select id="filterDept" class="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+          <option value="">All Departments</option>
+          <option value="Operations">Operations</option>
+          <option value="Administration">Administration</option>
+          <option value="Maintenance">Maintenance</option>
+          <option value="Customer Service">Customer Service</option>
+        </select>
+        <button id="filterBtn" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition">
+          <i class="fas fa-search mr-1"></i>Search
         </button>
-        <button id="exportPdfBtn" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg hover:from-blue-700 hover:to-blue-900 transition flex items-center">
-          <i class="fas fa-file-pdf mr-2"></i>Export PDF
+      </div>
+      <div class="flex gap-2">
+        <button id="addSalaryBtn"
+                class="px-4 py-2 bg-green-700 text-white rounded-lg text-sm hover:bg-green-800 transition flex items-center gap-1.5">
+          <i class="fas fa-plus"></i>Add Record
+        </button>
+        <button id="exportPdfBtn"
+                class="px-4 py-2 bg-blue-700 text-white rounded-lg text-sm hover:bg-blue-800 transition flex items-center gap-1.5">
+          <i class="fas fa-file-pdf"></i>Export PDF
+        </button>
+        <button id="refreshBtn"
+                class="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200 transition">
+          <i class="fas fa-sync-alt"></i>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Salary Table -->
-  <div class="px-6 pb-4 bg-white rounded-b-lg shadow-sm">
-    <div class="dashboard-card bg-white rounded-xl overflow-hidden">
-      <div class="overflow-x-auto">
-        <table id="salaryTable" class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Basic Salary</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allowances</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deductions</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net Salary</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-          </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-          <tr>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center">
-                <div class="flex-shrink-0 h-10 w-10">
-                  <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                    <i class="fas fa-user text-blue-600"></i>
-                  </div>
-                </div>
-                <div class="ml-4">
-                  <div class="text-sm font-medium text-gray-900">Mr. John Doe</div>
-                  <div class="text-sm text-gray-500">EMP001</div>
-                </div>
-              </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-900">LKR 45,000</div></td>
-            <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-900">LKR 8,500</div></td>
-            <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-900">LKR 3,750</div></td>
-            <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm font-medium text-gray-900">LKR 49,750</div></td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full status-paid">Paid</span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              <button class="text-blue-600 hover:text-blue-900 view-btn mr-3" data-id="S001"><i class="fas fa-eye"></i></button>
-              <button class="text-yellow-600 hover:text-yellow-900 edit-btn mr-3" data-id="S001"><i class="fas fa-edit"></i></button>
-              <button class="text-red-600 hover:text-red-900 delete-btn" data-id="S001"><i class="fas fa-trash"></i></button>
-            </td>
-          </tr>
-          <tr>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center">
-                <div class="flex-shrink-0 h-10 w-10">
-                  <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                    <i class="fas fa-user text-green-600"></i>
-                  </div>
-                </div>
-                <div class="ml-4">
-                  <div class="text-sm font-medium text-gray-900">Ms. Jane Smith</div>
-                  <div class="text-sm text-gray-500">EMP002</div>
-                </div>
-              </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-900">LKR 38,000</div></td>
-            <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-900">LKR 5,200</div></td>
-            <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm text-gray-900">LKR 2,850</div></td>
-            <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm font-medium text-gray-900">LKR 40,350</div></td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full status-pending">Pending</span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              <button class="text-blue-600 hover:text-blue-900 view-btn mr-3" data-id="S002"><i class="fas fa-eye"></i></button>
-              <button class="text-yellow-600 hover:text-yellow-900 edit-btn mr-3" data-id="S002"><i class="fas fa-edit"></i></button>
-              <button class="text-red-600 hover:text-red-900 delete-btn" data-id="S002"><i class="fas fa-trash"></i></button>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
+  <!-- Table -->
+  <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-100">
+        <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Employee</th>
+          <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Basic Salary</th>
+          <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Allowances</th>
+          <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Deductions</th>
+          <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Net Salary</th>
+          <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Period</th>
+          <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+          <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+        </tr>
+        </thead>
+        <tbody id="salaryTableBody" class="bg-white divide-y divide-gray-100">
+        <!-- Skeleton rows -->
+        <tr><td colspan="8" class="px-6 py-10 text-center">
+          <div class="flex justify-center"><div class="spinner"></div></div>
+          <p class="text-gray-400 text-sm mt-3">Loading salary records…</p>
+        </td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="tableFooter" class="px-6 py-3 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
+      <span id="recordCount">— records</span>
+      <span>RailLanka Pro Salary Management</span>
     </div>
   </div>
 </div>
 
-<!-- Salary Settings Tab Content -->
-<div id="salary-settings" class="tab-content px-6 py-4 flex-1 hidden">
-  <div class="bg-white rounded-lg shadow-sm p-6">
-    <h3 class="text-lg font-medium text-gray-800 mb-6">Salary Components Settings</h3>
+<!-- ═══════════════════════════════════════════ -->
+<!--  TAB 2 — SALARY SETTINGS                   -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="tab-salary-settings" class="tab-content px-6 py-5 flex-1 hidden">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-      <div class="bg-gray-50 p-5 rounded-xl">
-        <h4 class="font-semibold text-gray-700 mb-4 flex items-center">
-          <div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center mr-2">
-            <i class="fas fa-plus-circle text-green-600"></i>
+    <!-- Allowances -->
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+          <span class="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-plus-circle text-green-600 text-xs"></i>
+          </span>Allowances
+        </h3>
+        <button onclick="openAddSetting('ALLOWANCE')"
+                class="px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-lg text-xs hover:bg-green-100 transition">
+          <i class="fas fa-plus mr-1"></i>Add
+        </button>
+      </div>
+      <div id="allowancesList" class="space-y-3">
+        <div class="flex justify-center py-4"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- Deductions -->
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+          <span class="w-7 h-7 bg-red-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-minus-circle text-red-600 text-xs"></i>
+          </span>Deductions
+        </h3>
+        <button onclick="openAddSetting('DEDUCTION')"
+                class="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-lg text-xs hover:bg-red-100 transition">
+          <i class="fas fa-plus mr-1"></i>Add
+        </button>
+      </div>
+      <div id="deductionsList" class="space-y-3">
+        <div class="flex justify-center py-4"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tax -->
+  <div class="bg-white rounded-xl border border-gray-200 p-5 mb-5">
+    <h3 class="font-semibold text-gray-800 flex items-center gap-2 mb-4">
+      <span class="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center">
+        <i class="fas fa-percent text-purple-600 text-xs"></i>
+      </span>Tax Settings
+    </h3>
+    <div id="taxList" class="space-y-3">
+      <div class="flex justify-center py-4"><div class="spinner"></div></div>
+    </div>
+    <button onclick="openAddSetting('TAX')"
+            class="mt-3 px-4 py-2 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg text-sm hover:bg-purple-100 transition">
+      <i class="fas fa-plus mr-1.5"></i>Add Tax Rule
+    </button>
+  </div>
+
+  <!-- Grades -->
+  <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+        <span class="w-7 h-7 bg-amber-100 rounded-lg flex items-center justify-center">
+          <i class="fas fa-chart-line text-amber-600 text-xs"></i>
+        </span>Salary Grades
+      </h3>
+      <button onclick="openAddGrade()"
+              class="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-xs hover:bg-blue-100 transition">
+        <i class="fas fa-plus mr-1"></i>Add Grade
+      </button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-100">
+        <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Grade</th>
+          <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Position</th>
+          <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Salary Range</th>
+          <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+        </tr>
+        </thead>
+        <tbody id="gradesTableBody" class="divide-y divide-gray-100">
+        <tr><td colspan="4" class="px-4 py-6 text-center">
+          <div class="flex justify-center"><div class="spinner"></div></div>
+        </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  TAB 3 — PAYROLL PROCESSING                -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="tab-payroll-processing" class="tab-content px-6 py-5 flex-1 hidden">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+
+    <!-- Period selector -->
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <h3 class="font-semibold text-gray-800 flex items-center gap-2 mb-4">
+        <span class="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center">
+          <i class="fas fa-calendar-alt text-blue-600 text-xs"></i>
+        </span>Payroll Period
+      </h3>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Month</label>
+          <select id="payrollMonth" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+            <option value="1">January</option><option value="2">February</option>
+            <option value="3">March</option><option value="4">April</option>
+            <option value="5" selected>May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option>
+            <option value="9">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Year</label>
+          <select id="payrollYear" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+            <option value="2023">2023</option><option value="2024" selected>2024</option><option value="2025">2025</option>
+          </select>
+        </div>
+        <button id="loadSummaryBtn"
+                class="w-full py-2 bg-blue-700 text-white rounded-lg text-sm hover:bg-blue-800 transition flex items-center justify-center gap-2">
+          <i class="fas fa-sync-alt"></i>Load Summary
+        </button>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <h3 class="font-semibold text-gray-800 flex items-center gap-2 mb-4">
+        <span class="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center">
+          <i class="fas fa-cogs text-green-600 text-xs"></i>
+        </span>Process Controls
+      </h3>
+      <div class="space-y-3">
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div>
+            <p class="text-sm font-medium text-gray-800">Calculate Salaries</p>
+            <p class="text-xs text-gray-500">Auto-generate PENDING records for active employees</p>
           </div>
-          Allowances
-        </h4>
-        <div class="space-y-4">
-          <div class="flex justify-between items-center">
-            <div>
-              <p class="text-sm font-medium text-gray-800">Travel Allowance</p>
-              <p class="text-xs text-gray-500">Monthly travel expense reimbursement</p>
-            </div>
-            <div class="text-right">
-              <p class="text-sm font-medium text-gray-800">LKR 5,000</p>
-              <div class="flex space-x-2 mt-1">
-                <button class="text-blue-600 hover:text-blue-800 text-sm"><i class="fas fa-edit"></i></button>
-                <button class="text-red-600 hover:text-red-800 text-sm"><i class="fas fa-trash"></i></button>
-              </div>
-            </div>
+          <button id="calculateBtn"
+                  class="px-3 py-1.5 bg-blue-700 text-white rounded-lg text-sm hover:bg-blue-800 transition whitespace-nowrap">
+            Calculate
+          </button>
+        </div>
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div>
+            <p class="text-sm font-medium text-gray-800">Generate Payslips</p>
+            <p class="text-xs text-gray-500">Download payroll report PDF</p>
           </div>
-          <div class="flex justify-between items-center">
-            <div>
-              <p class="text-sm font-medium text-gray-800">Overtime Allowance</p>
-              <p class="text-xs text-gray-500">Extra payment for overtime work</p>
-            </div>
-            <div class="text-right">
-              <p class="text-sm font-medium text-gray-800">LKR 250/hour</p>
-              <div class="flex space-x-2 mt-1">
-                <button class="text-blue-600 hover:text-blue-800 text-sm"><i class="fas fa-edit"></i></button>
-                <button class="text-red-600 hover:text-red-800 text-sm"><i class="fas fa-trash"></i></button>
-              </div>
-            </div>
+          <button id="generateBtn"
+                  class="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition whitespace-nowrap">
+            Generate
+          </button>
+        </div>
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div>
+            <p class="text-sm font-medium text-gray-800">Process Payments</p>
+            <p class="text-xs text-gray-500">Mark all PENDING → PAID, set payment date today</p>
           </div>
-          <button class="w-full mt-4 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 flex items-center justify-center">
-            <i class="fas fa-plus mr-2"></i> Add Allowance
+          <button id="processBtn"
+                  class="px-3 py-1.5 bg-green-700 text-white rounded-lg text-sm hover:bg-green-800 transition whitespace-nowrap">
+            Process
           </button>
         </div>
       </div>
-
-      <div class="bg-gray-50 p-5 rounded-xl">
-        <h4 class="font-semibold text-gray-700 mb-4 flex items-center">
-          <div class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center mr-2">
-            <i class="fas fa-minus-circle text-red-600"></i>
-          </div>
-          Deductions
-        </h4>
-        <div class="space-y-4">
-          <div class="flex justify-between items-center">
-            <div>
-              <p class="text-sm font-medium text-gray-800">ETF Contribution</p>
-              <p class="text-xs text-gray-500">Employee Trust Fund</p>
-            </div>
-            <div class="text-right">
-              <p class="text-sm font-medium text-gray-800">3% of Basic</p>
-              <div class="flex space-x-2 mt-1">
-                <button class="text-blue-600 hover:text-blue-800 text-sm"><i class="fas fa-edit"></i></button>
-                <button class="text-red-600 hover:text-red-800 text-sm"><i class="fas fa-trash"></i></button>
-              </div>
-            </div>
-          </div>
-          <div class="flex justify-between items-center">
-            <div>
-              <p class="text-sm font-medium text-gray-800">EPF Contribution</p>
-              <p class="text-xs text-gray-500">Employee Provident Fund</p>
-            </div>
-            <div class="text-right">
-              <p class="text-sm font-medium text-gray-800">8% of Basic</p>
-              <div class="flex space-x-2 mt-1">
-                <button class="text-blue-600 hover:text-blue-800 text-sm"><i class="fas fa-edit"></i></button>
-                <button class="text-red-600 hover:text-red-800 text-sm"><i class="fas fa-trash"></i></button>
-              </div>
-            </div>
-          </div>
-          <button class="w-full mt-4 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 flex items-center justify-center">
-            <i class="fas fa-plus mr-2"></i> Add Deduction
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-gray-50 p-5 rounded-xl mb-6">
-      <h4 class="font-semibold text-gray-700 mb-4 flex items-center">
-        <div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center mr-2">
-          <i class="fas fa-percent text-purple-600"></i>
-        </div>
-        Tax Settings
-      </h4>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Tax Percentage</label>
-          <div class="flex items-center">
-            <input type="number" value="8" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
-            <span class="ml-2 text-gray-500">%</span>
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Tax-Free Allowance</label>
-          <div class="flex items-center">
-            <span class="mr-2 text-gray-500">LKR</span>
-            <input type="number" value="100000" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
-          </div>
-        </div>
-        <div class="flex items-end">
-          <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Update Tax Settings</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-gray-50 p-5 rounded-xl">
-      <div class="flex justify-between items-center mb-4">
-        <h4 class="font-semibold text-gray-700 flex items-center">
-          <div class="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center mr-2">
-            <i class="fas fa-chart-line text-yellow-600"></i>
-          </div>
-          Salary Grades
-        </h4>
-        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
-          <i class="fas fa-plus mr-2"></i> Add Grade
-        </button>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-100">
-          <tr>
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Basic Salary</th>
-            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-          </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-          <tr>
-            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">G1</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">Station Master</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">LKR 65,000 - 85,000</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-              <button class="text-blue-600 hover:text-blue-900 mr-3"><i class="fas fa-edit"></i></button>
-              <button class="text-red-600 hover:text-red-900"><i class="fas fa-trash"></i></button>
-            </td>
-          </tr>
-          <tr>
-            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">G2</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">Ticket Inspector</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">LKR 45,000 - 60,000</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-              <button class="text-blue-600 hover:text-blue-900 mr-3"><i class="fas fa-edit"></i></button>
-              <button class="text-red-600 hover:text-red-900"><i class="fas fa-trash"></i></button>
-            </td>
-          </tr>
-          <tr>
-            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">G3</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">Counter Staff</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">LKR 35,000 - 45,000</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-              <button class="text-blue-600 hover:text-blue-900 mr-3"><i class="fas fa-edit"></i></button>
-              <button class="text-red-600 hover:text-red-900"><i class="fas fa-trash"></i></button>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
     </div>
   </div>
-</div>
 
-<!-- Payroll Processing Tab Content -->
-<div id="payroll-processing" class="tab-content px-6 py-4 flex-1 hidden">
-  <div class="bg-white rounded-lg shadow-sm p-6">
-    <h3 class="text-lg font-medium text-gray-800 mb-6">Process Payroll</h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-      <div class="bg-blue-50 p-5 rounded-xl">
-        <h4 class="font-semibold text-gray-700 mb-4 flex items-center">
-          <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center mr-2">
-            <i class="fas fa-calendar-alt text-blue-600"></i>
-          </div>
-          Select Payroll Period
-        </h4>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Month</label>
-            <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-              <option>January</option><option>February</option><option>March</option>
-              <option>April</option><option>May</option><option>June</option>
-              <option>July</option><option>August</option><option>September</option>
-              <option>October</option><option>November</option><option>December</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Year</label>
-            <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-              <option>2023</option><option selected>2024</option><option>2025</option>
-            </select>
-          </div>
-          <div class="flex items-center justify-between pt-2">
-            <span class="text-sm text-gray-600">Payroll Period:</span>
-            <span class="text-sm font-medium">01 May 2024 - 31 May 2024</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-green-50 p-5 rounded-xl">
-        <h4 class="font-semibold text-gray-700 mb-4 flex items-center">
-          <div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center mr-2">
-            <i class="fas fa-cogs text-green-600"></i>
-          </div>
-          Process Controls
-        </h4>
-        <div class="space-y-4">
-          <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-            <div>
-              <p class="text-sm font-medium text-gray-800">Calculate Salaries</p>
-              <p class="text-xs text-gray-500">Compute all employee salaries</p>
-            </div>
-            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">Calculate</button>
-          </div>
-          <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-            <div>
-              <p class="text-sm font-medium text-gray-800">Generate Payslips</p>
-              <p class="text-xs text-gray-500">Create PDF payslips for all employees</p>
-            </div>
-            <button class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm">Generate</button>
-          </div>
-          <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-            <div>
-              <p class="text-sm font-medium text-gray-800">Process Payments</p>
-              <p class="text-xs text-gray-500">Initiate bank transfers</p>
-            </div>
-            <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">Process</button>
-          </div>
-        </div>
+  <!-- Summary cards -->
+  <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <h3 class="font-semibold text-gray-800 flex items-center gap-2 mb-4">
+      <span class="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center">
+        <i class="fas fa-file-invoice-dollar text-purple-600 text-xs"></i>
+      </span>
+      Payroll Summary – <span id="summaryLabel" class="text-blue-700 ml-1">May 2024</span>
+    </h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5" id="summaryCards">
+      <div class="stat-card text-center"><p class="text-xs text-gray-500 mb-1">Total Employees</p><p id="sumTotal" class="text-2xl font-bold text-gray-800">—</p></div>
+      <div class="stat-card text-center"><p class="text-xs text-gray-500 mb-1">Total Basic</p><p id="sumBasic" class="text-2xl font-bold text-gray-800">—</p></div>
+      <div class="stat-card text-center"><p class="text-xs text-gray-500 mb-1">Total Deductions</p><p id="sumDeductions" class="text-2xl font-bold text-gray-800">—</p></div>
+      <div class="stat-card text-center border-green-200 bg-green-50">
+        <p class="text-xs text-green-600 mb-1">Net Payroll</p>
+        <p id="sumNet" class="text-2xl font-bold text-green-700">—</p>
       </div>
     </div>
-
-    <div class="bg-gray-50 p-5 rounded-xl">
-      <h4 class="font-semibold text-gray-700 mb-4 flex items-center">
-        <div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center mr-2">
-          <i class="fas fa-file-invoice-dollar text-purple-600"></i>
-        </div>
-        Payroll Summary (May 2024)
-      </h4>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div class="text-sm text-gray-500">Total Employees</div>
-          <div class="text-2xl font-bold text-gray-800">142</div>
-        </div>
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div class="text-sm text-gray-500">Total Basic Salary</div>
-          <div class="text-2xl font-bold text-gray-800">LKR 6.2M</div>
-        </div>
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div class="text-sm text-gray-500">Total Deductions</div>
-          <div class="text-2xl font-bold text-gray-800">LKR 1.1M</div>
-        </div>
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-green-200 bg-green-50">
-          <div class="text-sm text-green-600">Net Payroll</div>
-          <div class="text-2xl font-bold text-green-700">LKR 5.8M</div>
-        </div>
+    <div class="flex justify-between items-center border-t border-gray-100 pt-4">
+      <div class="flex gap-4 text-xs">
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>Paid: <strong id="sumPaid">—</strong></span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>Pending: <strong id="sumPending">—</strong></span>
       </div>
-      <div class="flex justify-end">
-        <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 mr-3">
-          <i class="fas fa-download mr-2"></i> Export Report
-        </button>
-        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-          <i class="fas fa-paper-plane mr-2"></i> Submit Payroll
+      <div class="flex gap-2">
+        <button id="exportReportBtn"
+                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition">
+          <i class="fas fa-download mr-1.5"></i>Export Report
         </button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Salary Details Modal -->
-<div id="salaryModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-  <div class="modal-content bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl transform transition-all">
-    <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-white relative">
-      <div class="absolute top-4 right-4">
-        <button type="button" id="closeModal" class="text-white hover:text-blue-200 text-xl transition-transform hover:rotate-90 duration-300">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      <div class="flex items-center">
-        <div class="w-14 h-14 rounded-full bg-blue-500/20 flex items-center justify-center mr-4">
-          <i class="fas fa-money-bill-wave text-2xl"></i>
+<!-- ═══════════════════════════════════════════ -->
+<!--  MODAL: VIEW SALARY DETAILS                 -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="viewModal" class="modal-overlay" onclick="if(event.target===this)closeModal('viewModal')">
+  <div class="modal-box">
+    <div class="bg-gradient-to-r from-blue-700 to-blue-900 p-6 text-white relative">
+      <button onclick="closeModal('viewModal')" class="absolute top-4 right-4 text-white/70 hover:text-white text-xl transition">
+        <i class="fas fa-times"></i>
+      </button>
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center">
+          <i class="fas fa-money-bill-wave text-xl"></i>
         </div>
         <div>
-          <h3 class="text-2xl font-bold">Salary Details</h3>
-          <p class="text-blue-200 mt-1">Complete salary information for employee</p>
+          <h2 class="text-xl font-bold">Salary Details</h2>
+          <p class="text-blue-200 text-sm">Complete salary information</p>
         </div>
       </div>
     </div>
+    <div class="p-6 max-h-[72vh] overflow-y-auto space-y-4">
 
-    <div class="p-6 max-h-[70vh] overflow-y-auto">
-      <div class="flex items-center mb-6 pb-6 border-b border-gray-100">
+      <!-- Employee info -->
+      <div class="flex items-center gap-4 pb-4 border-b border-gray-100">
         <div class="relative">
-          <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center shadow-inner">
-            <i class="fas fa-user text-blue-600 text-3xl"></i>
+          <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+            <i class="fas fa-user text-blue-600 text-2xl"></i>
           </div>
-          <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-md">
-            <div id="viewStatusIndicator" class="w-3 h-3 rounded-full bg-green-500"></div>
+          <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow">
+            <div id="vStatusDot" class="w-3 h-3 rounded-full bg-green-500 pulse"></div>
           </div>
         </div>
-        <div class="ml-5">
-          <h2 id="viewEmployeeName" class="text-xl font-bold text-gray-800">Mr. John Doe</h2>
-          <div class="flex items-center mt-2">
-            <span id="viewEmployeeDept" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium mr-2">Operations</span>
-            <span id="viewSalaryStatus" class="px-3 py-1 status-paid rounded-full text-xs font-medium">Paid</span>
+        <div>
+          <h3 id="vName" class="text-lg font-bold text-gray-900">—</h3>
+          <div class="flex items-center gap-2 mt-1">
+            <span id="vDept" class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">—</span>
+            <span id="vStatus" class="px-2 py-0.5 rounded-full text-xs font-medium badge-paid">—</span>
           </div>
-          <p class="text-sm text-gray-500 mt-2">
-            <i class="fas fa-id-badge mr-1"></i>
-            Employee ID: <span id="viewEmployeeId">EMP001</span>
-          </p>
+          <p class="text-xs text-gray-500 mt-1"><i class="fas fa-id-badge mr-1"></i>ID: <span id="vEmpId" class="mono">—</span></p>
         </div>
       </div>
 
-      <div class="bg-gray-50 p-5 rounded-xl mb-5">
-        <h4 class="font-semibold text-gray-700 mb-4 flex items-center">
-          <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center mr-2">
-            <i class="fas fa-receipt text-blue-600"></i>
-          </div>
-          Salary Breakdown (May 2024)
+      <!-- Breakdown -->
+      <div class="bg-gray-50 rounded-xl p-4">
+        <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <i class="fas fa-receipt text-blue-600"></i>Salary Breakdown
+          <span id="vPeriod" class="text-gray-400 font-normal text-xs"></span>
         </h4>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <p class="text-xs text-gray-500 uppercase tracking-wide">Basic Salary</p>
-            <p id="viewBasicSalary" class="font-medium text-lg">LKR 45,000</p>
-          </div>
-          <div>
-            <p class="text-xs text-gray-500 uppercase tracking-wide">Allowances</p>
-            <p id="viewAllowances" class="font-medium text-lg text-green-600">+ LKR 8,500</p>
-          </div>
-          <div>
-            <p class="text-xs text-gray-500 uppercase tracking-wide">Deductions</p>
-            <p id="viewDeductions" class="font-medium text-lg text-red-600">- LKR 3,750</p>
-          </div>
-          <div class="bg-blue-50 p-3 rounded-lg">
-            <p class="text-xs text-gray-500 uppercase tracking-wide">Net Salary</p>
-            <p id="viewNetSalary" class="font-bold text-lg text-blue-700">LKR 49,750</p>
-          </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><p class="text-xs text-gray-400 uppercase mb-0.5">Basic</p><p id="vBasic" class="font-semibold text-gray-900">—</p></div>
+          <div><p class="text-xs text-gray-400 uppercase mb-0.5">Allowances</p><p id="vAllow" class="font-semibold text-green-600">—</p></div>
+          <div><p class="text-xs text-gray-400 uppercase mb-0.5">Deductions</p><p id="vDeduct" class="font-semibold text-red-600">—</p></div>
+          <div class="bg-blue-50 rounded-lg p-2"><p class="text-xs text-gray-400 uppercase mb-0.5">Net Salary</p><p id="vNet" class="font-bold text-blue-700">—</p></div>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-        <div class="bg-green-50 p-5 rounded-xl">
-          <h4 class="font-semibold text-gray-700 mb-4 flex items-center">
-            <div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center mr-2">
-              <i class="fas fa-plus-circle text-green-600"></i>
-            </div>
-            Allowances
-          </h4>
-          <div class="space-y-3">
-            <div class="flex justify-between"><p class="text-sm text-gray-700">Travel Allowance</p><p class="text-sm font-medium">LKR 5,000</p></div>
-            <div class="flex justify-between"><p class="text-sm text-gray-700">Overtime (8 hours)</p><p class="text-sm font-medium">LKR 2,000</p></div>
-            <div class="flex justify-between"><p class="text-sm text-gray-700">Attendance Bonus</p><p class="text-sm font-medium">LKR 1,500</p></div>
-            <div class="border-t border-green-200 pt-2 mt-2 flex justify-between">
-              <p class="text-sm font-medium text-gray-800">Total Allowances</p>
-              <p class="text-sm font-medium text-green-700">LKR 8,500</p>
-            </div>
-          </div>
-        </div>
-        <div class="bg-red-50 p-5 rounded-xl">
-          <h4 class="font-semibold text-gray-700 mb-4 flex items-center">
-            <div class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center mr-2">
-              <i class="fas fa-minus-circle text-red-600"></i>
-            </div>
-            Deductions
-          </h4>
-          <div class="space-y-3">
-            <div class="flex justify-between"><p class="text-sm text-gray-700">ETF Contribution (3%)</p><p class="text-sm font-medium">LKR 1,350</p></div>
-            <div class="flex justify-between"><p class="text-sm text-gray-700">EPF Contribution (8%)</p><p class="text-sm font-medium">LKR 3,600</p></div>
-            <div class="flex justify-between"><p class="text-sm text-gray-700">Tax</p><p class="text-sm font-medium">LKR 0</p></div>
-            <div class="border-t border-red-200 pt-2 mt-2 flex justify-between">
-              <p class="text-sm font-medium text-gray-800">Total Deductions</p>
-              <p class="text-sm font-medium text-red-700">LKR 4,950</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-gray-50 p-5 rounded-xl">
-        <h4 class="font-semibold text-gray-700 mb-4 flex items-center">
-          <div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center mr-2">
-            <i class="fas fa-credit-card text-purple-600"></i>
-          </div>
-          Payment Information
+      <!-- Payment info -->
+      <div class="bg-gray-50 rounded-xl p-4">
+        <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <i class="fas fa-credit-card text-purple-600"></i>Payment Information
         </h4>
-        <div class="grid grid-cols-2 gap-4">
-          <div><p class="text-xs text-gray-500 uppercase tracking-wide">Payment Date</p><p id="viewPaymentDate" class="font-medium">25 May 2024</p></div>
-          <div><p class="text-xs text-gray-500 uppercase tracking-wide">Payment Method</p><p id="viewPaymentMethod" class="font-medium">Bank Transfer</p></div>
-          <div><p class="text-xs text-gray-500 uppercase tracking-wide">Bank Name</p><p id="viewBankName" class="font-medium">Commercial Bank</p></div>
-          <div><p class="text-xs text-gray-500 uppercase tracking-wide">Account Number</p><p id="viewAccountNumber" class="font-medium">XXXX-XXXX-7890</p></div>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div><p class="text-xs text-gray-400 uppercase mb-0.5">Payment Date</p><p id="vPayDate" class="font-medium text-gray-800">—</p></div>
+          <div><p class="text-xs text-gray-400 uppercase mb-0.5">Method</p><p id="vPayMethod" class="font-medium text-gray-800">—</p></div>
+          <div><p class="text-xs text-gray-400 uppercase mb-0.5">Bank</p><p id="vBank" class="font-medium text-gray-800">—</p></div>
+          <div><p class="text-xs text-gray-400 uppercase mb-0.5">Account</p><p id="vAccount" class="font-medium text-gray-800 mono">—</p></div>
         </div>
+      </div>
+
+      <!-- Notes -->
+      <div id="vNotesBox" class="hidden bg-amber-50 border border-amber-100 rounded-xl p-4 text-sm text-amber-800">
+        <i class="fas fa-sticky-note mr-1.5"></i><span id="vNotes"></span>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-2">
+        <button id="vDownloadBtn"
+                class="flex-1 py-2 bg-blue-700 text-white rounded-lg text-sm hover:bg-blue-800 transition flex items-center justify-center gap-2">
+          <i class="fas fa-file-pdf"></i>Download Payslip
+        </button>
       </div>
     </div>
-
-    <div class="bg-gray-50 px-6 py-4 flex justify-end rounded-b-2xl">
-      <button type="button" id="closeViewBtn" class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-xl hover:from-blue-700 hover:to-blue-900 transition-all shadow-md hover:shadow-lg flex items-center">
-        <i class="fas fa-times mr-2"></i>Close
+    <div class="bg-gray-50 px-6 py-3 flex justify-end border-t border-gray-100">
+      <button onclick="closeModal('viewModal')"
+              class="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition">
+        Close
       </button>
     </div>
   </div>
 </div>
 
-<!-- Add/Edit Salary Modal -->
-<div id="editSalaryModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-  <div class="modal-content bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl transform transition-all">
-    <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-white relative">
-      <div class="absolute top-4 right-4">
-        <button type="button" id="closeEditModal" class="text-white hover:text-blue-200 text-xl transition-transform hover:rotate-90 duration-300">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      <div class="flex items-center">
-        <div class="w-14 h-14 rounded-full bg-blue-500/20 flex items-center justify-center mr-4">
-          <i class="fas fa-money-bill-wave text-2xl"></i>
+<!-- ═══════════════════════════════════════════ -->
+<!--  MODAL: ADD / EDIT SALARY RECORD           -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="editModal" class="modal-overlay" onclick="if(event.target===this)closeModal('editModal')">
+  <div class="modal-box">
+    <div class="bg-gradient-to-r from-blue-700 to-blue-900 p-6 text-white relative">
+      <button onclick="closeModal('editModal')" class="absolute top-4 right-4 text-white/70 hover:text-white text-xl transition">
+        <i class="fas fa-times"></i>
+      </button>
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center">
+          <i class="fas fa-money-bill-wave text-xl"></i>
         </div>
         <div>
-          <h3 class="text-2xl font-bold" id="editModalTitle">Add Salary Record</h3>
-          <p class="text-blue-200 mt-1">Create new salary record for employee</p>
+          <h2 id="editModalTitle" class="text-xl font-bold">Add Salary Record</h2>
+          <p class="text-blue-200 text-sm">Fill in the salary details below</p>
         </div>
-      </div>
-    </div>
-
-    <div class="p-6 max-h-[70vh] overflow-y-auto">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Select Employee</label>
-          <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-            <option value="">-- Select Employee --</option>
-            <option value="EMP001">John Doe (EMP001) - Operations</option>
-            <option value="EMP002">Jane Smith (EMP002) - Customer Service</option>
-            <option value="EMP003">Robert Johnson (EMP003) - Maintenance</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Basic Salary (LKR)</label>
-          <input type="number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="0.00" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Payment Date</label>
-          <input type="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Allowances (LKR)</label>
-          <input type="number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="0.00" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Deductions (LKR)</label>
-          <input type="number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="0.00" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
-          <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-            <option value="bank">Bank Transfer</option>
-            <option value="cash">Cash</option>
-            <option value="cheque">Cheque</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-          <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-            <option value="paid">Paid</option>
-            <option value="pending">Pending</option>
-          </select>
-        </div>
-      </div>
-      <div class="mb-5">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-        <textarea rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Additional notes..."></textarea>
       </div>
     </div>
+    <div class="p-6 max-h-[72vh] overflow-y-auto">
+      <input type="hidden" id="editRecordId" />
+      <div class="grid grid-cols-2 gap-4">
+        <div class="col-span-2">
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Employee <span class="text-red-500">*</span></label>
+          <select id="editEmployee" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+            <option value="">— Select Employee —</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Basic Salary (LKR) <span class="text-red-500">*</span></label>
+          <input id="editBasic" type="number" min="0" placeholder="0.00"
+                 class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Allowances (LKR)</label>
+          <input id="editAllowances" type="number" min="0" placeholder="0.00"
+                 class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Deductions (LKR)</label>
+          <input id="editDeductions" type="number" min="0" placeholder="0.00"
+                 class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Payment Date</label>
+          <input id="editPayDate" type="date"
+                 class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Payroll Month <span class="text-red-500">*</span></label>
+          <select id="editMonth" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+            <option value="1">January</option><option value="2">February</option>
+            <option value="3">March</option><option value="4">April</option>
+            <option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option>
+            <option value="9">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Payroll Year <span class="text-red-500">*</span></label>
+          <select id="editYear" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+            <option value="2023">2023</option><option value="2024" selected>2024</option><option value="2025">2025</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Payment Method</label>
+          <select id="editPayMethod" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+            <option value="BANK_TRANSFER">Bank Transfer</option>
+            <option value="CASH">Cash</option>
+            <option value="CHEQUE">Cheque</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Status</label>
+          <select id="editStatus" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+            <option value="PENDING">Pending</option>
+            <option value="PAID">Paid</option>
+          </select>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Notes</label>
+          <textarea id="editNotes" rows="2" placeholder="Additional notes…"
+                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"></textarea>
+        </div>
+      </div>
 
-    <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3 rounded-b-2xl">
-      <button type="button" id="cancelEditBtn" class="px-5 py-2.5 text-gray-700 rounded-xl border border-gray-300 hover:bg-gray-100 transition-all">Cancel</button>
-      <button type="button" id="saveSalaryBtn" class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-xl hover:from-blue-700 hover:to-blue-900 transition-all shadow-md hover:shadow-lg flex items-center">
-        <i class="fas fa-save mr-2"></i>Save Record
+      <!-- Net preview -->
+      <div class="mt-4 p-3 bg-blue-50 rounded-xl flex items-center justify-between">
+        <span class="text-sm text-gray-600">Calculated Net Salary</span>
+        <span id="netPreview" class="font-bold text-blue-700 text-lg">LKR 0.00</span>
+      </div>
+    </div>
+    <div class="bg-gray-50 px-6 py-3 flex justify-end gap-3 border-t border-gray-100">
+      <button onclick="closeModal('editModal')"
+              class="px-4 py-2 text-gray-600 border border-gray-200 rounded-lg text-sm hover:bg-gray-100 transition">
+        Cancel
+      </button>
+      <button id="saveRecordBtn"
+              class="px-5 py-2 bg-blue-700 text-white rounded-lg text-sm hover:bg-blue-800 transition flex items-center gap-2">
+        <i class="fas fa-save"></i>Save Record
       </button>
     </div>
   </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<!-- ═══════════════════════════════════════════ -->
+<!--  MODAL: ADD / EDIT SETTING                 -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="settingModal" class="modal-overlay" onclick="if(event.target===this)closeModal('settingModal')">
+  <div class="modal-box max-w-md">
+    <div class="bg-gradient-to-r from-blue-700 to-blue-900 p-5 text-white relative">
+      <button onclick="closeModal('settingModal')" class="absolute top-4 right-4 text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
+      <h2 id="settingModalTitle" class="font-bold text-lg">Add Allowance</h2>
+    </div>
+    <div class="p-5 space-y-3">
+      <input type="hidden" id="settingId" />
+      <input type="hidden" id="settingType" />
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Name <span class="text-red-500">*</span></label>
+        <input id="settingName" type="text" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="e.g. Travel Allowance" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Description</label>
+        <input id="settingDesc" type="text" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="Short description" />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Value <span class="text-red-500">*</span></label>
+          <input id="settingValue" type="number" min="0" step="0.01" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Value Type</label>
+          <select id="settingValueType" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+            <option value="FIXED">Fixed (LKR)</option>
+            <option value="PERCENTAGE">Percentage (%)</option>
+          </select>
+        </div>
+      </div>
+      <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+        <input id="settingActive" type="checkbox" checked class="w-4 h-4 rounded border-gray-300" />
+        Active
+      </label>
+    </div>
+    <div class="bg-gray-50 px-5 py-3 flex justify-end gap-2 border-t border-gray-100">
+      <button onclick="closeModal('settingModal')" class="px-4 py-2 text-gray-600 border border-gray-200 rounded-lg text-sm hover:bg-gray-100 transition">Cancel</button>
+      <button id="saveSettingBtn" class="px-4 py-2 bg-blue-700 text-white rounded-lg text-sm hover:bg-blue-800 transition"><i class="fas fa-save mr-1.5"></i>Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  MODAL: ADD / EDIT GRADE                   -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="gradeModal" class="modal-overlay" onclick="if(event.target===this)closeModal('gradeModal')">
+  <div class="modal-box max-w-md">
+    <div class="bg-gradient-to-r from-blue-700 to-blue-900 p-5 text-white relative">
+      <button onclick="closeModal('gradeModal')" class="absolute top-4 right-4 text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
+      <h2 id="gradeModalTitle" class="font-bold text-lg">Add Salary Grade</h2>
+    </div>
+    <div class="p-5 space-y-3">
+      <input type="hidden" id="gradeId" />
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Grade Code <span class="text-red-500">*</span></label>
+          <input id="gradeCode" type="text" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm mono" placeholder="G1" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Position <span class="text-red-500">*</span></label>
+          <input id="gradePosition" type="text" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="Station Master" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Min Salary (LKR) <span class="text-red-500">*</span></label>
+          <input id="gradeMin" type="number" min="0" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Max Salary (LKR) <span class="text-red-500">*</span></label>
+          <input id="gradeMax" type="number" min="0" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0" />
+        </div>
+      </div>
+    </div>
+    <div class="bg-gray-50 px-5 py-3 flex justify-end gap-2 border-t border-gray-100">
+      <button onclick="closeModal('gradeModal')" class="px-4 py-2 text-gray-600 border border-gray-200 rounded-lg text-sm hover:bg-gray-100 transition">Cancel</button>
+      <button id="saveGradeBtn" class="px-4 py-2 bg-blue-700 text-white rounded-lg text-sm hover:bg-blue-800 transition"><i class="fas fa-save mr-1.5"></i>Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  SCRIPT                                    -->
+<!-- ═══════════════════════════════════════════ -->
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const tabs = document.querySelectorAll(".tab-button");
-    const tabContents = document.querySelectorAll(".tab-content");
+  const API = 'http://localhost:8080/api';
+  let currentViewId = null;
 
-    tabs.forEach((tab) => {
-      tab.addEventListener("click", () => {
-        const tabId = tab.getAttribute("data-tab");
-        tabs.forEach((t) => t.classList.remove("active"));
-        tab.classList.add("active");
-        tabContents.forEach((content) => {
-          content.classList.add("hidden");
-          if (content.id === tabId) content.classList.remove("hidden");
-        });
-      });
+  // ─── Utils ───────────────────────────────────────────────────────────────
+
+  const fmt = v => 'LKR ' + Number(v || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const months = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  function toast(msg, type = 'info') {
+    const el = document.getElementById('toast');
+    el.className = `show ${type}`;
+    el.innerHTML = `<i class="fas ${type==='success'?'fa-check-circle':type==='error'?'fa-exclamation-circle':'fa-info-circle'}"></i> ${msg}`;
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('show'), 3500);
+  }
+
+  function openModal(id)  { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  async function api(path, opts = {}) {
+    const r = await fetch(API + path, {
+      headers: { 'Content-Type': 'application/json' },
+      ...opts
     });
+    if (!r.ok) {
+      let msg = `HTTP ${r.status}`;
+      try { const j = await r.json(); msg = j.message || msg; } catch {}
+      throw new Error(msg);
+    }
+    if (r.status === 204) return null;
+    const j = await r.json();
+    return j.data !== undefined ? j.data : j;
+  }
 
-    const viewButtons = document.querySelectorAll(".view-btn");
-    const viewModal = document.getElementById("salaryModal");
-    const closeViewBtn = document.getElementById("closeViewBtn");
-    const closeModalBtn = document.getElementById("closeModal");
+  // ─── API health check ────────────────────────────────────────────────────
 
-    viewButtons.forEach((button) => {
-      button.addEventListener("click", () => viewModal.classList.add("active"));
-    });
-    closeViewBtn.addEventListener("click", () => viewModal.classList.remove("active"));
-    closeModalBtn.addEventListener("click", () => viewModal.classList.remove("active"));
+  async function checkApi() {
+    try {
+      await fetch(API + '/employees');
+      document.getElementById('apiDot').className = 'w-2 h-2 rounded-full bg-green-500 inline-block';
+      document.getElementById('apiStatus').innerHTML = '<span class="w-2 h-2 rounded-full bg-green-500 inline-block" id="apiDot"></span> API Connected';
+    } catch {
+      document.getElementById('apiDot').className = 'w-2 h-2 rounded-full bg-red-500 inline-block';
+      document.getElementById('apiStatus').innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500 inline-block" id="apiDot"></span> API Offline';
+      toast('Cannot reach API at ' + API, 'error');
+    }
+  }
 
-    const addSalaryBtn = document.getElementById("addSalaryBtn");
-    const editButtons = document.querySelectorAll(".edit-btn");
-    const editModal = document.getElementById("editSalaryModal");
-    const closeEditBtn = document.getElementById("closeEditModal");
-    const cancelEditBtn = document.getElementById("cancelEditBtn");
+  // clock
+  setInterval(() => {
+    document.getElementById('headerTime').textContent = new Date().toLocaleTimeString('en-LK');
+  }, 1000);
 
-    addSalaryBtn.addEventListener("click", () => {
-      document.getElementById("editModalTitle").textContent = "Add Salary Record";
-      editModal.classList.add("active");
-    });
-    editButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        document.getElementById("editModalTitle").textContent = "Edit Salary Record";
-        editModal.classList.add("active");
-      });
-    });
-    closeEditBtn.addEventListener("click", () => editModal.classList.remove("active"));
-    cancelEditBtn.addEventListener("click", () => editModal.classList.remove("active"));
+  // ─── Tabs ────────────────────────────────────────────────────────────────
 
-    window.addEventListener("click", (event) => {
-      if (event.target.classList.contains("modal")) {
-        document.querySelectorAll(".modal").forEach((modal) => modal.classList.remove("active"));
-      }
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      document.getElementById('tab-' + tab).classList.remove('hidden');
+      if (tab === 'salary-settings') loadSettings();
+      if (tab === 'payroll-processing') loadSummary();
     });
   });
+
+  // ─── SALARY RECORDS ──────────────────────────────────────────────────────
+
+  async function loadRecords(search = '', status = '', dept = '') {
+    const body = document.getElementById('salaryTableBody');
+    body.innerHTML = `<tr><td colspan="8" class="px-6 py-10 text-center">
+      <div class="flex justify-center"><div class="spinner"></div></div>
+      <p class="text-gray-400 text-sm mt-3">Loading…</p>
+    </td></tr>`;
+
+    try {
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (status) params.set('status', status);
+      if (dept)   params.set('department', dept);
+      const records = await api('/salary-records?' + params);
+      renderTable(records);
+    } catch (e) {
+      body.innerHTML = `<tr><td colspan="8" class="px-6 py-10 text-center text-red-500">
+        <i class="fas fa-exclamation-triangle mr-2"></i>${e.message}
+      </td></tr>`;
+    }
+  }
+
+  function renderTable(records) {
+    const body = document.getElementById('salaryTableBody');
+    document.getElementById('recordCount').textContent = records.length + ' record' + (records.length !== 1 ? 's' : '');
+
+    if (!records.length) {
+      body.innerHTML = `<tr><td colspan="8" class="px-6 py-12 text-center text-gray-400">
+        <i class="fas fa-inbox text-3xl mb-3 block opacity-30"></i>No records found
+      </td></tr>`;
+      return;
+    }
+
+    const colors = ['blue','green','purple','amber','rose','teal','indigo','orange'];
+    body.innerHTML = records.map((r, i) => {
+      const color = colors[i % colors.length];
+      const isPaid = r.status === 'PAID';
+      return `<tr>
+        <td class="px-6 py-4">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full bg-${color}-100 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-user text-${color}-600 text-sm"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-gray-900">${r.employeeName}</p>
+              <p class="text-xs text-gray-400 mono">${r.employeeId}</p>
+            </div>
+          </div>
+        </td>
+        <td class="px-6 py-4 text-sm text-gray-700">${fmt(r.basicSalary)}</td>
+        <td class="px-6 py-4 text-sm text-green-700">+${fmt(r.allowances)}</td>
+        <td class="px-6 py-4 text-sm text-red-600">−${fmt(r.deductions)}</td>
+        <td class="px-6 py-4 text-sm font-semibold text-gray-900">${fmt(r.netSalary)}</td>
+        <td class="px-6 py-4 text-xs text-gray-500">${months[r.payrollMonth]} ${r.payrollYear}</td>
+        <td class="px-6 py-4">
+          <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${isPaid ? 'badge-paid' : 'badge-pending'}">
+            ${isPaid ? 'Paid' : 'Pending'}
+          </span>
+        </td>
+        <td class="px-6 py-4">
+          <div class="flex items-center gap-3">
+            <button onclick="viewRecord(${r.id})" title="View" class="text-blue-500 hover:text-blue-700 transition"><i class="fas fa-eye"></i></button>
+            <button onclick="editRecord(${r.id})" title="Edit" class="text-amber-500 hover:text-amber-700 transition"><i class="fas fa-edit"></i></button>
+            <button onclick="deleteRecord(${r.id},'${r.employeeName}')" title="Delete" class="text-red-400 hover:text-red-600 transition"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Search
+  document.getElementById('filterBtn').addEventListener('click', () => {
+    loadRecords(
+            document.getElementById('filterSearch').value.trim(),
+            document.getElementById('filterStatus').value,
+            document.getElementById('filterDept').value
+    );
+  });
+  document.getElementById('filterSearch').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('filterBtn').click();
+  });
+  document.getElementById('refreshBtn').addEventListener('click', () => loadRecords());
+
+  // ─── VIEW record ─────────────────────────────────────────────────────────
+
+  async function viewRecord(id) {
+    currentViewId = id;
+    openModal('viewModal');
+    try {
+      const r = await api('/salary-records/' + id);
+      const isPaid = r.status === 'PAID';
+      document.getElementById('vName').textContent      = r.employeeName;
+      document.getElementById('vDept').textContent      = r.department;
+      document.getElementById('vEmpId').textContent     = r.employeeId;
+      document.getElementById('vBasic').textContent     = fmt(r.basicSalary);
+      document.getElementById('vAllow').textContent     = '+' + fmt(r.allowances);
+      document.getElementById('vDeduct').textContent    = '−' + fmt(r.deductions);
+      document.getElementById('vNet').textContent       = fmt(r.netSalary);
+      document.getElementById('vPayDate').textContent   = r.paymentDate ? new Date(r.paymentDate).toLocaleDateString('en-LK', {day:'numeric',month:'short',year:'numeric'}) : '—';
+      document.getElementById('vPayMethod').textContent = (r.paymentMethod || '').replace(/_/g,' ');
+      document.getElementById('vBank').textContent      = r.bankName || '—';
+      document.getElementById('vAccount').textContent   = r.accountNumber || '—';
+      document.getElementById('vPeriod').textContent    = `(${months[r.payrollMonth]} ${r.payrollYear})`;
+
+      const statusEl = document.getElementById('vStatus');
+      statusEl.textContent = isPaid ? 'Paid' : 'Pending';
+      statusEl.className = `px-2 py-0.5 rounded-full text-xs font-medium ${isPaid ? 'badge-paid' : 'badge-pending'}`;
+      document.getElementById('vStatusDot').className = `w-3 h-3 rounded-full pulse ${isPaid ? 'bg-green-500' : 'bg-amber-400'}`;
+
+      const notesBox = document.getElementById('vNotesBox');
+      if (r.notes) { document.getElementById('vNotes').textContent = r.notes; notesBox.classList.remove('hidden'); }
+      else notesBox.classList.add('hidden');
+
+      document.getElementById('vDownloadBtn').onclick = () => downloadPayslip(id);
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  }
+
+  function downloadPayslip(id) {
+    window.open(API + '/salary-records/' + id + '/payslip', '_blank');
+  }
+
+  // ─── ADD record ──────────────────────────────────────────────────────────
+
+  document.getElementById('addSalaryBtn').addEventListener('click', async () => {
+    document.getElementById('editModalTitle').textContent = 'Add Salary Record';
+    document.getElementById('editRecordId').value = '';
+    document.getElementById('editEmployee').value = '';
+    document.getElementById('editBasic').value = '';
+    document.getElementById('editAllowances').value = '';
+    document.getElementById('editDeductions').value = '';
+    document.getElementById('editPayDate').value = '';
+    document.getElementById('editMonth').value = new Date().getMonth() + 1;
+    document.getElementById('editYear').value = new Date().getFullYear();
+    document.getElementById('editPayMethod').value = 'BANK_TRANSFER';
+    document.getElementById('editStatus').value = 'PENDING';
+    document.getElementById('editNotes').value = '';
+    updateNetPreview();
+    await loadEmployeeDropdown();
+    openModal('editModal');
+  });
+
+  async function editRecord(id) {
+    document.getElementById('editModalTitle').textContent = 'Edit Salary Record';
+    await loadEmployeeDropdown();
+    try {
+      const r = await api('/salary-records/' + id);
+      document.getElementById('editRecordId').value   = id;
+      document.getElementById('editEmployee').value   = r.employeeId;
+      document.getElementById('editBasic').value      = r.basicSalary;
+      document.getElementById('editAllowances').value = r.allowances;
+      document.getElementById('editDeductions').value = r.deductions;
+      document.getElementById('editPayDate').value    = r.paymentDate || '';
+      document.getElementById('editMonth').value      = r.payrollMonth;
+      document.getElementById('editYear').value       = r.payrollYear;
+      document.getElementById('editPayMethod').value  = r.paymentMethod;
+      document.getElementById('editStatus').value     = r.status;
+      document.getElementById('editNotes').value      = r.notes || '';
+      updateNetPreview();
+      openModal('editModal');
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  }
+
+  async function loadEmployeeDropdown() {
+    try {
+      const employees = await api('/employees?activeOnly=true');
+      const sel = document.getElementById('editEmployee');
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">— Select Employee —</option>' +
+              employees.map(e => `<option value="${e.employeeId}">${e.name} (${e.employeeId}) – ${e.department}</option>`).join('');
+      if (cur) sel.value = cur;
+    } catch {}
+  }
+
+  // Net preview
+  function updateNetPreview() {
+    const basic  = parseFloat(document.getElementById('editBasic').value) || 0;
+    const allow  = parseFloat(document.getElementById('editAllowances').value) || 0;
+    const deduct = parseFloat(document.getElementById('editDeductions').value) || 0;
+    document.getElementById('netPreview').textContent = fmt(basic + allow - deduct);
+  }
+  ['editBasic','editAllowances','editDeductions'].forEach(id =>
+          document.getElementById(id).addEventListener('input', updateNetPreview));
+
+  // Save
+  document.getElementById('saveRecordBtn').addEventListener('click', async () => {
+    const empId = document.getElementById('editEmployee').value;
+    const basic = document.getElementById('editBasic').value;
+    if (!empId) { toast('Please select an employee', 'error'); return; }
+    if (!basic)  { toast('Basic salary is required', 'error'); return; }
+
+    const id = document.getElementById('editRecordId').value;
+    const body = {
+      employeeId:    empId,
+      basicSalary:   parseFloat(basic),
+      allowances:    parseFloat(document.getElementById('editAllowances').value) || 0,
+      deductions:    parseFloat(document.getElementById('editDeductions').value) || 0,
+      paymentDate:   document.getElementById('editPayDate').value || null,
+      payrollMonth:  parseInt(document.getElementById('editMonth').value),
+      payrollYear:   parseInt(document.getElementById('editYear').value),
+      paymentMethod: document.getElementById('editPayMethod').value,
+      status:        document.getElementById('editStatus').value,
+      notes:         document.getElementById('editNotes').value || null,
+    };
+
+    const btn = document.getElementById('saveRecordBtn');
+    btn.disabled = true; btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px"></div> Saving…';
+    try {
+      if (id) {
+        await api('/salary-records/' + id, { method: 'PUT', body: JSON.stringify(body) });
+        toast('Record updated successfully', 'success');
+      } else {
+        await api('/salary-records', { method: 'POST', body: JSON.stringify(body) });
+        toast('Record created successfully', 'success');
+      }
+      closeModal('editModal');
+      loadRecords();
+    } catch (e) {
+      toast(e.message, 'error');
+    } finally {
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Save Record';
+    }
+  });
+
+  // Delete
+  async function deleteRecord(id, name) {
+    if (!confirm(`Delete salary record for ${name}? This cannot be undone.`)) return;
+    try {
+      await api('/salary-records/' + id, { method: 'DELETE' });
+      toast('Record deleted', 'success');
+      loadRecords();
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  }
+
+  // Export PDF (current period payroll report)
+  document.getElementById('exportPdfBtn').addEventListener('click', () => {
+    const m = document.getElementById('payrollMonth')?.value || new Date().getMonth() + 1;
+    const y = document.getElementById('payrollYear')?.value || new Date().getFullYear();
+    window.open(`${API}/payroll/report?month=${m}&year=${y}`, '_blank');
+    toast('Generating payroll report PDF…', 'info');
+  });
+
+  // ─── SALARY SETTINGS ─────────────────────────────────────────────────────
+
+  async function loadSettings() {
+    try {
+      const settings = await api('/salary-settings');
+      renderSettingList('allowancesList', settings.filter(s => s.type === 'ALLOWANCE'), 'green');
+      renderSettingList('deductionsList', settings.filter(s => s.type === 'DEDUCTION'), 'red');
+      renderSettingList('taxList',        settings.filter(s => s.type === 'TAX'),       'purple');
+      renderGrades();
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  }
+
+  function renderSettingList(containerId, items, color) {
+    const el = document.getElementById(containerId);
+    if (!items.length) {
+      el.innerHTML = `<p class="text-xs text-gray-400 py-2 text-center">No items yet</p>`;
+      return;
+    }
+    el.innerHTML = items.map(s => `
+      <div class="flex items-center justify-between p-3 bg-${color}-50 rounded-lg border border-${color}-100">
+        <div>
+          <p class="text-sm font-medium text-gray-800">${s.name}</p>
+          <p class="text-xs text-gray-500">${s.description || ''}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-sm font-semibold text-gray-800">
+            ${s.valueType === 'PERCENTAGE' ? s.value + '%' : fmt(s.value)}
+          </p>
+          ${s.valueType === 'PERCENTAGE' ? '<p class="text-xs text-gray-400">of basic</p>' : ''}
+          <div class="flex gap-2 mt-1 justify-end">
+            <button onclick="openEditSetting(${s.id})" class="text-blue-500 hover:text-blue-700 text-xs"><i class="fas fa-edit"></i></button>
+            <button onclick="deleteSetting(${s.id},'${s.name}')" class="text-red-400 hover:text-red-600 text-xs"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  async function renderGrades() {
+    try {
+      const grades = await api('/salary-settings/grades');
+      const tbody = document.getElementById('gradesTableBody');
+      if (!grades.length) {
+        tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-6 text-center text-xs text-gray-400">No grades defined</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = grades.map(g => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 text-sm font-bold text-gray-900 mono">${g.grade}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">${g.position}</td>
+          <td class="px-4 py-3 text-sm text-gray-800">${fmt(g.minSalary)} – ${fmt(g.maxSalary)}</td>
+          <td class="px-4 py-3">
+            <button onclick="openEditGrade(${g.id})" class="text-blue-500 hover:text-blue-700 mr-3 text-sm"><i class="fas fa-edit"></i></button>
+            <button onclick="deleteGrade(${g.id},'${g.grade}')" class="text-red-400 hover:text-red-600 text-sm"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>`).join('');
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  }
+
+  // Setting CRUD
+  function openAddSetting(type) {
+    document.getElementById('settingModalTitle').textContent = `Add ${type === 'TAX' ? 'Tax Rule' : type === 'ALLOWANCE' ? 'Allowance' : 'Deduction'}`;
+    document.getElementById('settingId').value = '';
+    document.getElementById('settingType').value = type;
+    document.getElementById('settingName').value = '';
+    document.getElementById('settingDesc').value = '';
+    document.getElementById('settingValue').value = '';
+    document.getElementById('settingValueType').value = type === 'TAX' || type === 'DEDUCTION' ? 'PERCENTAGE' : 'FIXED';
+    document.getElementById('settingActive').checked = true;
+    openModal('settingModal');
+  }
+
+  async function openEditSetting(id) {
+    try {
+      const s = await api('/salary-settings/' + id);
+      document.getElementById('settingModalTitle').textContent = 'Edit Setting';
+      document.getElementById('settingId').value        = s.id;
+      document.getElementById('settingType').value      = s.type;
+      document.getElementById('settingName').value      = s.name;
+      document.getElementById('settingDesc').value      = s.description || '';
+      document.getElementById('settingValue').value     = s.value;
+      document.getElementById('settingValueType').value = s.valueType;
+      document.getElementById('settingActive').checked  = s.isActive;
+      openModal('settingModal');
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  document.getElementById('saveSettingBtn').addEventListener('click', async () => {
+    const id = document.getElementById('settingId').value;
+    const body = {
+      name:        document.getElementById('settingName').value,
+      description: document.getElementById('settingDesc').value,
+      type:        document.getElementById('settingType').value,
+      value:       parseFloat(document.getElementById('settingValue').value),
+      valueType:   document.getElementById('settingValueType').value,
+      isActive:    document.getElementById('settingActive').checked,
+    };
+    if (!body.name || !body.value) { toast('Name and value are required', 'error'); return; }
+    try {
+      if (id) await api('/salary-settings/' + id, { method: 'PUT', body: JSON.stringify(body) });
+      else     await api('/salary-settings',        { method: 'POST', body: JSON.stringify(body) });
+      toast('Setting saved', 'success');
+      closeModal('settingModal');
+      loadSettings();
+    } catch (e) { toast(e.message, 'error'); }
+  });
+
+  async function deleteSetting(id, name) {
+    if (!confirm(`Delete "${name}"?`)) return;
+    try {
+      await api('/salary-settings/' + id, { method: 'DELETE' });
+      toast('Setting deleted', 'success');
+      loadSettings();
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  // Grade CRUD
+  function openAddGrade() {
+    document.getElementById('gradeModalTitle').textContent = 'Add Salary Grade';
+    document.getElementById('gradeId').value = '';
+    document.getElementById('gradeCode').value = '';
+    document.getElementById('gradePosition').value = '';
+    document.getElementById('gradeMin').value = '';
+    document.getElementById('gradeMax').value = '';
+    openModal('gradeModal');
+  }
+
+  async function openEditGrade(id) {
+    try {
+      const g = await api('/salary-settings/grades/' + id);
+      document.getElementById('gradeModalTitle').textContent = 'Edit Salary Grade';
+      document.getElementById('gradeId').value       = g.id;
+      document.getElementById('gradeCode').value     = g.grade;
+      document.getElementById('gradePosition').value = g.position;
+      document.getElementById('gradeMin').value      = g.minSalary;
+      document.getElementById('gradeMax').value      = g.maxSalary;
+      openModal('gradeModal');
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  document.getElementById('saveGradeBtn').addEventListener('click', async () => {
+    const id = document.getElementById('gradeId').value;
+    const body = {
+      grade:     document.getElementById('gradeCode').value,
+      position:  document.getElementById('gradePosition').value,
+      minSalary: parseFloat(document.getElementById('gradeMin').value),
+      maxSalary: parseFloat(document.getElementById('gradeMax').value),
+    };
+    if (!body.grade || !body.position) { toast('Grade code and position are required', 'error'); return; }
+    try {
+      if (id) await api('/salary-settings/grades/' + id, { method: 'PUT', body: JSON.stringify(body) });
+      else     await api('/salary-settings/grades',        { method: 'POST', body: JSON.stringify(body) });
+      toast('Grade saved', 'success');
+      closeModal('gradeModal');
+      renderGrades();
+    } catch (e) { toast(e.message, 'error'); }
+  });
+
+  async function deleteGrade(id, grade) {
+    if (!confirm(`Delete grade "${grade}"?`)) return;
+    try {
+      await api('/salary-settings/grades/' + id, { method: 'DELETE' });
+      toast('Grade deleted', 'success');
+      renderGrades();
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  // ─── PAYROLL PROCESSING ───────────────────────────────────────────────────
+
+  async function loadSummary() {
+    const month = document.getElementById('payrollMonth').value;
+    const year  = document.getElementById('payrollYear').value;
+    document.getElementById('summaryLabel').textContent = `${months[month]} ${year}`;
+    ['sumTotal','sumBasic','sumDeductions','sumNet','sumPaid','sumPending'].forEach(id =>
+            document.getElementById(id).textContent = '…');
+    try {
+      const s = await api(`/payroll/summary?month=${month}&year=${year}`);
+      document.getElementById('sumTotal').textContent      = s.totalEmployees;
+      document.getElementById('sumBasic').textContent      = fmt(s.totalBasicSalary);
+      document.getElementById('sumDeductions').textContent = fmt(s.totalDeductions);
+      document.getElementById('sumNet').textContent        = fmt(s.netPayroll);
+      document.getElementById('sumPaid').textContent       = s.paidCount;
+      document.getElementById('sumPending').textContent    = s.pendingCount;
+    } catch (e) {
+      toast(e.message, 'error');
+      ['sumTotal','sumBasic','sumDeductions','sumNet','sumPaid','sumPending'].forEach(id =>
+              document.getElementById(id).textContent = '—');
+    }
+  }
+
+  document.getElementById('loadSummaryBtn').addEventListener('click', loadSummary);
+
+  document.getElementById('calculateBtn').addEventListener('click', async () => {
+    const month = document.getElementById('payrollMonth').value;
+    const year  = document.getElementById('payrollYear').value;
+    if (!confirm(`Auto-calculate payroll for all active employees for ${months[month]} ${year}?`)) return;
+    try {
+      toast('Calculating payroll…', 'info');
+      const result = await api(`/payroll/calculate?month=${month}&year=${year}`, { method: 'POST' });
+      toast(`${result.length} record(s) calculated`, 'success');
+      loadSummary();
+    } catch (e) { toast(e.message, 'error'); }
+  });
+
+  document.getElementById('generateBtn').addEventListener('click', () => {
+    const month = document.getElementById('payrollMonth').value;
+    const year  = document.getElementById('payrollYear').value;
+    window.open(`${API}/payroll/report?month=${month}&year=${year}`, '_blank');
+    toast('Generating payroll PDF…', 'info');
+  });
+
+  document.getElementById('processBtn').addEventListener('click', async () => {
+    const month = document.getElementById('payrollMonth').value;
+    const year  = document.getElementById('payrollYear').value;
+    if (!confirm(`Process all PENDING payments for ${months[month]} ${year}? This will mark them as PAID.`)) return;
+    try {
+      toast('Processing payments…', 'info');
+      const result = await api(`/payroll/process?month=${month}&year=${year}`, { method: 'POST' });
+      toast(`${result.length} payment(s) processed`, 'success');
+      loadSummary();
+    } catch (e) { toast(e.message, 'error'); }
+  });
+
+  document.getElementById('exportReportBtn').addEventListener('click', () => {
+    const month = document.getElementById('payrollMonth').value;
+    const year  = document.getElementById('payrollYear').value;
+    window.open(`${API}/payroll/report?month=${month}&year=${year}`, '_blank');
+    toast('Downloading report…', 'info');
+  });
+
+  // ─── INIT ─────────────────────────────────────────────────────────────────
+
+  checkApi();
+  loadRecords();
 </script>
 </body>
 </html>

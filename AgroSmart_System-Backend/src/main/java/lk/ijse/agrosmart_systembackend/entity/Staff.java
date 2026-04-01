@@ -1,37 +1,37 @@
-    package lk.ijse.agrosmart_systembackend.entity;
+package lk.ijse.agrosmart_systembackend.entity;
 
-    import jakarta.persistence.*;
-    import lk.ijse.agrosmart_systembackend.entity.enums.Gender;
-    import lk.ijse.agrosmart_systembackend.entity.enums.Role;
-    import lombok.*;
+import jakarta.persistence.*;
+import lombok.*;
 
-    import java.io.Serializable;
-    import java.util.ArrayList;
-    import java.util.List;
+import java.util.ArrayList;
+import java.util.List;
 
-    @Entity
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Getter
-    @Setter
-    @Builder
-    public class Staff implements Serializable {
-        @Id
-        private String staffId;
-        private String fullName;
-        private String designation;
-        @Enumerated(EnumType.STRING)
-        private Gender gender;
-        private String contactNumber;
-        private String email;
-        @Enumerated(EnumType.STRING)
-        private Role role;
-        @OneToMany(mappedBy = "staff", cascade = CascadeType.ALL)
-        private List<Equipment> equipment;
-        @ManyToOne
-        @JoinColumn(name = "vehicle_id")
-        private Vehicle vehicleId;
-        @OneToMany(mappedBy = "staff", cascade = CascadeType.ALL)
-        private List<FieldStaff> fieldStaff = new ArrayList<>();
+@Entity
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
+@Builder
+public class Staff {
 
+    @Id
+    private String staffId;
+
+    private String fullName;
+
+    private String designation;
+
+    private String position;
+
+    private String bankName;
+
+    private String accountNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private StaffStatus status = StaffStatus.ACTIVE;
+
+    public enum StaffStatus {
+        ACTIVE, INACTIVE
     }
+    @OneToMany(mappedBy = "staff", cascade = CascadeType.ALL)
+    private List<FieldStaff> fieldStaff = new ArrayList<>();
+}

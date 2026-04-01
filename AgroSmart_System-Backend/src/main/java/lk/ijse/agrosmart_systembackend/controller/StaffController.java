@@ -1,5 +1,8 @@
 package lk.ijse.agrosmart_systembackend.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lk.ijse.agrosmart_systembackend.dto.StaffDTO;
 import lk.ijse.agrosmart_systembackend.service.StaffService;
 import lk.ijse.agrosmart_systembackend.util.ApiResponse;
@@ -12,22 +15,21 @@ import java.util.List;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/api/v1/staff")
+@RequestMapping("api/v1/staff")
 @RequiredArgsConstructor
 public class StaffController {
 
     private final StaffService staffService;
 
-    //  CREATE
+    // SAVE STAFF
     @PostMapping
-    public ResponseEntity<ApiResponse> saveStaff(@RequestBody StaffDTO staffDTO) {
-        return new ResponseEntity<>(
-                new ApiResponse(201, "Staff Saved Successfully", staffService.saveStaff(staffDTO)),
-                HttpStatus.CREATED
+    public ResponseEntity<ApiResponse> saveStaff(@Valid @RequestBody StaffDTO staffDTO) {
+        return ResponseEntity.ok(new ApiResponse(
+                200, "Staff Saved Successfully", staffService.saveStaff(staffDTO))
         );
     }
 
-    //  GET ALL
+    // GET ALL STAFF
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllStaff() {
         List<StaffDTO> staffList = staffService.getAllStaff();
@@ -37,29 +39,39 @@ public class StaffController {
         );
     }
 
-    //  GET BY ID
+    // GET STAFF BY ID
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getStaff(@PathVariable String id) {
+        StaffDTO staff = staffService.getStaff(id);
         return new ResponseEntity<>(
-                new ApiResponse(200, "Success", staffService.getStaff(id)),
+                new ApiResponse(200, "Success", staff),
                 HttpStatus.OK
         );
     }
 
-    //  UPDATE
+    // UPDATE STAFF
     @PutMapping
-    public ResponseEntity<ApiResponse> updateStaff(@RequestBody StaffDTO staffDTO) {
+    public ResponseEntity<ApiResponse> updateStaff(@Valid @RequestBody StaffDTO staffDTO) {
         return new ResponseEntity<>(
                 new ApiResponse(200, "Staff Updated Successfully", staffService.updateStaff(staffDTO)),
                 HttpStatus.OK
         );
     }
 
-    //  DELETE
+    // DELETE STAFF
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse> deleteStaff(@PathVariable String id) {
         return new ResponseEntity<>(
                 new ApiResponse(200, "Staff Deleted Successfully", staffService.deleteStaff(id)),
+                HttpStatus.OK
+        );
+    }
+    // GET ACTIVE STAFF
+    @GetMapping("/active")
+    public ResponseEntity<ApiResponse> getActiveStaff() {
+        List<StaffDTO> activeStaff = staffService.findActive();
+        return new ResponseEntity<>(
+                new ApiResponse(200, "Active staff retrieved successfully", activeStaff),
                 HttpStatus.OK
         );
     }

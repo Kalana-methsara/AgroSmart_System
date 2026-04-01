@@ -1,10 +1,7 @@
 package lk.ijse.agrosmart_systembackend.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lk.ijse.agrosmart_systembackend.entity.enums.Gender;
-import lk.ijse.agrosmart_systembackend.entity.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,16 +23,12 @@ public class StaffDTO implements Serializable {
     @Size(max = 50, message = "Designation must be at most 50 characters")
     private String designation;
 
-    private Gender gender;
+    @NotBlank(message = "Job position cannot be blank")
+    private String position;
 
-    @NotBlank(message = "Contact number cannot be blank")
-    @Size(max = 15, message = "Contact number must be at most 15 characters")
-    private String contactNumber;
+    private String bankName;
 
-    @Email(message = "Invalid email format")
-    private String email;
+    private String accountNumber;
 
-    private Role role;
-
-    private String vehicleId;
+    private String status;
 }
