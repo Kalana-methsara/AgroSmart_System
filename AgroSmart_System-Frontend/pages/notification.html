@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>AgroSmart · Notification Center</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        @keyframes slideInRight {
+            from { transform: translateX(30px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes pulseRing {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+        .notification-item {
+            animation: slideInRight 0.25s ease-out;
+            transition: all 0.2s;
+        }
+        .notification-item:hover {
+            background-color: #f9fafb;
+            transform: translateX(2px);
+        }
+        .badge-critical {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 2px 6px rgba(239,68,68,0.2);
+        }
+        .badge-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+        .badge-info {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+        .badge-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        .filter-chip.active {
+            background-color: #166534;
+            color: white;
+            border-color: #166534;
+        }
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1000;
+            animation: slideInRight 0.3s ease-out;
+        }
+        .unread-dot {
+            position: relative;
+        }
+        .unread-dot::before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            box-shadow: 0 0 0 2px white;
+        }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .notification-card {
+            transition: all 0.2s ease;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans antialiased">
+
+<div class=" mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+    <!-- Header with back button and stats -->
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center space-x-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 tracking-tight">Notification Center</h1>
+                <p class="text-gray-500 text-sm mt-1 flex items-center gap-2">
+                    <i class="fa-regular fa-bell text-green-600"></i>
+                    Stay updated with real-time farm alerts & recommendations
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button id="markAllReadBtn" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm flex items-center gap-2">
+                <i class="fa-regular fa-circle-check"></i> Mark all read
+            </button>
+            <button id="clearAllBtn" class="bg-white border border-red-200 hover:bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm flex items-center gap-2">
+                <i class="fa-regular fa-trash-can"></i> Clear all
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards Row -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-xs uppercase tracking-wide">Total</p>
+                <p class="text-2xl font-bold text-gray-800" id="totalCount">0</p>
+            </div>
+            <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                <i class="fa-regular fa-bell text-blue-500 text-xl"></i>
+            </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-xs uppercase tracking-wide">Unread</p>
+                <p class="text-2xl font-bold text-blue-600" id="unreadCount">0</p>
+            </div>
+            <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                <i class="fa-regular fa-envelope text-blue-500 text-xl"></i>
+            </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-xs uppercase tracking-wide">Critical</p>
+                <p class="text-2xl font-bold text-red-600" id="criticalCount">0</p>
+            </div>
+            <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center">
+                <i class="fa-solid fa-circle-exclamation text-red-500 text-xl"></i>
+            </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-xs uppercase tracking-wide">Last 7d</p>
+                <p class="text-2xl font-bold text-green-600" id="weekCount">0</p>
+            </div>
+            <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center">
+                <i class="fa-regular fa-calendar text-green-500 text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs + Search -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex flex-wrap gap-2">
+                <button data-filter="all" class="filter-chip px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 border border-transparent hover:bg-gray-200 transition active">📬 All</button>
+                <button data-filter="unread" class="filter-chip px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 border border-transparent hover:bg-gray-200 transition">🆕 Unread</button>
+                <button data-filter="critical" class="filter-chip px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 border border-transparent hover:bg-gray-200 transition">⚠️ Critical</button>
+                <button data-filter="warning" class="filter-chip px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 border border-transparent hover:bg-gray-200 transition">🌾 Advisory</button>
+                <button data-filter="success" class="filter-chip px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700 border border-transparent hover:bg-gray-200 transition">✅ Success</button>
+            </div>
+            <div class="relative">
+                <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" id="searchInput" placeholder="Search notifications..." class="pl-9 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-green-400 w-full sm:w-64 text-sm">
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications List Container -->
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-3 border-b border-green-100">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-tower-cell text-green-700"></i>
+                <span class="text-sm font-semibold text-green-800">Live farm intelligence feed</span>
+                <span class="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full ml-2">IoT connected</span>
+            </div>
+        </div>
+        <div id="notificationsContainer" class="divide-y divide-gray-100 max-h-[520px] overflow-y-auto">
+            <!-- dynamic notifications injected -->
+            <div class="flex justify-center items-center py-12 text-gray-400">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading alerts...
+            </div>
+        </div>
+        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-16 text-center">
+            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <i class="fa-regular fa-bell-slash text-4xl text-gray-400"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-700">No notifications</h3>
+            <p class="text-gray-400 text-sm mt-1">All caught up! New alerts will appear here.</p>
+        </div>
+    </div>
+
+    <!-- Simulate live notification demo bar -->
+    <div class="mt-8 bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-gray-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                <i class="fa-solid fa-microchip text-green-600 text-sm"></i>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-700">Live simulation active</p>
+                <p class="text-xs text-gray-500">Real-time agro alerts from sensors & weather API</p>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button id="simulateRainAlert" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                <i class="fa-solid fa-cloud-rain"></i> Simulate Rain Alert
+            </button>
+            <button id="simulatePestAlert" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                <i class="fa-solid fa-bug"></i> Pest Warning
+            </button>
+            <button id="simulateIrrigation" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                <i class="fa-solid fa-droplet"></i> Irrigation complete
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==================================================
+    //  Notification Data Model (mocked but persistent)
+    // ==================================================
+    let notifications = [];
+    let currentFilter = 'all';
+    let searchQuery = '';
+
+    // Helper: generate unique ID
+    function genId() { return Date.now() + '-' + Math.random().toString(36).substr(2, 8); }
+
+    // Helper: relative time (just readable)
+    function timeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        if (seconds < 60) return 'just now';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes} min ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+        const days = Math.floor(hours / 24);
+        if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
+        return date.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    }
+
+    // Default notification dataset (rich variety)
+    const defaultNotifications = [
+        { id: genId(), title: "🌧️ Heavy Rainfall Warning", message: "40-60mm rainfall expected in North Field within 24h. Risk of waterlogging. Check drainage systems.", type: "critical", timestamp: new Date(Date.now() - 1000*60*45), read: false, icon: "fa-cloud-rain", link: null },
+        { id: genId(), title: "🐛 Pest Outbreak Alert", message: "Aphid population detected in South Field (Corn). Immediate organic pesticide recommended.", type: "critical", timestamp: new Date(Date.now() - 1000*60*120), read: false, icon: "fa-bug", link: null },
+        { id: genId(), title: "💧 Smart Irrigation Completed", message: "Zone C (East Field) irrigation finished. 1,250L water used. Soil moisture increased to 48%.", type: "success", timestamp: new Date(Date.now() - 1000*60*30), read: true, icon: "fa-droplet", link: null },
+        { id: genId(), title: "📊 Yield Forecast Updated", message: "Wheat yield estimated at 5.8 t/ha (+12% vs regional avg). Optimal harvest window: Jun 18-22.", type: "success", timestamp: new Date(Date.now() - 1000*60*60*2), read: true, icon: "fa-chart-line", link: null },
+        { id: genId(), title: "🌱 Fertilizer Recommendation", message: "North Field nitrogen levels low (28 ppm). Apply Urea (50kg/ha) within 3 days for optimal growth.", type: "warning", timestamp: new Date(Date.now() - 1000*60*60*5), read: false, icon: "fa-flask", link: null },
+        { id: genId(), title: "🚜 Equipment Maintenance Due", message: "Tractor JD-5050 (ID: EQ-102) needs engine service after 210 hours. Schedule maintenance.", type: "warning", timestamp: new Date(Date.now() - 1000*60*60*24), read: false, icon: "fa-tractor", link: null },
+        { id: genId(), title: "🌾 Market Price Spike", message: "Soybean prices up 8.2% today. Current rate: $472/ton. Consider selling surplus stock.", type: "success", timestamp: new Date(Date.now() - 1000*60*60*27), read: true, icon: "fa-chart-simple", link: null },
+        { id: genId(), title: "📡 IoT Sensor Offline", message: "Weather station (South Field) disconnected for 25 min. Check connectivity or battery.", type: "critical", timestamp: new Date(Date.now() - 1000*60*60*48), read: true, icon: "fa-microchip", link: null },
+        { id: genId(), title: "☀️ Ideal Spraying Window", message: "Low wind & clear skies tomorrow 6AM-10AM. Perfect for fungicide application.", type: "warning", timestamp: new Date(Date.now() - 1000*60*60*72), read: false, icon: "fa-sun", link: null },
+        { id: genId(), title: "✅ Drone Survey Completed", message: "Multispectral analysis shows 94% crop uniformity. Early stress detected in 2% of East field.", type: "success", timestamp: new Date(Date.now() - 1000*60*60*96), read: true, icon: "fa-drone", link: null }
+    ];
+
+    // Load from localStorage or init default
+    function loadNotifications() {
+        const stored = localStorage.getItem('agrosmart_notifications');
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed) && parsed.length) {
+                    // restore Date objects from ISO strings
+                    notifications = parsed.map(n => ({ ...n, timestamp: new Date(n.timestamp) }));
+                    return;
+                }
+            } catch(e) {}
+        }
+        notifications = [...defaultNotifications];
+        saveToLocal();
+    }
+
+    function saveToLocal() {
+        localStorage.setItem('agrosmart_notifications', JSON.stringify(notifications));
+    }
+
+    // Add new notification (with optional auto toast)
+    function addNotification(notif) {
+        const newNotif = {
+            id: genId(),
+            title: notif.title,
+            message: notif.message,
+            type: notif.type || 'info',   // critical, warning, success
+            timestamp: new Date(),
+            read: false,
+            icon: notif.icon || 'fa-bell',
+            link: notif.link || null
+        };
+        notifications.unshift(newNotif);
+        saveToLocal();
+        renderNotifications();
+        updateStats();
+        showToastNotification(newNotif);
+    }
+
+    // Floating toast for new alert
+    function showToastNotification(notif) {
+        const toastId = 'dynamicToast';
+        if ($(`#${toastId}`).length) $(`#${toastId}`).remove();
+        let bgGradient = '';
+        if (notif.type === 'critical') bgGradient = 'bg-gradient-to-r from-red-600 to-red-500';
+        else if (notif.type === 'warning') bgGradient = 'bg-gradient-to-r from-amber-500 to-orange-500';
+        else bgGradient = 'bg-gradient-to-r from-green-600 to-emerald-500';
+
+        const toastHtml = `
+                <div id="${toastId}" class="toast-notify bg-white rounded-xl shadow-2xl border-l-4 ${notif.type === 'critical' ? 'border-red-500' : notif.type === 'warning' ? 'border-amber-500' : 'border-green-500'} w-80 overflow-hidden animate-slide-in">
+                    <div class="p-4">
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 ${bgGradient} rounded-full flex items-center justify-center text-white shadow-md">
+                                <i class="fa-solid ${notif.icon || 'fa-bell'} text-sm"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-bold text-gray-800">${escapeHtml(notif.title)}</p>
+                                <p class="text-xs text-gray-600 mt-0.5 line-clamp-2">${escapeHtml(notif.message.substring(0, 80))}${notif.message.length > 80 ? '...' : ''}</p>
+                                <p class="text-xs text-gray-400 mt-1">just now</p>
+                            </div>
+                            <button class="close-toast text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        $('body').append(toastHtml);
+        setTimeout(() => $(`#${toastId}`).fadeOut(400, function() { $(this).remove(); }), 5000);
+        $(document).on('click', '.close-toast', function() { $(this).closest('.toast-notify').remove(); });
+    }
+
+    // Mark as read
+    function markAsRead(id) {
+        const notif = notifications.find(n => n.id === id);
+        if (notif && !notif.read) {
+            notif.read = true;
+            saveToLocal();
+            renderNotifications();
+            updateStats();
+        }
+    }
+
+    function markAllRead() {
+        notifications.forEach(n => { n.read = true; });
+        saveToLocal();
+        renderNotifications();
+        updateStats();
+        Swal.fire({ title: 'All marked read', icon: 'success', toast: true, timer: 1500, showConfirmButton: false });
+    }
+
+    function clearAllNotifications() {
+        Swal.fire({
+            title: 'Clear all notifications?',
+            text: 'This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Yes, clear all'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                notifications = [];
+                saveToLocal();
+                renderNotifications();
+                updateStats();
+                Swal.fire('Cleared!', 'All notifications removed', 'success');
+            }
+        });
+    }
+
+    function deleteSingleNotification(id) {
+        notifications = notifications.filter(n => n.id !== id);
+        saveToLocal();
+        renderNotifications();
+        updateStats();
+        Swal.fire({ title: 'Removed', icon: 'info', toast: true, timer: 1200, showConfirmButton: false });
+    }
+
+    // Filter + search logic
+    function getFilteredNotifications() {
+        let filtered = [...notifications];
+        if (currentFilter === 'unread') filtered = filtered.filter(n => !n.read);
+        else if (currentFilter === 'critical') filtered = filtered.filter(n => n.type === 'critical');
+        else if (currentFilter === 'warning') filtered = filtered.filter(n => n.type === 'warning');
+        else if (currentFilter === 'success') filtered = filtered.filter(n => n.type === 'success');
+
+        if (searchQuery.trim() !== '') {
+            const q = searchQuery.toLowerCase();
+            filtered = filtered.filter(n => n.title.toLowerCase().includes(q) || n.message.toLowerCase().includes(q));
+        }
+        return filtered;
+    }
+
+    function updateStats() {
+        const total = notifications.length;
+        const unread = notifications.filter(n => !n.read).length;
+        const critical = notifications.filter(n => n.type === 'critical').length;
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        const weekCount = notifications.filter(n => n.timestamp >= weekAgo).length;
+        $('#totalCount').text(total);
+        $('#unreadCount').text(unread);
+        $('#criticalCount').text(critical);
+        $('#weekCount').text(weekCount);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+
+    function getTypeBadge(type) {
+        if (type === 'critical') return '<span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-medium"><i class="fa-solid fa-triangle-exclamation mr-1 text-red-500"></i>Critical</span>';
+        if (type === 'warning') return '<span class="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full font-medium"><i class="fa-solid fa-leaf mr-1"></i>Advisory</span>';
+        if (type === 'success') return '<span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium"><i class="fa-regular fa-circle-check mr-1"></i>Success</span>';
+        return '<span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-medium"><i class="fa-regular fa-bell mr-1"></i>Info</span>';
+    }
+
+    function getIconColor(type) {
+        if (type === 'critical') return 'text-red-500 bg-red-50';
+        if (type === 'warning') return 'text-amber-500 bg-amber-50';
+        if (type === 'success') return 'text-green-500 bg-green-50';
+        return 'text-blue-500 bg-blue-50';
+    }
+
+    function renderNotifications() {
+        const filtered = getFilteredNotifications();
+        const container = $('#notificationsContainer');
+        const emptyDiv = $('#emptyState');
+
+        if (filtered.length === 0) {
+            container.addClass('hidden');
+            emptyDiv.removeClass('hidden');
+            return;
+        }
+        container.removeClass('hidden');
+        emptyDiv.addClass('hidden');
+
+        let html = '';
+        filtered.forEach(notif => {
+            const isUnread = !notif.read;
+            const iconColorClass = getIconColor(notif.type);
+            const timeStr = timeAgo(notif.timestamp);
+            const unreadClass = isUnread ? 'unread-dot' : '';
+            html += `
+                    <div class="notification-item p-5 hover:bg-gray-50 transition cursor-pointer relative ${unreadClass}" data-id="${notif.id}">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0">
+                                <div class="w-11 h-11 ${iconColorClass} rounded-xl flex items-center justify-center shadow-sm">
+                                    <i class="fa-solid ${notif.icon || 'fa-bell'} text-lg"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex flex-wrap items-center gap-2 mb-1">
+                                    <h4 class="text-base font-semibold text-gray-800 ${isUnread ? 'font-bold text-gray-900' : ''}">${escapeHtml(notif.title)}</h4>
+                                    ${getTypeBadge(notif.type)}
+                                    ${isUnread ? '<span class="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">NEW</span>' : ''}
+                                </div>
+                                <p class="text-sm text-gray-600 leading-relaxed mb-2">${escapeHtml(notif.message)}</p>
+                                <div class="flex items-center gap-4 text-xs text-gray-400">
+                                    <span><i class="fa-regular fa-clock mr-1"></i> ${timeStr}</span>
+                                    ${notif.link ? `<span><i class="fa-regular fa-link mr-1"></i> actionable</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end gap-2">
+                                ${!notif.read ? `<button class="mark-read-btn text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1 rounded-lg transition" data-id="${notif.id}"><i class="fa-regular fa-envelope-open"></i> Mark read</button>` : ''}
+                                <button class="delete-one-btn text-gray-400 hover:text-red-500 transition" data-id="${notif.id}"><i class="fa-regular fa-trash-can"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+        });
+        container.html(html);
+
+        // attach events
+        $('.notification-item').on('click', function(e) {
+            if ($(e.target).closest('.mark-read-btn, .delete-one-btn').length) return;
+            const id = $(this).data('id');
+            markAsRead(id);
+        });
+        $('.mark-read-btn').on('click', function(e) {
+            e.stopPropagation();
+            const id = $(this).data('id');
+            markAsRead(id);
+        });
+        $('.delete-one-btn').on('click', function(e) {
+            e.stopPropagation();
+            const id = $(this).data('id');
+            deleteSingleNotification(id);
+        });
+    }
+
+    // Simulation triggers
+    function simulateAlert(type) {
+        if (type === 'rain') {
+            addNotification({
+                title: "🌧️ Flash Rain Advisory",
+                message: "Intense rainfall (30-45mm) approaching North & South fields in 6 hours. Activate drainage channels.",
+                type: "critical",
+                icon: "fa-cloud-showers-heavy"
+            });
+        } else if (type === 'pest') {
+            addNotification({
+                title: "🕷️ Fall Armyworm Risk",
+                message: "High pest pressure detected in East Field (Soybean). Scout immediately and apply Bt if larvae > 30% infestation.",
+                type: "critical",
+                icon: "fa-bug"
+            });
+        } else if (type === 'irrigation') {
+            addNotification({
+                title: "💧 Zone B Irrigation Completed",
+                message: "Smart valve finished irrigation (18 min). Soil moisture now 62% - optimal range achieved.",
+                type: "success",
+                icon: "fa-droplet"
+            });
+        }
+    }
+
+    // Filter UI active class
+    function initFilters() {
+        $('.filter-chip').click(function() {
+            $('.filter-chip').removeClass('active bg-green-700 text-white').addClass('bg-gray-100 text-gray-700');
+            $(this).addClass('active bg-green-700 text-white').removeClass('bg-gray-100 text-gray-700');
+            currentFilter = $(this).data('filter');
+            renderNotifications();
+        });
+        // default "all" active
+        $('.filter-chip[data-filter="all"]').addClass('active bg-green-700 text-white').removeClass('bg-gray-100 text-gray-700');
+
+        $('#searchInput').on('input', function() {
+            searchQuery = $(this).val();
+            renderNotifications();
+        });
+    }
+
+    // Initial load & event bindings
+    $(document).ready(function() {
+        loadNotifications();
+        renderNotifications();
+        updateStats();
+        initFilters();
+
+        $('#markAllReadBtn').click(markAllRead);
+        $('#clearAllBtn').click(clearAllNotifications);
+        $('#simulateRainAlert').click(() => simulateAlert('rain'));
+        $('#simulatePestAlert').click(() => simulateAlert('pest'));
+        $('#simulateIrrigation').click(() => simulateAlert('irrigation'));
+
+        // Simulate random live alert every 75 seconds (demo)
+        let interval = setInterval(() => {
+            const r = Math.random();
+            if (r < 0.3) simulateAlert('rain');
+            else if (r < 0.6) simulateAlert('pest');
+            else if (r < 0.85) simulateAlert('irrigation');
+            else {
+                addNotification({
+                    title: "📈 Market Update",
+                    message: `Wheat futures up ${Math.floor(Math.random() * 5) + 1}% today. Consider selling surplus.`,
+                    type: "success",
+                    icon: "fa-chart-line"
+                });
+            }
+        }, 75000);
+
+        // clean up interval on page unload (optional)
+        $(window).on('beforeunload', function() { clearInterval(interval); });
+    });
+</script>
+</body>
+</html>

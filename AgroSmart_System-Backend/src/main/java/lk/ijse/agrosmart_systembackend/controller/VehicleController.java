@@ -1,12 +1,19 @@
 package lk.ijse.agrosmart_systembackend.controller;
 
 import lk.ijse.agrosmart_systembackend.dto.VehicleDTO;
+import lk.ijse.agrosmart_systembackend.entity.SalarySetting;
+import lk.ijse.agrosmart_systembackend.entity.enums.SettingType;
+import lk.ijse.agrosmart_systembackend.entity.enums.ValueType;
+import lk.ijse.agrosmart_systembackend.repository.SalarySettingRepository;
 import lk.ijse.agrosmart_systembackend.service.VehicleService;
 import lk.ijse.agrosmart_systembackend.util.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
 
 @CrossOrigin(origins = "*")
 @RestController
