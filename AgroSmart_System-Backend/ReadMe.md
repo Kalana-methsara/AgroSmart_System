@@ -13,7 +13,7 @@
 
 Watch our comprehensive walkthrough to see AgroSmart in action:
 
-[![AgroSmart Demo Video](https://img.youtube.com/vi/your-video-id/0.jpg)](https://www.youtube.com/watch?v=your-video-id)
+[![AgroSmart Demo Video](https://img.youtube.com/vi/x0RjuFCrIn4/0.jpg)](https://www.youtube.com/watch?v=x0RjuFCrIn4)
 
 > 🎥 *Click the image above to watch the full demo on YouTube. We cover setup, AI features, and system architecture.*
 
@@ -47,15 +47,20 @@ Watch our comprehensive walkthrough to see AgroSmart in action:
 
 ## 🖼️ System Snapshots
 
-| Dashboard View | AI Consultant Chatbot |
-|:--------------:|:---------------------:|
-| ![Dashboard](https://via.placeholder.com/400x200?text=Farm+Dashboard) | ![AI Chatbot](https://via.placeholder.com/400x200?text=Gemini+AI+Chatbot) |
-| *Centralized farm overview* | *AI-powered crop diagnosis* |
+|         Dashboard View          |      AI Consultant Chatbot      |
+|:-------------------------------:|:-------------------------------:|
+| ![Dashboard](img/dashboard.png) |  ![AI Chatbot](img/chatbot.png) |
+|   *Centralized farm overview* |  *AI-powered crop diagnosis* |
 
-| Field Logs | Payroll Management |
-|:----------:|:------------------:|
-| ![Field Logs](https://via.placeholder.com/400x200?text=Digital+Field+Logs) | ![Payroll](https://via.placeholder.com/400x200?text=Automated+Payroll) |
-| *Track daily operations* | *Secure staff payments* |
+|           Field Management      |         Crop Tracking           |
+|:-------------------------------:|:-------------------------------:|
+|   ![Fields](img/fields.png)     |    ![Crops](img/crops.png)      |
+|  *Real-time land monitoring* | *Growth stages & health status* |
+
+|           Field Logs            |       Payroll Management        |
+|:-------------------------------:|:-------------------------------:|
+|     ![Field Logs](img/logs.png) |   ![Payroll](img/payroll.png)   |
+|    *Track daily operations* |     *Secure staff payments* |
 
 ---
 
@@ -88,8 +93,7 @@ The project follows a clean **Layered Architecture** to ensure scalability and m
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/your-username/AgroSmart.git](https://github.com/your-username/AgroSmart.git)    
-
+     git clone [https://github.com/Kalana-methsara/AgroSmart_System.git](https://github.com/Kalana-methsara/AgroSmart_System.git)
 
 ## 👨‍💻 Developer
 Kalana Methsara University Engineering Student
