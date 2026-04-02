@@ -10,27 +10,18 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        @keyframes slideIn {
-            from { transform: translateX(-10px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes pulseGreen {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(1.05); }
-        }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes slideIn { from { transform: translateX(-10px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes pulseGreen { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.05); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-slide-in { animation: slideIn 0.3s ease-out; }
         .sidebar-item { transition: all 0.2s; }
         .sidebar-item:hover:not(.active) { background-color: rgba(34, 197, 94, 0.1); color: #166534; }
         .sidebar-item.active { background-color: #166534; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
         .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
-        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); }
         .weather-glow-card { background: linear-gradient(135deg, #fef9e6 0%, #fff3e0 100%); border-left: 6px solid #f59e0b; transition: all 0.2s; }
         .weather-icon-container i { filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
-        .weather-glow { background: linear-gradient(145deg, #fbbf24, #f59e0b); box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.2); }
+        .weather-glow { background: linear-gradient(145deg, #fbbf24, #f59e0b); box-shadow: 0 10px 15px -3px rgba(245,158,11,0.2); }
         .alert-smart { background: linear-gradient(95deg, #eef2ff 0%, #ffffff 100%); border-left: 4px solid #3b82f6; }
         .mobile-menu { transition: transform 0.3s ease-in-out; }
         ::-webkit-scrollbar { width: 6px; }
@@ -39,13 +30,26 @@
         ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
         .btn-transition { transition: all 0.2s ease; }
         .inventory-status-badge { @apply px-2 py-1 rounded-full text-xs font-medium; }
-        .weather-chip { background: rgba(245, 158, 11, 0.1); border-radius: 40px; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 500; color: #b45309; }
+        .weather-chip { background: rgba(245,158,11,0.1); border-radius: 40px; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 500; color: #b45309; }
         .active-tab { background-color: #22c55e; color: white; }
         .sensor-tab { transition: all 0.2s ease; }
         .irrigate-btn { transition: all 0.2s; }
         .irrigate-btn:hover:not(:disabled) { transform: scale(1.05); }
         .iot-device-btn { transition: all 0.2s; }
         .iot-device-btn:active { transform: scale(0.98); }
+
+        /* Role badge */
+        .role-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; }
+        .role-ADMIN     { background: #ede9fe; color: #5b21b6; }
+        .role-MANAGER   { background: #dbeafe; color: #1e40af; }
+        .role-SCIENTIST { background: #d1fae5; color: #065f46; }
+        .role-USER      { background: #f3f4f6; color: #374151; }
+
+        /* Locked sidebar item */
+        .sidebar-locked { opacity: 0.38; cursor: not-allowed; pointer-events: none; }
+
+        /* Access-denied overlay inside sections */
+        .access-denied-overlay { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:380px; gap:16px; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans antialiased">
@@ -59,7 +63,7 @@
 </div>
 
 <div class="flex h-screen bg-gray-50 overflow-hidden">
-    <!-- Sidebar Desktop -->
+    <!-- ==================== SIDEBAR DESKTOP ==================== -->
     <aside class="hidden md:flex md:flex-shrink-0">
         <div class="w-72 bg-white shadow-2xl flex flex-col h-full overflow-y-auto">
             <div class="p-6 border-b border-gray-100">
@@ -104,7 +108,7 @@
         </div>
     </aside>
 
-    <!-- Mobile Header + Menu -->
+    <!-- ==================== MOBILE HEADER ==================== -->
     <div class="md:hidden fixed top-0 left-0 right-0 bg-white shadow-lg z-30">
         <div class="flex items-center justify-between p-4">
             <button id="mobileMenuBtn" class="text-gray-600 hover:text-green-600"><i class="fa-solid fa-bars text-2xl"></i></button>
@@ -142,7 +146,7 @@
         </div>
     </div>
 
-    <!-- Main Content Area -->
+    <!-- ==================== MAIN CONTENT ==================== -->
     <main class="flex-1 overflow-y-auto bg-gray-50 pt-16 md:pt-0">
         <div class="bg-white shadow-sm border-b border-gray-100 py-4 px-8 hidden md:block">
             <div class="flex items-center justify-between">
@@ -163,6 +167,8 @@
                         <button class="flex items-center space-x-2 focus:outline-none" id="userMenuButton">
                             <div class="w-8 h-8 bg-green-700 rounded-lg flex items-center justify-center text-white font-bold" id="userInitials">F</div>
                             <span class="text-sm font-medium text-gray-700" id="userDisplayName">Farmer</span>
+                            <!-- Role badge shown in header -->
+                            <span id="headerRoleBadge" class="role-badge role-USER"></span>
                             <i class="fa-solid fa-chevron-down text-xs text-gray-500"></i>
                         </button>
                         <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden z-20" id="userDropdown">
@@ -177,10 +183,8 @@
 
         <div class="p-6 md:p-8">
 
-            <!-- ==================== OVERVIEW SECTION ==================== -->
+            <!-- ==================== OVERVIEW ==================== -->
             <div id="overview-section" class="section-content">
-
-                <!-- KPI Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <div class="bg-white rounded-xl shadow-md p-5 card-hover border-l-4 border-green-500">
                         <div class="flex items-center justify-between">
@@ -208,7 +212,6 @@
                     </div>
                 </div>
 
-                <!-- Advanced Farm Operations -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div class="lg:col-span-2 space-y-8">
                         <!-- Crop Health -->
@@ -264,15 +267,9 @@
                             </div>
                             <div class="border-t border-gray-100 pt-4">
                                 <div class="flex space-x-4 mb-4">
-                                    <button class="sensor-tab active-tab text-sm font-medium px-3 py-1 rounded-lg" data-sensor="moisture">
-                                        <i class="fa-solid fa-droplet mr-1"></i> Soil Sensors
-                                    </button>
-                                    <button class="sensor-tab text-sm font-medium px-3 py-1 rounded-lg text-gray-600 hover:bg-gray-100" data-sensor="nutrients">
-                                        <i class="fa-solid fa-flask mr-1"></i> Nutrients
-                                    </button>
-                                    <button class="sensor-tab text-sm font-medium px-3 py-1 rounded-lg text-gray-600 hover:bg-gray-100" data-sensor="weather-station">
-                                        <i class="fa-solid fa-microchip mr-1"></i> Microclimate
-                                    </button>
+                                    <button class="sensor-tab active-tab text-sm font-medium px-3 py-1 rounded-lg" data-sensor="moisture"><i class="fa-solid fa-droplet mr-1"></i> Soil Sensors</button>
+                                    <button class="sensor-tab text-sm font-medium px-3 py-1 rounded-lg text-gray-600 hover:bg-gray-100" data-sensor="nutrients"><i class="fa-solid fa-flask mr-1"></i> Nutrients</button>
+                                    <button class="sensor-tab text-sm font-medium px-3 py-1 rounded-lg text-gray-600 hover:bg-gray-100" data-sensor="weather-station"><i class="fa-solid fa-microchip mr-1"></i> Microclimate</button>
                                 </div>
                                 <div id="sensorDataDisplay" class="space-y-3"></div>
                             </div>
@@ -337,7 +334,7 @@
                                         <div class="bg-blue-100 p-3 rounded-full"><i class="fa-solid fa-microchip text-blue-600 text-xl"></i></div>
                                         <div>
                                             <h4 class="font-bold text-gray-800 text-lg">AgroSmart Insight</h4>
-                                            <p id="smartInsightText" class="text-purple-800 text-exsm leading-relaxed" >Loading farm intelligence...</p>
+                                            <p id="smartInsightText" class="text-purple-800 text-exsm leading-relaxed">Loading farm intelligence...</p>
                                             <div class="mt-2 flex gap-2">
                                                 <span class="inline-flex items-center text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full"><i class="fa-regular fa-thumbs-up mr-1"></i> AI-driven</span>
                                                 <span class="inline-flex items-center text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full" style="color: firebrick"><i class="fa-solid fa-map" style="padding-right: 3px"></i> Field specific</span>
@@ -386,26 +383,10 @@
                         <div class="bg-white rounded-xl shadow-md p-6">
                             <h3 class="text-lg font-semibold text-gray-800 mb-4">📡 IoT Device Controls</h3>
                             <div class="grid grid-cols-2 gap-3">
-                                <button class="iot-device-btn p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition text-center" data-device="drone">
-                                    <i class="fa-solid fa-satellite-dish text-blue-600 text-xl mb-2"></i>
-                                    <p class="text-xs text-gray-600">Field Drone</p>
-                                    <span class="text-xs text-green-600">Ready</span>
-                                </button>
-                                <button class="iot-device-btn p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition text-center" data-device="sensors">
-                                    <i class="fa-solid fa-microchip text-purple-600 text-xl mb-2"></i>
-                                    <p class="text-xs text-gray-600">Soil Sensors</p>
-                                    <span class="text-xs text-green-600">12 Active</span>
-                                </button>
-                                <button class="iot-device-btn p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition text-center" data-device="irrigation">
-                                    <i class="fa-solid fa-water text-cyan-600 text-xl mb-2"></i>
-                                    <p class="text-xs text-gray-600">Smart Valves</p>
-                                    <span class="text-xs text-green-600">Auto Mode</span>
-                                </button>
-                                <button class="iot-device-btn p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition text-center" data-device="weather">
-                                    <i class="fa-solid fa-cloud-sun text-amber-600 text-xl mb-2"></i>
-                                    <p class="text-xs text-gray-600">Weather Station</p>
-                                    <span class="text-xs text-green-600">Online</span>
-                                </button>
+                                <button class="iot-device-btn p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition text-center" data-device="drone"><i class="fa-solid fa-satellite-dish text-blue-600 text-xl mb-2"></i><p class="text-xs text-gray-600">Field Drone</p><span class="text-xs text-green-600">Ready</span></button>
+                                <button class="iot-device-btn p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition text-center" data-device="sensors"><i class="fa-solid fa-microchip text-purple-600 text-xl mb-2"></i><p class="text-xs text-gray-600">Soil Sensors</p><span class="text-xs text-green-600">12 Active</span></button>
+                                <button class="iot-device-btn p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition text-center" data-device="irrigation"><i class="fa-solid fa-water text-cyan-600 text-xl mb-2"></i><p class="text-xs text-gray-600">Smart Valves</p><span class="text-xs text-green-600">Auto Mode</span></button>
+                                <button class="iot-device-btn p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition text-center" data-device="weather"><i class="fa-solid fa-cloud-sun text-amber-600 text-xl mb-2"></i><p class="text-xs text-gray-600">Weather Station</p><span class="text-xs text-green-600">Online</span></button>
                             </div>
                         </div>
                     </div>
@@ -413,7 +394,7 @@
             </div>
             <!-- END OVERVIEW -->
 
-            <!-- ==================== INVENTORY SECTION ==================== -->
+            <!-- ==================== INVENTORY ==================== -->
             <div id="inventory-section" class="section-content hidden">
                 <div class="flex justify-between items-center mb-6 flex-wrap gap-3">
                     <h2 class="text-2xl font-bold text-gray-800">Inventory Management</h2>
@@ -443,46 +424,44 @@
                 </div>
             </div>
 
-            <!-- ==================== SALARY SECTION ==================== -->
+            <!-- ==================== SALARY ==================== -->
             <div id="salary-section" class="section-content hidden">
-                <iframe src="salary.html" style="width: 100%; height: 900px; border: none; border-radius: 12px;"></iframe>
+                <iframe src="salary.html" style="width:100%;height:900px;border:none;border-radius:12px;"></iframe>
             </div>
 
-            <!-- ==================== FIELDS SECTION ==================== -->
+            <!-- ==================== FIELDS ==================== -->
             <div id="fields-section" class="section-content hidden">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">Fields Management</h2>
-                <iframe src="field.html" style="width: 100%; height: 900px; border: none; border-radius: 12px;"></iframe>
+                <iframe src="field.html" style="width:100%;height:900px;border:none;border-radius:12px;"></iframe>
             </div>
 
-            <!-- ==================== CROPS SECTION ==================== -->
+            <!-- ==================== CROPS ==================== -->
             <div id="crops-section" class="section-content hidden">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">Crop Management</h2>
-                <iframe src="crop.html" style="width: 100%; height: 800px; border: none; border-radius: 12px;"></iframe>
+                <iframe src="crop.html" style="width:100%;height:800px;border:none;border-radius:12px;"></iframe>
             </div>
 
-            <!-- ==================== WEATHER SECTION ==================== -->
+            <!-- ==================== WEATHER ==================== -->
             <div id="weather-section" class="section-content hidden">
-                <iframe src="wether.html" style="width: 100%; height: 900px; border: none; border-radius: 12px;"></iframe>
+                <iframe src="wether.html" style="width:100%;height:900px;border:none;border-radius:12px;"></iframe>
             </div>
 
-            <!-- ==================== CULTIVATION SECTION ==================== -->
+            <!-- ==================== CULTIVATION ==================== -->
             <div id="cultivation-section" class="section-content hidden">
-                <iframe src="cultivation.html" style="width: 100%; height: 900px; border: none; border-radius: 12px;"></iframe>
+                <iframe src="cultivation.html" style="width:100%;height:900px;border:none;border-radius:12px;"></iframe>
             </div>
 
-            <!-- ==================== ANALYTICS SECTION ==================== -->
+            <!-- ==================== ANALYTICS ==================== -->
             <div id="analytics-section" class="section-content hidden">
-                <iframe src="analytics.html" style="width: 100%; height: 900px; border: none; border-radius: 12px;"></iframe>
+                <iframe src="analytics.html" style="width:100%;height:900px;border:none;border-radius:12px;"></iframe>
             </div>
 
-            <!-- ==================== AI ASSISTANT SECTION ==================== -->
+            <!-- ==================== AI ASSISTANT ==================== -->
             <div id="assistant-section" class="section-content hidden">
                 <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
                     <div class="bg-gradient-to-r from-green-700 to-green-600 px-6 py-5">
                         <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                                <i class="fa-solid fa-robot text-white text-xl"></i>
-                            </div>
+                            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><i class="fa-solid fa-robot text-white text-xl"></i></div>
                             <div>
                                 <h2 class="text-xl font-bold text-white">AgroSmart AI Assistant</h2>
                                 <p class="text-green-100 text-sm">Your intelligent farming companion - Ask me anything about agriculture!</p>
@@ -492,12 +471,10 @@
                     <div class="flex flex-col h-[600px]">
                         <div id="chatMessages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-gray-50 to-white">
                             <div class="flex items-start space-x-3">
-                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <i class="fa-solid fa-leaf text-green-600 text-sm"></i>
-                                </div>
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-leaf text-green-600 text-sm"></i></div>
                                 <div class="flex-1">
                                     <div class="bg-white rounded-2xl rounded-tl-none shadow-sm p-4 border border-gray-100">
-                                        <p class="text-gray-700 text-sm leading-relaxed">👋 <strong>Hello! I'm your AgroSmart AI Assistant.</strong> I can help you with:</p>
+                                        <p class="text-gray-700 text-sm leading-relaxed">👋 <strong>Hello! I'm your AgroSmart AI Assistant.</strong></p>
                                         <div class="grid grid-cols-2 gap-2 mt-3 text-sm">
                                             <div class="flex items-center space-x-2 text-gray-600"><i class="fa-solid fa-seedling text-green-500 text-xs"></i><span>Crop recommendations</span></div>
                                             <div class="flex items-center space-x-2 text-gray-600"><i class="fa-solid fa-bug text-green-500 text-xs"></i><span>Pest control solutions</span></div>
@@ -512,9 +489,7 @@
                         </div>
                         <div id="typingIndicator" class="hidden px-6 py-2">
                             <div class="flex items-center space-x-2">
-                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                    <i class="fa-solid fa-leaf text-green-600 text-sm"></i>
-                                </div>
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center"><i class="fa-solid fa-leaf text-green-600 text-sm"></i></div>
                                 <div class="bg-gray-100 rounded-2xl px-4 py-2">
                                     <div class="flex space-x-1">
                                         <div class="w-2 h-2 bg-green-500 rounded-full" style="animation: pulse 1s infinite; animation-delay: 0s"></div>
@@ -529,12 +504,8 @@
                                 <div class="flex-1 relative">
                                     <textarea id="chatInput" rows="1" placeholder="Ask about farming, crops, weather, pests..." class="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-200 resize-none text-sm"></textarea>
                                 </div>
-                                <button id="sendChatBtn" class="bg-green-600 hover:bg-green-700 text-white rounded-full w-10 h-10 flex items-center justify-center transition shadow-md">
-                                    <i class="fa-solid fa-paper-plane text-sm"></i>
-                                </button>
-                                <button id="clearChatBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full w-10 h-10 flex items-center justify-center transition">
-                                    <i class="fa-solid fa-trash-alt text-sm"></i>
-                                </button>
+                                <button id="sendChatBtn" class="bg-green-600 hover:bg-green-700 text-white rounded-full w-10 h-10 flex items-center justify-center transition shadow-md"><i class="fa-solid fa-paper-plane text-sm"></i></button>
+                                <button id="clearChatBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full w-10 h-10 flex items-center justify-center transition"><i class="fa-solid fa-trash-alt text-sm"></i></button>
                             </div>
                             <div class="flex flex-wrap gap-2 mt-3">
                                 <button class="suggestion-chip text-xs px-3 py-1.5 bg-gray-100 hover:bg-green-100 text-gray-600 rounded-full transition">🌱 Best crops for rainy season</button>
@@ -547,13 +518,11 @@
                 </div>
             </div>
 
-            <!-- ==================== EQUIPMENT SECTION ==================== -->
+            <!-- ==================== EQUIPMENT ==================== -->
             <div id="equipment-section" class="section-content hidden">
                 <div class="flex justify-between items-center mb-6 flex-wrap gap-3">
                     <h2 class="text-2xl font-bold text-gray-800">Equipment Management</h2>
-                    <button id="addEquipmentBtn" class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition shadow-sm flex items-center space-x-2">
-                        <i class="fa-solid fa-plus"></i><span>Add New Equipment</span>
-                    </button>
+                    <button id="addEquipmentBtn" class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition shadow-sm flex items-center space-x-2"><i class="fa-solid fa-plus"></i><span>Add New Equipment</span></button>
                 </div>
                 <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
                     <div class="overflow-x-auto">
@@ -577,18 +546,16 @@
                 </div>
             </div>
 
-            <!-- ==================== VEHICLE SECTION ==================== -->
+            <!-- ==================== VEHICLE ==================== -->
             <div id="vehicle-section" class="section-content hidden">
-                <iframe src="vehicle.html" style="width: 100%; height: 900px; border: none; border-radius: 12px;"></iframe>
+                <iframe src="vehicle.html" style="width:100%;height:900px;border:none;border-radius:12px;"></iframe>
             </div>
 
-            <!-- ==================== USER SECTION ==================== -->
+            <!-- ==================== USER ==================== -->
             <div id="user-section" class="section-content hidden">
                 <div class="flex justify-between items-center mb-6 flex-wrap gap-3">
                     <h2 class="text-2xl font-bold text-gray-800">User Management</h2>
-                    <button id="addUserBtn" class="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 transition shadow-sm flex items-center space-x-2">
-                        <i class="fa-solid fa-user-plus"></i><span>Create New User</span>
-                    </button>
+                    <button id="addUserBtn" class="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 transition shadow-sm flex items-center space-x-2"><i class="fa-solid fa-user-plus"></i><span>Create New User</span></button>
                 </div>
                 <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
                     <div class="overflow-x-auto">
@@ -610,32 +577,76 @@
                 </div>
             </div>
 
-            <!-- ==================== STAFF SECTION ==================== -->
+            <!-- ==================== STAFF ==================== -->
             <div id="staff-section" class="section-content hidden">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">Staff Management</h2>
-                <iframe src="staff.html" style="width: 100%; height: 900px; border: none; border-radius: 12px;"></iframe>
+                <iframe src="staff.html" style="width:100%;height:900px;border:none;border-radius:12px;"></iframe>
             </div>
 
-            <!-- ==================== TASKS SECTION ==================== -->
+            <!-- ==================== TASKS ==================== -->
             <div id="tasks-section" class="section-content hidden">
-                <iframe src="task.html" style="width: 100%; height: 900px; border: none; border-radius: 12px;"></iframe>
+                <iframe src="task.html" style="width:100%;height:900px;border:none;border-radius:12px;"></iframe>
             </div>
 
-            <!-- ==================== PROFILE SECTION ==================== -->
+            <!-- ==================== PROFILE ==================== -->
             <div id="profile-section" class="section-content hidden">
-                <iframe src="profile.html" style="width: 100%; height: 900px; border: none; border-radius: 12px;"></iframe>
+                <iframe src="profile.html" style="width:100%;height:900px;border:none;border-radius:12px;"></iframe>
             </div>
 
-            <!-- ==================== NOTIFICATIONS SECTION ==================== -->
+            <!-- ==================== NOTIFICATIONS ==================== -->
             <div id="notifications-section" class="section-content hidden">
-                <iframe src="notification.html" style="width: 100%; height: 900px; border: none; border-radius: 12px;"></iframe>
+                <iframe src="notification.html" style="width:100%;height:900px;border:none;border-radius:12px;"></iframe>
             </div>
 
-        </div><!-- end .p-6 -->
+        </div>
     </main>
-</div><!-- end .flex.h-screen -->
+</div>
 
 <script>
+    // ============================================================
+    //  ROLE-BASED ACCESS CONTROL (RBAC)
+    //  Roles: ADMIN | MANAGER | SCIENTIST | USER
+    // ============================================================
+
+    const ROLE_PERMISSIONS = {
+        MANAGER: [
+            'overview', 'fields', 'crops', 'weather', 'cultivation',
+            'analytics', 'assistant', 'salary', 'inventory', 'equipment',
+            'vehicle', 'tasks', 'staff', 'profile', 'notifications'
+            // NOT allowed: 'user'  (user management is admin-only)
+        ],
+        SCIENTIST: [
+            'overview', 'fields', 'crops', 'weather', 'cultivation',
+            'analytics', 'assistant', 'profile', 'notifications', 'tasks'
+            // NOT allowed: salary, inventory, equipment, vehicle, staff, user
+        ],
+        USER: [
+            'overview', 'weather', 'assistant', 'profile', 'notifications'
+            // Very restricted – read-only overview + assistant only
+        ]
+    };
+
+    const ROLE_HIDDEN_ACTIONS = {
+        MANAGER: [],               // managers can do everything they can see
+        SCIENTIST: [
+            '#addItemBtn', '#addEquipmentBtn', '#addEquipmentBtn',
+            '.edit-inv-btn', '.delete-inv-btn',
+            '.edit-eq-btn',  '.delete-eq-btn',
+            '.edit-user-btn','.delete-user-btn', '#addUserBtn',
+            '.irrigate-btn', '#autoScheduleBtn'
+        ],
+        USER: [
+            '#addItemBtn', '#addEquipmentBtn',
+            '.edit-inv-btn', '.delete-inv-btn',
+            '.edit-eq-btn',  '.delete-eq-btn',
+            '.edit-user-btn','.delete-user-btn', '#addUserBtn',
+            '.irrigate-btn', '#autoScheduleBtn', '.iot-device-btn'
+        ]
+    };
+
+    // Friendly labels for the access-denied screen
+    const ROLE_LABELS = { ADMIN:'Admin', MANAGER:'Manager', SCIENTIST:'Scientist', USER:'User' };
+
     // ============================================================
     //  CONSTANTS & GLOBALS
     // ============================================================
@@ -654,26 +665,103 @@
     let currentStaffData     = [];
     let currentFieldData     = [];
     let isSending            = false;
+    let currentUserRole      = 'USER';  // will be overwritten on init
+
+    // ============================================================
+    //  RBAC HELPERS
+    // ============================================================
+    function getStoredRole() {
+        try {
+            const token = localStorage.getItem('token') || '';
+            if (!token) return 'USER';
+
+            // Decode the JWT payload (middle segment, base64url)
+            const payloadB64 = token.split('.')[1];
+            if (!payloadB64) return 'USER';
+
+            // base64url → base64 → JSON
+            const json    = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'));
+            const payload = JSON.parse(json);
+
+            // Spring Security typically puts the role in one of these fields:
+            // "role", "roles", "authorities", or "scope"
+            const raw =
+                payload.role ||
+                payload.roles ||
+                (Array.isArray(payload.authorities) ? payload.authorities[0] : payload.authorities) ||
+                '';
+
+            // Strip Spring's "ROLE_" prefix if present (e.g. "ROLE_ADMIN" → "ADMIN")
+            const role = String(raw).replace(/^ROLE_/i, '').toUpperCase().trim();
+            return ['ADMIN', 'MANAGER', 'SCIENTIST', 'USER'].includes(role) ? role : 'USER';
+
+        } catch (e) {
+            console.warn('Could not decode JWT role, defaulting to USER:', e);
+            return 'USER';
+        }
+    }
+
+    function canAccess(section) {
+        if (currentUserRole === 'ADMIN') return true;
+        const allowed = ROLE_PERMISSIONS[currentUserRole] || [];
+        return allowed.includes(section);
+    }
+
+    function applyRoleToSidebar() {
+        $('[data-section]').each(function() {
+            const section = $(this).data('section');
+            if (section === undefined) return;
+            if (!canAccess(section) && section !== 'logout') {
+                $(this).addClass('sidebar-locked');
+                // Add a tiny lock icon if not already present
+                if (!$(this).find('.lock-icon').length) {
+                    $(this).append('<i class="fa-solid fa-lock text-xs ml-auto lock-icon" style="opacity:.5"></i>');
+                }
+            } else {
+                $(this).removeClass('sidebar-locked');
+                $(this).find('.lock-icon').remove();
+            }
+        });
+    }
+
+    function showAccessDenied(section) {
+        const roleLabel = ROLE_LABELS[currentUserRole] || currentUserRole;
+        const $sec = $(`#${section}-section`);
+        // Remove old overlay if any
+        $sec.find('.access-denied-overlay').remove();
+        $sec.prepend(`
+        <div class="access-denied-overlay">
+            <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-2">
+                <i class="fa-solid fa-lock text-red-400 text-4xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-700">Access Restricted</h3>
+            <p class="text-gray-500 text-sm text-center max-w-xs">
+                Your current role <span class="font-semibold text-indigo-600">${roleLabel}</span> does not have permission to view this section.
+            </p>
+            <p class="text-xs text-gray-400">Contact your administrator to request access.</p>
+        </div>
+    `);
+    }
+
+    function applyHiddenActions() {
+        if (currentUserRole === 'ADMIN') return;
+        const selectors = ROLE_HIDDEN_ACTIONS[currentUserRole] || [];
+        selectors.forEach(sel => {
+            $(sel).hide();
+        });
+    }
 
     // ============================================================
     //  HELPERS
     // ============================================================
-    function getToken() {
-        return localStorage.getItem('token') || '';
-    }
-
-    function authHeaders() {
-        return { 'Authorization': `Bearer ${getToken()}` };
-    }
-
-    function jsonHeaders() {
-        return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` };
-    }
+    function getToken() { return localStorage.getItem('token') || ''; }
+    function authHeaders() { return { 'Authorization': `Bearer ${getToken()}` }; }
+    function jsonHeaders() { return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` }; }
 
     function getLocalDateTime() {
         const n = new Date();
         return n.getFullYear() + '-' +
-            String(n.getMonth() + 1).padStart(2,'0') + '-' +
+            String(n.getMonth()+1).padStart(2,'0') + '-' +
             String(n.getDate()).padStart(2,'0') + 'T' +
             String(n.getHours()).padStart(2,'0') + ':' +
             String(n.getMinutes()).padStart(2,'0') + ':' +
@@ -700,30 +788,24 @@
         try {
             const res      = await fetch(API_BASE_WEATHER, { headers: { 'Authorization': `Bearer ${token}` } });
             const response = await res.json();
-
             if (response.code === 200 && response.data) {
                 const w = response.data;
                 $('#tempDisplay').text(`${w.temp || 24}°C`);
                 $('#weatherDesc').text(w.condition || 'Sunny');
                 $('#humidityVal').text(w.humidity || '68');
                 $('#windVal').text(w.windSpeed || '12');
-
                 const condition = (w.condition || '').toLowerCase();
                 let iconClass = 'fa-solid fa-sun text-amber-500';
                 if (condition.includes('rain'))  iconClass = 'fa-solid fa-cloud-rain text-blue-500';
                 else if (condition.includes('cloud')) iconClass = 'fa-solid fa-cloud-sun text-gray-500';
                 $('#weatherIcon').attr('class', `${iconClass} fa-3x`);
                 $('#weatherUpdateTime').text(new Date().toLocaleTimeString());
-
                 let insightMsg = w.recommendation || "Soil moisture optimal. Irrigation not required for next 48h.";
-                if (condition.includes('rain'))  insightMsg = "🌧️ Rainfall expected soon. Delay fertilizer application to avoid runoff. Perfect for rain-fed crops.";
+                if (condition.includes('rain'))  insightMsg = "🌧️ Rainfall expected soon. Delay fertilizer application to avoid runoff.";
                 else if (condition.includes('clear')) insightMsg = "☀️ Excellent sunshine for photosynthesis. Monitor soil moisture in South fields.";
                 $('#smartInsightText').html(`<i class="fa-regular fa-message"></i> ${insightMsg}`);
-            } else {
-                throw new Error('Invalid weather data');
-            }
-        } catch (e) {
-            console.warn('Weather load error:', e);
+            } else { throw new Error('Invalid weather data'); }
+        } catch(e) {
             $('#tempDisplay').text('24°C');
             $('#weatherDesc').text('Fair conditions');
             $('#smartInsightText').text('Using local agri-model: Good day for planting. Check soil sensors.');
@@ -775,22 +857,17 @@
             if (apiRes.code === 200 && Array.isArray(apiRes.data)) {
                 currentInventoryData = apiRes.data;
                 renderInventoryTable(currentInventoryData);
-            } else {
-                renderInventoryTable([]);
-            }
-        } catch (err) {
-            console.error(err);
-            renderInventoryTable([]);
-            Swal.fire('Error', 'Could not load inventory', 'error');
-        }
+            } else { renderInventoryTable([]); }
+        } catch(err) { console.error(err); renderInventoryTable([]); Swal.fire('Error','Could not load inventory','error'); }
     }
 
     function renderInventoryTable(items) {
         const tbody = $('#inventoryTableBody');
         if (!items || items.length === 0) {
-            tbody.html('<tr><td colspan="7" class="text-center py-8 text-gray-400"><i class="fa-solid fa-database mr-2"></i>No inventory items found. Add one!</td></tr>');
+            tbody.html('<tr><td colspan="7" class="text-center py-8 text-gray-400"><i class="fa-solid fa-database mr-2"></i>No inventory items found.</td></tr>');
             return;
         }
+        const canWrite = currentUserRole === 'ADMIN' || currentUserRole === 'MANAGER';
         let rows = '';
         items.forEach(item => {
             const id       = item.id || item.inventoryId;
@@ -799,17 +876,18 @@
             const quantity = item.quantity || 0;
             const status   = quantity < 20 ? 'Low Stock' : quantity > 200 ? 'High Stock' : 'In Stock';
             const cls      = status === 'Low Stock' ? 'bg-red-100 text-red-700' : status === 'High Stock' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700';
+            const actions  = canWrite
+                ? `<button class="text-blue-600 hover:text-blue-800 edit-inv-btn" data-id="${id}"><i class="fa-regular fa-pen-to-square"></i> Edit</button>
+               <button class="text-red-600 hover:text-red-800 delete-inv-btn ml-2" data-id="${id}"><i class="fa-regular fa-trash-can"></i> Del</button>`
+                : `<span class="text-xs text-gray-400 italic">View only</span>`;
             rows += `<tr class="hover:bg-gray-50">
-            <td class="px-6 py-4 font-mono text-sm text-gray-600">${id || '—'}</td>
+            <td class="px-6 py-4 font-mono text-sm text-gray-600">${id||'—'}</td>
             <td class="px-6 py-4 font-medium text-gray-900">${escapeHtml(name)}</td>
             <td class="px-6 py-4 text-gray-500">${escapeHtml(category)}</td>
-            <td class="px-6 py-4 text-gray-500">${quantity} ${item.unit || 'units'}</td>
+            <td class="px-6 py-4 text-gray-500">${quantity} ${item.unit||'units'}</td>
             <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-medium ${cls}">${status}</span></td>
-            <td class="px-6 py-4 text-gray-500 text-sm">${formatDate(item.updatedAt || item.lastUpdated || item.modifiedAt)}</td>
-            <td class="px-6 py-4 text-right space-x-2">
-                <button class="text-blue-600 hover:text-blue-800 edit-inv-btn" data-id="${id}"><i class="fa-regular fa-pen-to-square"></i> Edit</button>
-                <button class="text-red-600 hover:text-red-800 delete-inv-btn ml-2" data-id="${id}"><i class="fa-regular fa-trash-can"></i> Del</button>
-            </td>
+            <td class="px-6 py-4 text-gray-500 text-sm">${formatDate(item.updatedAt||item.lastUpdated||item.modifiedAt)}</td>
+            <td class="px-6 py-4 text-right space-x-2">${actions}</td>
         </tr>`;
         });
         tbody.html(rows);
@@ -831,118 +909,54 @@
     async function openEditInventoryModal(id) {
         const item = currentInventoryData.find(i => (i.id || i.inventoryId) == id);
         if (!item) return;
-
         const { value: updatedItem } = await Swal.fire({
             title: '',
-            html: `<style>
-            .swal2-html-container{margin:0;text-align:left}
-            .mc{font-family:'Segoe UI',sans-serif;padding:10px}
-            .mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid #eee;padding-bottom:10px}
-            .fg{margin-bottom:15px;display:flex;flex-direction:column}
-            .fg label{font-weight:600;font-size:14px;margin-bottom:5px;color:#444}
-            .ii{padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;width:100%}
-            .row{display:flex;gap:15px}
-            .row .fg{flex:1}
-        </style>
-        <div class="mc">
-            <div class="mh"><h3>Edit Inventory Item</h3></div>
-            <div class="fg"><label>Item Name *</label><input id="s-name" class="ii" value="${escapeHtml(item.name || item.itemName)}"></div>
-            <div class="fg"><label>Category</label>
-                <select id="s-cat" class="ii">
-                    <option value="SEED" ${item.category==='SEED'?'selected':''}>Seed</option>
-                    <option value="FERTILIZER" ${item.category==='FERTILIZER'?'selected':''}>Fertilizer</option>
-                    <option value="PESTICIDE" ${item.category==='PESTICIDE'?'selected':''}>Pesticide</option>
-                </select>
-            </div>
-            <div class="row">
-                <div class="fg"><label>Quantity *</label><input id="s-qty" type="number" class="ii" value="${item.quantity}"></div>
-                <div class="fg"><label>Unit</label>
-                    <select id="s-unit" class="ii">
-                        <option value="kg" ${item.unit==='kg'?'selected':''}>kg</option>
-                        <option value="g" ${item.unit==='g'?'selected':''}>g</option>
-                        <option value="L" ${item.unit==='L'?'selected':''}>L</option>
-                        <option value="pcs" ${item.unit==='pcs'?'selected':''}>pcs</option>
-                    </select>
-                </div>
-            </div>
-        </div>`,
-            showCancelButton: true,
-            confirmButtonText: 'Update Item',
-            confirmButtonColor: '#2563EB',
-            focusConfirm: false,
+            html: `<style>.swal2-html-container{margin:0;text-align:left}.mc{font-family:'Segoe UI',sans-serif;padding:10px}.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid #eee;padding-bottom:10px}.fg{margin-bottom:15px;display:flex;flex-direction:column}.fg label{font-weight:600;font-size:14px;margin-bottom:5px;color:#444}.ii{padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;width:100%}.row{display:flex;gap:15px}.row .fg{flex:1}</style>
+        <div class="mc"><div class="mh"><h3>Edit Inventory Item</h3></div>
+        <div class="fg"><label>Item Name *</label><input id="s-name" class="ii" value="${escapeHtml(item.name||item.itemName)}"></div>
+        <div class="fg"><label>Category</label><select id="s-cat" class="ii"><option value="SEED" ${item.category==='SEED'?'selected':''}>Seed</option><option value="FERTILIZER" ${item.category==='FERTILIZER'?'selected':''}>Fertilizer</option><option value="PESTICIDE" ${item.category==='PESTICIDE'?'selected':''}>Pesticide</option></select></div>
+        <div class="row"><div class="fg"><label>Quantity *</label><input id="s-qty" type="number" class="ii" value="${item.quantity}"></div><div class="fg"><label>Unit</label><select id="s-unit" class="ii"><option value="kg" ${item.unit==='kg'?'selected':''}>kg</option><option value="g" ${item.unit==='g'?'selected':''}>g</option><option value="L" ${item.unit==='L'?'selected':''}>L</option><option value="pcs" ${item.unit==='pcs'?'selected':''}>pcs</option></select></div></div></div>`,
+            showCancelButton: true, confirmButtonText: 'Update Item', confirmButtonColor: '#2563EB', focusConfirm: false,
             preConfirm: () => {
-                const name     = document.getElementById('s-name').value;
+                const name = document.getElementById('s-name').value;
                 const quantity = document.getElementById('s-qty').value;
                 if (!name || !quantity) { Swal.showValidationMessage('Name and Quantity required'); return false; }
-                return { ...item, itemName: name, category: document.getElementById('s-cat').value, quantity: parseFloat(quantity), unit: document.getElementById('s-unit').value || 'units', lastUpdated: getLocalDateTime() };
+                return { ...item, itemName: name, category: document.getElementById('s-cat').value, quantity: parseFloat(quantity), unit: document.getElementById('s-unit').value||'units', lastUpdated: getLocalDateTime() };
             }
         });
-
         if (updatedItem) {
             try {
-                const res    = await fetch(API_BASE_INVENTORY, { method:'PUT', headers: jsonHeaders(), body: JSON.stringify(updatedItem) });
+                const res = await fetch(API_BASE_INVENTORY, { method:'PUT', headers: jsonHeaders(), body: JSON.stringify(updatedItem) });
                 const result = await res.json();
                 if (res.ok || result.code === 200) { Swal.fire('Updated!','Inventory updated','success'); fetchInventory(); }
-                else throw new Error(result.message || 'Update failed');
-            } catch(e) { Swal.fire('Error', e.message || 'Could not update', 'error'); }
+                else throw new Error(result.message||'Update failed');
+            } catch(e) { Swal.fire('Error', e.message||'Could not update', 'error'); }
         }
     }
 
     async function addNewInventory() {
         const { value: newItem } = await Swal.fire({
             title: '',
-            html: `<style>
-            .swal2-html-container{margin:0;text-align:left}
-            .mc{font-family:'Segoe UI',sans-serif;padding:10px}
-            .mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid #eee;padding-bottom:10px}
-            .fg{margin-bottom:15px;display:flex;flex-direction:column}
-            .fg label{font-weight:600;font-size:14px;margin-bottom:5px;color:#444}
-            .ii{padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;width:100%}
-            .row{display:flex;gap:15px}
-            .row .fg{flex:1}
-        </style>
-        <div class="mc">
-            <div class="mh"><h3>Add Inventory Item</h3></div>
-            <div class="fg"><label>Item Name *</label><input id="s-name" class="ii" placeholder="e.g., Urea Fertilizer"></div>
-            <div class="fg"><label>Category</label>
-                <select id="s-cat" class="ii">
-                    <option value="SEED">Seed</option>
-                    <option value="FERTILIZER">Fertilizer</option>
-                    <option value="PESTICIDE">Pesticide</option>
-                </select>
-            </div>
-            <div class="row">
-                <div class="fg"><label>Quantity *</label><input id="s-qty" type="number" class="ii" value="0"></div>
-                <div class="fg"><label>Unit</label>
-                    <select id="s-unit" class="ii">
-                        <option value="" disabled selected>Select unit</option>
-                        <option value="kg">kg</option>
-                        <option value="g">g</option>
-                        <option value="L">L</option>
-                        <option value="pcs">pcs</option>
-                    </select>
-                </div>
-            </div>
-        </div>`,
-            showCancelButton: true,
-            confirmButtonText: 'Save Item',
-            confirmButtonColor: '#16A34A',
-            focusConfirm: false,
+            html: `<style>.swal2-html-container{margin:0;text-align:left}.mc{font-family:'Segoe UI',sans-serif;padding:10px}.mh{margin-bottom:20px;border-bottom:1px solid #eee;padding-bottom:10px}.fg{margin-bottom:15px;display:flex;flex-direction:column}.fg label{font-weight:600;font-size:14px;margin-bottom:5px;color:#444}.ii{padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;width:100%}.row{display:flex;gap:15px}.row .fg{flex:1}</style>
+        <div class="mc"><div class="mh"><h3>Add Inventory Item</h3></div>
+        <div class="fg"><label>Item Name *</label><input id="s-name" class="ii" placeholder="e.g., Urea Fertilizer"></div>
+        <div class="fg"><label>Category</label><select id="s-cat" class="ii"><option value="SEED">Seed</option><option value="FERTILIZER">Fertilizer</option><option value="PESTICIDE">Pesticide</option></select></div>
+        <div class="row"><div class="fg"><label>Quantity *</label><input id="s-qty" type="number" class="ii" value="0"></div><div class="fg"><label>Unit</label><select id="s-unit" class="ii"><option value="" disabled selected>Select unit</option><option value="kg">kg</option><option value="g">g</option><option value="L">L</option><option value="pcs">pcs</option></select></div></div></div>`,
+            showCancelButton: true, confirmButtonText: 'Save Item', confirmButtonColor: '#16A34A', focusConfirm: false,
             preConfirm: () => {
-                const name     = document.getElementById('s-name').value;
+                const name = document.getElementById('s-name').value;
                 const quantity = document.getElementById('s-qty').value;
                 if (!name || !quantity) { Swal.showValidationMessage('Name and Quantity required'); return false; }
-                return { itemName: name, category: document.getElementById('s-cat').value, quantity: parseFloat(quantity), unit: document.getElementById('s-unit').value || 'units', lastUpdated: getLocalDateTime() };
+                return { itemName: name, category: document.getElementById('s-cat').value, quantity: parseFloat(quantity), unit: document.getElementById('s-unit').value||'units', lastUpdated: getLocalDateTime() };
             }
         });
-
         if (newItem) {
             try {
-                const res    = await fetch(API_BASE_INVENTORY, { method:'POST', headers: jsonHeaders(), body: JSON.stringify(newItem) });
+                const res = await fetch(API_BASE_INVENTORY, { method:'POST', headers: jsonHeaders(), body: JSON.stringify(newItem) });
                 const result = await res.json();
                 if (res.ok || result.code === 201) { Swal.fire('Created!','New item added','success'); fetchInventory(); }
-                else throw new Error(result.message || 'Failed to save');
-            } catch(e) { Swal.fire('Error', e.message || 'Could not save', 'error'); }
+                else throw new Error(result.message||'Failed to save');
+            } catch(e) { Swal.fire('Error', e.message||'Could not save', 'error'); }
         }
     }
 
@@ -999,23 +1013,25 @@
     function renderEquipmentTable(items) {
         const tbody = $('#equipmentTableBody');
         if (!items || items.length === 0) {
-            tbody.html('<tr><td colspan="7" class="text-center py-8 text-gray-400">No equipment found. Add new equipment.</td></tr>');
+            tbody.html('<tr><td colspan="7" class="text-center py-8 text-gray-400">No equipment found.</td></tr>');
             return;
         }
+        const canWrite = currentUserRole === 'ADMIN' || currentUserRole === 'MANAGER';
         let rows = '';
         items.forEach(item => {
             const cls = item.status === 'AVAILABLE' ? 'bg-green-100 text-green-700' : item.status === 'UNDER_REPAIR' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700';
+            const actions = canWrite
+                ? `<button class="text-blue-600 hover:text-blue-800 edit-eq-btn" data-id="${item.equipmentId}"><i class="fa-regular fa-pen-to-square"></i> Edit</button>
+               <button class="text-red-600 hover:text-red-800 delete-eq-btn ml-2" data-id="${item.equipmentId}"><i class="fa-regular fa-trash-can"></i> Del</button>`
+                : `<span class="text-xs text-gray-400 italic">View only</span>`;
             rows += `<tr class="hover:bg-gray-50">
-            <td class="px-6 py-4 font-mono text-sm text-gray-600">${item.equipmentId || item.id || '-'}</td>
-            <td class="px-6 py-4">${escapeHtml(item.category || '-')}</td>
-            <td class="px-6 py-4">${escapeHtml(item.type || '-')}</td>
-            <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-medium ${cls}">${item.status || 'UNKNOWN'}</span></td>
-            <td class="px-6 py-4">${escapeHtml(item.fieldId || 'Not Assigned')}</td>
-            <td class="px-6 py-4 font-mono text-sm">${escapeHtml(item.staffId || 'Not Assigned')}</td>
-            <td class="px-6 py-4 text-right space-x-2">
-                <button class="text-blue-600 hover:text-blue-800 edit-eq-btn" data-id="${item.equipmentId}"><i class="fa-regular fa-pen-to-square"></i> Edit</button>
-                <button class="text-red-600 hover:text-red-800 delete-eq-btn ml-2" data-id="${item.equipmentId}"><i class="fa-regular fa-trash-can"></i> Del</button>
-            </td>
+            <td class="px-6 py-4 font-mono text-sm text-gray-600">${item.equipmentId||item.id||'-'}</td>
+            <td class="px-6 py-4">${escapeHtml(item.category||'-')}</td>
+            <td class="px-6 py-4">${escapeHtml(item.type||'-')}</td>
+            <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-medium ${cls}">${item.status||'UNKNOWN'}</span></td>
+            <td class="px-6 py-4">${escapeHtml(item.fieldId||'Not Assigned')}</td>
+            <td class="px-6 py-4 font-mono text-sm">${escapeHtml(item.staffId||'Not Assigned')}</td>
+            <td class="px-6 py-4 text-right space-x-2">${actions}</td>
         </tr>`;
         });
         tbody.html(rows);
@@ -1037,74 +1053,38 @@
     async function openEquipmentModal(id = null) {
         await fetchStaffForDropdown();
         await fetchFieldsForDropdown();
-
         const isEdit = id !== null;
-        const item   = isEdit ? currentEquipmentData.find(e => e.equipmentId == id) : { equipmentId:'', category:'', type:'', status:'AVAILABLE', staffId:'', fieldId:'' };
+        const item = isEdit ? currentEquipmentData.find(e => e.equipmentId == id) : { equipmentId:'', category:'', type:'', status:'AVAILABLE', staffId:'', fieldId:'' };
         if (!item && isEdit) return;
-
         const staffOpts = getStaffOptionsHtml(isEdit ? item.staffId : null);
         const fieldOpts = getFieldOptionsHtml(isEdit ? item.fieldId : null);
-
         const { value: formData } = await Swal.fire({
             title: '',
-            html: `<style>
-            .swal2-html-container{margin:0;text-align:left}
-            .mc{font-family:'Segoe UI',sans-serif;padding:10px}
-            .mh{margin-bottom:20px;border-bottom:1px solid #eee;padding-bottom:10px}
-            .fg{margin-bottom:15px;display:flex;flex-direction:column}
-            .fg label{font-weight:600;font-size:14px;margin-bottom:5px;color:#444}
-            .ii{padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;width:100%}
-            .row{display:flex;gap:15px}
-            .row .fg{flex:1}
-        </style>
-        <div class="mc">
-            <div class="mh"><h3>${isEdit ? 'Edit Equipment' : 'Add Equipment'}</h3></div>
-            ${isEdit ? `<div class="fg"><label>Equipment ID</label><input class="ii" value="${escapeHtml(item.equipmentId)}" disabled></div>` : ''}
-            <div class="row">
-                <div class="fg"><label>Category *</label><input id="eq-cat" class="ii" value="${escapeHtml(item.category||'')}" placeholder="e.g., Tractor"></div>
-                <div class="fg"><label>Type *</label><input id="eq-type" class="ii" value="${escapeHtml(item.type||'')}" placeholder="e.g., John Deere 5050"></div>
-            </div>
-            <div class="row">
-                <div class="fg"><label>Status</label>
-                    <select id="eq-status" class="ii">
-                        <option value="AVAILABLE" ${item.status==='AVAILABLE'?'selected':''}>Available</option>
-                        <option value="UNDER_REPAIR" ${item.status==='UNDER_REPAIR'?'selected':''}>Under Repair</option>
-                        <option value="OUT_OF_SERVICE" ${item.status==='OUT_OF_SERVICE'?'selected':''}>Out of Service</option>
-                    </select>
-                </div>
-                <div class="fg"><label>Field</label><select id="eq-field" class="ii">${fieldOpts}</select></div>
-            </div>
-            <div class="fg"><label>Staff</label><select id="eq-staff" class="ii">${staffOpts}</select></div>
-        </div>`,
-            showCancelButton: true,
-            confirmButtonText: isEdit ? 'Update Equipment' : 'Save Equipment',
-            confirmButtonColor: '#16A34A',
-            focusConfirm: false,
+            html: `<style>.swal2-html-container{margin:0;text-align:left}.mc{font-family:'Segoe UI',sans-serif;padding:10px}.mh{margin-bottom:20px;border-bottom:1px solid #eee;padding-bottom:10px}.fg{margin-bottom:15px;display:flex;flex-direction:column}.fg label{font-weight:600;font-size:14px;margin-bottom:5px;color:#444}.ii{padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;width:100%}.row{display:flex;gap:15px}.row .fg{flex:1}</style>
+        <div class="mc"><div class="mh"><h3>${isEdit ? 'Edit Equipment' : 'Add Equipment'}</h3></div>
+        ${isEdit ? `<div class="fg"><label>Equipment ID</label><input class="ii" value="${escapeHtml(item.equipmentId)}" disabled></div>` : ''}
+        <div class="row"><div class="fg"><label>Category *</label><input id="eq-cat" class="ii" value="${escapeHtml(item.category||'')}" placeholder="e.g., Tractor"></div><div class="fg"><label>Type *</label><input id="eq-type" class="ii" value="${escapeHtml(item.type||'')}" placeholder="e.g., John Deere 5050"></div></div>
+        <div class="row"><div class="fg"><label>Status</label><select id="eq-status" class="ii"><option value="AVAILABLE" ${item.status==='AVAILABLE'?'selected':''}>Available</option><option value="UNDER_REPAIR" ${item.status==='UNDER_REPAIR'?'selected':''}>Under Repair</option><option value="OUT_OF_SERVICE" ${item.status==='OUT_OF_SERVICE'?'selected':''}>Out of Service</option></select></div><div class="fg"><label>Field</label><select id="eq-field" class="ii">${fieldOpts}</select></div></div>
+        <div class="fg"><label>Staff</label><select id="eq-staff" class="ii">${staffOpts}</select></div></div>`,
+            showCancelButton: true, confirmButtonText: isEdit ? 'Update Equipment' : 'Save Equipment', confirmButtonColor: '#16A34A', focusConfirm: false,
             preConfirm: () => {
                 const category = document.getElementById('eq-cat').value.trim();
                 const type     = document.getElementById('eq-type').value.trim();
                 if (!category || !type) { Swal.showValidationMessage('Category and Type are required'); return false; }
-                return {
-                    ...(isEdit && { equipmentId: item.equipmentId }),
-                    category, type,
-                    status:  document.getElementById('eq-status').value,
-                    staffId: document.getElementById('eq-staff').value || null,
-                    fieldId: document.getElementById('eq-field').value || null
-                };
+                return { ...(isEdit && { equipmentId: item.equipmentId }), category, type, status: document.getElementById('eq-status').value, staffId: document.getElementById('eq-staff').value||null, fieldId: document.getElementById('eq-field').value||null };
             }
         });
-
         if (formData) {
             try {
                 const res = await fetch(EQUIPMENT_API, { method: isEdit ? 'PUT' : 'POST', headers: jsonHeaders(), body: JSON.stringify(formData) });
                 if (res.ok) { Swal.fire('Success', `Equipment ${isEdit ? 'updated' : 'saved'}`, 'success'); fetchEquipment(); }
-                else { const err = await res.json(); throw new Error(err.message || 'Operation failed'); }
+                else { const err = await res.json(); throw new Error(err.message||'Operation failed'); }
             } catch(e) { Swal.fire('Error', e.message, 'error'); }
         }
     }
 
     // ============================================================
-    //  VEHICLE CRUD
+    //  VEHICLE
     // ============================================================
     async function fetchVehicles() {
         try {
@@ -1155,7 +1135,7 @@
             try {
                 const res = await fetch(`${USER_API}/${id}`, { method:'DELETE', headers: authHeaders() });
                 if (res.ok) { Swal.fire('Deleted!','User removed.','success'); fetchUsers(); }
-                else throw new Error(await res.text() || 'Delete failed');
+                else throw new Error(await res.text()||'Delete failed');
             } catch(e) { Swal.fire('Error', e.message, 'error'); }
         }
     }
@@ -1163,35 +1143,16 @@
     async function openUserModal(id = null) {
         const isEdit = id !== null;
         const user   = isEdit ? currentUserData.find(u => u.id.toString() === id.toString()) : { id:'', username:'', email:'', password:'', role:'ADMIN' };
-
         const { value: formData } = await Swal.fire({
             title: '',
-            html: `<style>
-            .swal2-html-container{margin:0;text-align:left}
-            .mc{font-family:'Segoe UI',sans-serif;padding:10px}
-            .mh{margin-bottom:20px;border-bottom:1px solid #eee;padding-bottom:10px}
-            .fg{margin-bottom:15px;display:flex;flex-direction:column}
-            .fg label{font-weight:600;font-size:14px;margin-bottom:5px;color:#444}
-            .ii{padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;width:100%}
-        </style>
-        <div class="mc">
-            <div class="mh"><h3>${isEdit ? 'Edit User' : 'Add User'}</h3></div>
-            ${isEdit ? `<div class="fg"><label>User ID</label><input class="ii" value="${escapeHtml(user ? user.id : '')}" disabled></div>` : ''}
-            <div class="fg"><label>Username *</label><input id="u-uname" class="ii" value="${escapeHtml(user ? user.username : '')}" placeholder="Enter username"></div>
-            <div class="fg"><label>Email *</label><input id="u-email" class="ii" type="email" value="${escapeHtml(user ? user.email : '')}" placeholder="Enter email"></div>
-            <div class="fg"><label>${isEdit ? 'New Password (leave blank to keep current)' : 'Password *'}</label><input id="u-pass" class="ii" type="password" placeholder="Enter password"></div>
-            <div class="fg"><label>Role *</label>
-                <select id="u-role" class="ii">
-                    <option value="ADMIN" ${user && user.role==='ADMIN'?'selected':''}>ADMIN</option>
-                    <option value="MANAGER" ${user && user.role==='MANAGER'?'selected':''}>MANAGER</option>
-                    <option value="SCIENTIST" ${user && user.role==='SCIENTIST'?'selected':''}>SCIENTIST</option>
-                </select>
-            </div>
-        </div>`,
-            showCancelButton: true,
-            confirmButtonText: isEdit ? 'Update User' : 'Create User',
-            confirmButtonColor: '#4F46E5',
-            focusConfirm: false,
+            html: `<style>.swal2-html-container{margin:0;text-align:left}.mc{font-family:'Segoe UI',sans-serif;padding:10px}.mh{margin-bottom:20px;border-bottom:1px solid #eee;padding-bottom:10px}.fg{margin-bottom:15px;display:flex;flex-direction:column}.fg label{font-weight:600;font-size:14px;margin-bottom:5px;color:#444}.ii{padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;width:100%}</style>
+        <div class="mc"><div class="mh"><h3>${isEdit ? 'Edit User' : 'Add User'}</h3></div>
+        ${isEdit ? `<div class="fg"><label>User ID</label><input class="ii" value="${escapeHtml(user ? user.id : '')}" disabled></div>` : ''}
+        <div class="fg"><label>Username *</label><input id="u-uname" class="ii" value="${escapeHtml(user ? user.username : '')}" placeholder="Enter username"></div>
+        <div class="fg"><label>Email *</label><input id="u-email" class="ii" type="email" value="${escapeHtml(user ? user.email : '')}" placeholder="Enter email"></div>
+        <div class="fg"><label>${isEdit ? 'New Password (leave blank to keep current)' : 'Password *'}</label><input id="u-pass" class="ii" type="password" placeholder="Enter password"></div>
+        <div class="fg"><label>Role *</label><select id="u-role" class="ii"><option value="ADMIN" ${user && user.role==='ADMIN'?'selected':''}>ADMIN</option><option value="MANAGER" ${user && user.role==='MANAGER'?'selected':''}>MANAGER</option><option value="SCIENTIST" ${user && user.role==='SCIENTIST'?'selected':''}>SCIENTIST</option><option value="USER" ${user && user.role==='USER'?'selected':''}>USER</option></select></div></div>`,
+            showCancelButton: true, confirmButtonText: isEdit ? 'Update User' : 'Create User', confirmButtonColor: '#4F46E5', focusConfirm: false,
             preConfirm: () => {
                 const username = document.getElementById('u-uname').value.trim();
                 const email    = document.getElementById('u-email').value.trim();
@@ -1201,12 +1162,11 @@
                 return { ...(isEdit && { id: user.id }), username, email, ...(password && { password }), role };
             }
         });
-
         if (formData) {
             try {
                 const res = await fetch(USER_API, { method: isEdit ? 'PUT' : 'POST', headers: jsonHeaders(), body: JSON.stringify(formData) });
                 if (res.ok) { Swal.fire('Success', `User ${isEdit ? 'updated' : 'created'}`, 'success'); fetchUsers(); }
-                else throw new Error(await res.text() || 'Operation failed');
+                else throw new Error(await res.text()||'Operation failed');
             } catch(e) { Swal.fire('Error', e.message, 'error'); }
         }
     }
@@ -1234,18 +1194,13 @@
 
     async function sendToAI(prompt) {
         try {
-            const res  = await fetch('http://localhost:8080/ai/generate', {
-                method: 'POST',
-                headers: jsonHeaders(),
-                body: JSON.stringify({ prompt })
-            });
+            const res  = await fetch('http://localhost:8080/ai/generate', { method:'POST', headers: jsonHeaders(), body: JSON.stringify({ prompt }) });
             const data = await res.text();
             try {
                 const json = JSON.parse(data);
                 return json.aiResponse || json.response || json.message || data;
             } catch(e) { return data; }
         } catch(err) {
-            console.error('AI Error:', err);
             return '⚠️ Unable to connect to AI service. Please ensure the backend is running on http://localhost:8080';
         }
     }
@@ -1273,19 +1228,23 @@
         $(`.sidebar-item[data-section="${section}"]`).addClass('active');
         $('.section-content').addClass('hidden');
         $(`#${section}-section`).removeClass('hidden');
-        $('#currentSection').text($(`.sidebar-item[data-section="${section}"] span`).text().trim() || section);
+        $('#currentSection').text($(`.sidebar-item[data-section="${section}"] span`).first().text().trim() || section);
 
+        // RBAC check — show denied overlay if not allowed
+        if (!canAccess(section)) {
+            showAccessDenied(section);
+            return;
+        }
+
+        // Load data for the section
         if (section === 'inventory')    fetchInventory();
         if (section === 'equipment')    fetchEquipment();
         if (section === 'vehicle')      fetchVehicles();
         if (section === 'user')         fetchUsers();
         if (section === 'overview')     loadWeatherAndInsights();
-        if (section === 'notifications') {
-            $('#notificationsList').html(`
-            <div class="p-4 border-b"><p class="font-semibold">⚠️ Irrigation Reminder</p><p class="text-sm text-gray-500">North field moisture low</p></div>
-            <div class="p-4"><p class="font-semibold">🌦️ Weather Alert</p><p class="text-sm text-gray-500">Heavy rain expected Thursday</p></div>
-        `);
-        }
+
+        // Apply hidden actions after section loads
+        setTimeout(applyHiddenActions, 100);
     }
 
     function logoutAction() {
@@ -1294,7 +1253,7 @@
     }
 
     // ============================================================
-    //  DOCUMENT READY  — single block, all init here
+    //  DOCUMENT READY
     // ============================================================
     $(document).ready(async function() {
 
@@ -1303,6 +1262,9 @@
         if (!token) { window.location.replace('../index.html'); return; }
 
         $('#loadingOverlay').removeClass('hidden').addClass('flex');
+
+        // Load role
+        currentUserRole = getStoredRole();
 
         // Date
         $('#currentDate').text(new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' }));
@@ -1313,6 +1275,12 @@
         const displayName    = firstName.charAt(0).toUpperCase() + firstName.slice(1);
         $('#userDisplayName').text(displayName);
         $('#userInitials').text(displayName.charAt(0).toUpperCase());
+
+        // Show role badge
+        $('#headerRoleBadge').text(ROLE_LABELS[currentUserRole] || currentUserRole).addClass(`role-${currentUserRole}`);
+
+        // Apply RBAC to sidebar
+        applyRoleToSidebar();
 
         // Load initial weather
         await loadWeatherAndInsights();
@@ -1345,23 +1313,19 @@
         $('#fieldSelector').change(function() {
             const f = $(this).val();
             const data = {
-                north: { health:'92%', w:'92%', stage:'Flowering',      harvest:'Jun 15, 2026', yield:'5.2 t/ha', disease:'Moderate risk of powdery mildew in next 3-5 days. Preventive fungicide recommended.' },
+                north: { health:'92%', w:'92%', stage:'Flowering',      harvest:'Jun 15, 2026', yield:'5.2 t/ha', disease:'Moderate risk of powdery mildew in next 3-5 days.' },
                 south: { health:'78%', w:'78%', stage:'Silking',         harvest:'Jul 20, 2026', yield:'8.1 t/ha', disease:'Corn borer activity detected. Immediate pest control recommended.' },
                 east:  { health:'88%', w:'88%', stage:'Pod Development', harvest:'Aug 05, 2026', yield:'3.4 t/ha', disease:'Healthy crop. Continue regular monitoring.' }
             };
             const d = data[f];
-            if (d) {
-                $('#cropHealthValue').text(d.health);
-                $('#cropHealthBar').css('width', d.w);
-                $('#growthStage').text(d.stage);
-                $('#harvestDate').text(d.harvest);
-                $('#yieldForecast').text(d.yield);
-                $('#diseaseRiskText').text(d.disease);
-            }
+            if (d) { $('#cropHealthValue').text(d.health); $('#cropHealthBar').css('width', d.w); $('#growthStage').text(d.stage); $('#harvestDate').text(d.harvest); $('#yieldForecast').text(d.yield); $('#diseaseRiskText').text(d.disease); }
         });
 
-        // Irrigation buttons
+        // Irrigation buttons (respect USER role)
         $(document).on('click', '.irrigate-btn:not(:disabled)', function() {
+            if (currentUserRole === 'USER') {
+                Swal.fire('Access Denied', 'Your role does not permit irrigation control.', 'warning'); return;
+            }
             const zone = $(this).data('zone');
             const btn  = $(this);
             Swal.fire({ title:`Start Irrigation - Zone ${zone}`, text:'Duration: 15 minutes\nWater usage: ~450L', icon:'question', showCancelButton:true, confirmButtonText:'Start Now', confirmButtonColor:'#3b82f6' })
@@ -1376,30 +1340,29 @@
 
         // Auto schedule
         $('#autoScheduleBtn').click(function() {
+            if (currentUserRole === 'USER' || currentUserRole === 'SCIENTIST') {
+                Swal.fire('Access Denied', 'Your role does not permit scheduling irrigation.', 'warning'); return;
+            }
             Swal.fire({
                 title:'Smart Irrigation Schedule',
-                html:`<div class="text-left">
-                <p class="text-sm">Optimized schedule generated:</p>
-                <ul class="text-xs text-gray-600 mt-2 space-y-1">
-                    <li>• Zone A: Today 6:00 AM (15 min)</li>
-                    <li>• Zone B: Tomorrow 5:30 AM (10 min)</li>
-                    <li>• Zone C: Today 7:00 PM (20 min) - Critical</li>
-                </ul>
-                <p class="text-xs text-blue-600 mt-3">Expected water savings: 23%</p>
-            </div>`,
+                html:`<div class="text-left"><p class="text-sm">Optimized schedule generated:</p><ul class="text-xs text-gray-600 mt-2 space-y-1"><li>• Zone A: Today 6:00 AM (15 min)</li><li>• Zone B: Tomorrow 5:30 AM (10 min)</li><li>• Zone C: Today 7:00 PM (20 min) - Critical</li></ul><p class="text-xs text-blue-600 mt-3">Expected water savings: 23%</p></div>`,
                 icon:'success', confirmButtonText:'Apply Schedule', confirmButtonColor:'#22c55e'
             });
         });
 
         // IoT buttons
         $(document).on('click', '.iot-device-btn', function() {
+            if (currentUserRole === 'USER') {
+                Swal.fire('Access Denied', 'Your role does not permit device control.', 'warning'); return;
+            }
             const device = $(this).data('device');
             Swal.fire({ title:`${device.charAt(0).toUpperCase() + device.slice(1)} Control`, html:`<div class="text-center"><i class="fa-solid fa-wifi text-3xl text-green-500 mb-2"></i><p class="text-sm">Device is online and ready</p></div>`, confirmButtonText:'Close' });
         });
 
-        // Navigation
+        // Navigation (sidebar)
         $(document).on('click', '.sidebar-item[data-section]', function(e) {
             e.preventDefault();
+            if ($(this).hasClass('sidebar-locked')) return;
             navigateTo($(this).data('section'));
         });
 
@@ -1427,7 +1390,7 @@
         $('#mobileMenuBtn').click(() => $('#mobileMenu').removeClass('hidden'));
         $('#closeMobileMenu').click(() => $('#mobileMenu').addClass('hidden'));
 
-        // Notifications button
+        // Notifications
         $('#desktopNotifications, #mobileNotifications').click(() => {
             Swal.fire({ title:'Notifications', html:`<div><div class="p-2 border-b"><b>Irrigation Alert</b><br>North Field needs watering</div><div class="p-2 mt-2"><b>Weather Update</b><br>Rain expected tomorrow</div></div>`, confirmButtonColor:'#059669' });
         });
@@ -1438,13 +1401,14 @@
             if (val.includes('field')) Swal.fire('Info','Fields: North, South, East with active crops','info');
         });
 
-        // Inventory buttons
-        $('#addItemBtn').click(() => addNewInventory());
-
-        // Equipment button
+        // Inventory / Equipment / User buttons
+        $('#addItemBtn').click(() => {
+            if (!canAccess('inventory') || (currentUserRole !== 'ADMIN' && currentUserRole !== 'MANAGER')) {
+                Swal.fire('Access Denied','You do not have permission to add inventory.','warning'); return;
+            }
+            addNewInventory();
+        });
         $('#addEquipmentBtn').click(() => openEquipmentModal());
-
-        // User management buttons (delegated)
         $(document).on('click', '.edit-user-btn', function() { openUserModal($(this).data('id')); });
         $(document).on('click', '.delete-user-btn', function() { deleteUser($(this).data('id')); });
         $('#addUserBtn').click(() => openUserModal());
@@ -1464,25 +1428,12 @@
             const c = Math.floor(190 + Math.random() * 20);
             const s = Math.floor(400 + Math.random() * 25);
             if ($('#marketPrices').length) {
-                $('#marketPrices').html(`
-                <div class="flex justify-between items-center border-b border-indigo-500 pb-2">
-                    <span><i class="fa-solid fa-wheat-awn mr-2"></i> Wheat</span>
-                    <span class="font-bold">$${w}<span class="text-xs">/ton</span></span>
-                    <span class="text-xs bg-green-400 bg-opacity-30 px-2 py-0.5 rounded">↑ +${(Math.random()*5).toFixed(1)}%</span>
-                </div>
-                <div class="flex justify-between items-center border-b border-indigo-500 pb-2">
-                    <span><i class="fa-solid fa-seedling mr-2"></i> Corn</span>
-                    <span class="font-bold">$${c}<span class="text-xs">/ton</span></span>
-                    <span class="text-xs ${Math.random()>0.5?'bg-green-400':'bg-red-400'} bg-opacity-30 px-2 py-0.5 rounded">${Math.random()>0.5?'↑':'↓'} ${(Math.random()*3).toFixed(1)}%</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span><i class="fa-solid fa-seedling mr-2"></i> Soybeans</span>
-                    <span class="font-bold">$${s}<span class="text-xs">/ton</span></span>
-                    <span class="text-xs bg-green-400 bg-opacity-30 px-2 py-0.5 rounded">↑ +${(Math.random()*4).toFixed(1)}%</span>
-                </div>
-            `);
+                $('#marketPrices').html(`<div class="flex justify-between items-center border-b border-indigo-500 pb-2"><span><i class="fa-solid fa-wheat-awn mr-2"></i> Wheat</span><span class="font-bold">$${w}<span class="text-xs">/ton</span></span><span class="text-xs bg-green-400 bg-opacity-30 px-2 py-0.5 rounded">↑ +${(Math.random()*5).toFixed(1)}%</span></div><div class="flex justify-between items-center border-b border-indigo-500 pb-2"><span><i class="fa-solid fa-seedling mr-2"></i> Corn</span><span class="font-bold">$${c}<span class="text-xs">/ton</span></span><span class="text-xs ${Math.random()>0.5?'bg-green-400':'bg-red-400'} bg-opacity-30 px-2 py-0.5 rounded">${Math.random()>0.5?'↑':'↓'} ${(Math.random()*3).toFixed(1)}%</span></div><div class="flex justify-between items-center"><span><i class="fa-solid fa-seedling mr-2"></i> Soybeans</span><span class="font-bold">$${s}<span class="text-xs">/ton</span></span><span class="text-xs bg-green-400 bg-opacity-30 px-2 py-0.5 rounded">↑ +${(Math.random()*4).toFixed(1)}%</span></div>`);
             }
         }, 30000);
+
+        // Apply action-level hiding after all init
+        applyHiddenActions();
 
         // Done loading
         setTimeout(() => $('#loadingOverlay').addClass('hidden').removeClass('flex'), 600);
