@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RailLanka Pro | Salary Management</title>
+  <title>Salary Management - AgroSmart</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
@@ -42,11 +43,7 @@
     .spinner { border: 3px solid #e2e8f0; border-top-color: var(--blue); border-radius: 50%; width: 24px; height: 24px; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 100; padding: 0.875rem 1.25rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.15); transition: all 0.3s; transform: translateY(100px); opacity: 0; }
-    #toast.show { transform: translateY(0); opacity: 1; }
-    #toast.success { background: #166534; color: white; }
-    #toast.error   { background: #b91c1c; color: white; }
-    #toast.info    { background: #1d4ed8; color: white; }
+
 
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(29,78,216,0.15); }
 
@@ -55,8 +52,6 @@
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
-
-<div id="toast"></div>
 
 
 <div class="bg-white border-b border-gray-200 px-6">
@@ -236,6 +231,7 @@
         <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>Paid: <strong id="sumPaid">—</strong></span>
         <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>Pending: <strong id="sumPending">—</strong></span>
       </div>
+      <button id="processPayment" onclick="processPayment()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition"><i class="fas fa-download mr-1.5"></i>Pay All Payments</button>
       <button id="exportReportBtn" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition"><i class="fas fa-download mr-1.5"></i>Export Report</button>
     </div>
   </div>
@@ -310,7 +306,11 @@
           <label class="block text-xs font-semibold text-gray-600 mb-1.5">Staff <span class="text-red-500">*</span></label>
           <select id="editEmployee" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"><option value="">— Select Staff —</option></select>
         </div>
-        <div><label class="block text-xs font-semibold text-gray-600 mb-1.5">Basic Salary (LKR) <span class="text-red-500">*</span></label><input id="editBasic" type="number" min="0" placeholder="0.00" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Basic Salary (LKR) <span class="text-red-500">*</span></label>
+          <input id="editBasic" type="number" min="0" placeholder="0.00" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+          <p id="gradeHint" class="text-xs text-blue-600 mt-1 min-h-[1rem]"></p>
+        </div>
         <div><label class="block text-xs font-semibold text-gray-600 mb-1.5">Allowances (LKR)</label><input id="editAllowances" type="number" min="0" placeholder="0.00" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
         <div><label class="block text-xs font-semibold text-gray-600 mb-1.5">Deductions (LKR)</label><input id="editDeductions" type="number" min="0" placeholder="0.00" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
         <div><label class="block text-xs font-semibold text-gray-600 mb-1.5">Payment Date</label><input id="editPayDate" type="date" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
@@ -379,7 +379,7 @@
   </div>
 </div>
 
-<!-- MODAL: ADD / EDIT GRADE — fixed with role dropdown -->
+<!-- MODAL: ADD / EDIT GRADE -->
 <div id="gradeModal" class="modal-overlay" onclick="if(event.target===this)closeModal('gradeModal')">
   <div class="modal-box max-w-md">
     <div class="bg-gradient-to-r from-blue-700 to-blue-900 p-5 text-white relative">
@@ -419,29 +419,39 @@
     </div>
   </div>
 </div>
-
 <script>
   const API = 'http://localhost:8080/api/v1';
-  const fmt = v => 'LKR ' + Number(v || 0).toLocaleString('en-LK', { minimumFractionDigits: 2 });
   const months = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
 
-  // Role enum values — must match your backend Role enum exactly
-  const ROLES = [
-    { value: 'ADMIN',     label: 'Admin' },
-    { value: 'MANAGER',   label: 'Manager' },
-    { value: 'SCIENTIST', label: 'Scientist' },
-    { value: 'USER',      label: 'User' },
-  ];
-
-  function toast(msg, type='info') {
-    const el = document.getElementById('toast');
-    el.className = `show ${type}`;
-    el.innerHTML = `<i class="fas ${type==='success'?'fa-check-circle':type==='error'?'fa-exclamation-circle':'fa-info-circle'}"></i> ${msg}`;
-    clearTimeout(el._t);
-    el._t = setTimeout(() => el.classList.remove('show'), 3500);
+  // =====================================================================
+  // FIX 1 — Central net salary calculator used everywhere consistently
+  // =====================================================================
+  function calcNet(basic, allowances, deductions) {
+    return (parseFloat(basic) || 0) + (parseFloat(allowances) || 0) - (parseFloat(deductions) || 0);
   }
 
-  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function fmt(v) {
+    return 'LKR ' + Number(v || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  const SwalToast = Swal.mixin({
+    toast: true,
+    position: 'bottom-end',
+    showConfirmButton: false,
+    timer: 3500,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+      toast.onmouseenter = Swal.stopTimer;
+      toast.onmouseleave = Swal.resumeTimer;
+    }
+  });
+
+  function toast(msg, type = 'info') {
+    const iconMap = { success: 'success', error: 'error', info: 'info', warning: 'warning' };
+    SwalToast.fire({ icon: iconMap[type] || 'info', title: msg });
+  }
+
+  function openModal(id)  { document.getElementById(id).classList.add('open'); }
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
   async function api(path, opts = {}) {
@@ -451,7 +461,17 @@
     const resp = await fetch(API + path, { headers, ...opts });
     if (!resp.ok) {
       let msg = `HTTP ${resp.status}`;
-      try { const err = await resp.json(); msg = err.message || err.error || msg; } catch {}
+      try {
+        const err = await resp.json();
+        // Spring Boot can return errors in several shapes — try them all
+        if (err.message)   msg = err.message;
+        else if (err.error)    msg = err.error;
+        else if (err.errors)   msg = err.errors.map(e => e.defaultMessage || e.field + ': ' + e.message).join('; ');
+        else if (typeof err === 'string') msg = err;
+        else msg = JSON.stringify(err);
+      } catch {}
+      // Always log the full details to the console so the developer can inspect
+      console.error('[API ERROR]', opts.method || 'GET', path, msg);
       throw new Error(msg);
     }
     if (resp.status === 204) return null;
@@ -461,9 +481,8 @@
 
   function escapeHtml(str) {
     if (!str) return '';
-    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
   }
-
 
   // Tab switching
   document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
@@ -477,7 +496,7 @@
   }));
 
   // ==================== SALARY RECORDS ====================
-  async function loadRecords(search='', status='', dept='') {
+  async function loadRecords(search = '', status = '', dept = '') {
     const body = document.getElementById('salaryTableBody');
     body.innerHTML = `<tr><td colspan="8" class="px-6 py-10 text-center"><div class="flex justify-center"><div class="spinner"></div></div><p class="text-gray-400 text-sm mt-3">Loading…</p></td></tr>`;
     try {
@@ -488,10 +507,9 @@
       const records = await api('/salary-records' + (params.toString() ? '?' + params.toString() : ''));
       renderRecords(records);
     } catch (e) {
-      body.innerHTML = `<tr><td colspan="8" class="px-6 py-10 text-center text-red-500"><i class="fas fa-exclamation-triangle mr-2"></i>${e.message}</td></tr>`;
+      body.innerHTML = `<tr><td colspan="8" class="px-6 py-10 text-center text-red-500"><i class="fas fa-exclamation-triangle mr-2"></i>${escapeHtml(e.message)}</td></tr>`;
     }
   }
-
 
   async function renderRecords(records) {
     const body = document.getElementById('salaryTableBody');
@@ -504,114 +522,215 @@
 
     const colors = ['blue', 'green', 'purple', 'amber', 'teal', 'indigo', 'rose'];
 
-    // 1. මුලින්ම හැම record එකකටම අදාළ staff data ටික fetch කරගන්නවා (Asynchronous map)
+    // Fetch all staff in parallel; silently fall back if any call fails
     const detailedRecords = await Promise.all(records.map(async (r) => {
       try {
         const staffInfo = await api('/staff/' + r.staffId);
-        return { ...r, staffInfo }; // මුල් record එකට අලුත් staffInfo එකතු කරනවා
-      } catch (error) {
-        console.error("Error fetching staff:", error);
+        return { ...r, staffInfo };
+      } catch {
         return { ...r, staffInfo: null };
       }
     }));
 
-    // 2. දැන් දත්ත ලැබුණු පසුව table එක render කරනවා
     body.innerHTML = detailedRecords.map((r, i) => {
-      const color = colors[i % colors.length];
-
-      // staffInfo තිබේ නම් එහි නම ගන්න, නැත්නම් default අගයක් දාන්න
-      const name = r.staffInfo ? r.staffInfo.fullName : '—';
+      const color  = colors[i % colors.length];
+      const name   = r.staffInfo ? (r.staffInfo.fullName || '—') : '—';
       const staffId = r.staffId || '—';
-      const detail = [r.designation, r.role].filter(Boolean).join(' · ') || r.designation || '';
+      const detail = [r.designation, r.role].filter(Boolean).join(' · ');
+
+      // =====================================================================
+      // FIX 2 — Client-side net salary fallback:
+      // If the backend did not return netSalary (null / 0), compute it here.
+      // =====================================================================
+      const netSalary = (r.netSalary != null && r.netSalary !== 0)
+              ? r.netSalary
+              : calcNet(r.basicSalary, r.allowances, r.deductions);
 
       return `<tr class="hover:bg-gray-50">
-      <td class="px-6 py-4"><div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-full bg-${color}-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-user text-${color}-600 text-sm"></i></div>
-        <div>
-          <p class="text-sm font-semibold text-gray-900">${escapeHtml(name)}</p>
-          <p class="text-xs text-gray-400 mono">${escapeHtml(staffId)}</p>
-          ${detail ? `<p class="text-xs text-gray-400">${escapeHtml(detail)}</p>` : ''}
-        </div>
-      </div></td>
-      <td class="px-6 py-4 text-sm text-gray-700">${fmt(r.basicSalary)}</td>
-      <td class="px-6 py-4 text-sm text-green-700">+${fmt(r.allowances)}</td>
-      <td class="px-6 py-4 text-sm text-red-600">-${fmt(r.deductions)}</td>
-      <td class="px-6 py-4 text-sm font-semibold text-gray-900">${fmt(r.netSalary)}</td>
-      <td class="px-6 py-4 text-xs text-gray-500">${months[r.payrollMonth]} ${r.payrollYear}</td>
-      <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${r.status === 'PAID' ? 'badge-paid' : 'badge-pending'}">${r.status === 'PAID' ? 'Paid' : 'Pending'}</span></td>
-      <td class="px-6 py-4"><div class="flex gap-3">
-        <button onclick="viewRecord(${r.id})" class="text-blue-500 hover:text-blue-700"><i class="fas fa-eye"></i></button>
-        <button onclick="editRecord(${r.id})" class="text-amber-500 hover:text-amber-700"><i class="fas fa-edit"></i></button>
-        <button onclick="deleteRecord(${r.id},'${escapeHtml(name)}')" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
-      </div></td>
-    </tr>`;
+        <td class="px-6 py-4"><div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-${color}-100 flex items-center justify-center flex-shrink-0"><i class="fas fa-user text-${color}-600 text-sm"></i></div>
+          <div>
+            <p class="text-sm font-semibold text-gray-900">${escapeHtml(name)}</p>
+            <p class="text-xs text-gray-400 mono">${escapeHtml(String(staffId))}</p>
+            ${detail ? `<p class="text-xs text-gray-400">${escapeHtml(detail)}</p>` : ''}
+          </div>
+        </div></td>
+        <td class="px-6 py-4 text-sm text-gray-700">${fmt(r.basicSalary)}</td>
+        <td class="px-6 py-4 text-sm text-green-700">+${fmt(r.allowances)}</td>
+        <td class="px-6 py-4 text-sm text-red-600">-${fmt(r.deductions)}</td>
+        <td class="px-6 py-4 text-sm font-semibold text-gray-900">${fmt(netSalary)}</td>
+        <td class="px-6 py-4 text-xs text-gray-500">${months[r.payrollMonth] || '—'} ${r.payrollYear || ''}</td>
+        <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${r.status === 'PAID' ? 'badge-paid' : 'badge-pending'}">${r.status === 'PAID' ? 'Paid' : 'Pending'}</span></td>
+        <td class="px-6 py-4"><div class="flex gap-3">
+          <button onclick="viewRecord(${r.id})" class="text-blue-500 hover:text-blue-700" title="View"><i class="fas fa-eye"></i></button>
+          <button onclick="editRecord(${r.id})" class="text-amber-500 hover:text-amber-700" title="Edit"><i class="fas fa-edit"></i></button>
+          <button onclick="deleteRecord(${r.id},'${escapeHtml(name)}')" class="text-red-400 hover:text-red-600" title="Delete"><i class="fas fa-trash"></i></button>
+        </div></td>
+      </tr>`;
     }).join('');
   }
+
   async function viewRecord(id) {
     openModal('viewModal');
     try {
       const r = await api('/salary-records/' + id);
       const s = await api('/staff/' + r.staffId);
+
       document.getElementById('vName').textContent    = s.fullName || '—';
-      // Show designation + position together, fallback to department
       const deptLabel = [s.designation, s.position].filter(Boolean).join(' · ') || s.role || '—';
       document.getElementById('vDept').textContent    = deptLabel;
       document.getElementById('vEmpId').textContent   = r.staffId || '—';
-      document.getElementById('vBasic').textContent = fmt(r.basicSalary);
-      document.getElementById('vAllow').textContent = '+' + fmt(r.allowances);
-      document.getElementById('vDeduct').textContent = '-' + fmt(r.deductions);
-      document.getElementById('vNet').textContent = fmt(r.netSalary);
-      document.getElementById('vPayDate').textContent = r.paymentDate ? new Date(r.paymentDate).toLocaleDateString('en-LK', {day:'numeric',month:'short',year:'numeric'}) : '—';
+      document.getElementById('vBasic').textContent   = fmt(r.basicSalary);
+      document.getElementById('vAllow').textContent   = '+' + fmt(r.allowances);
+      document.getElementById('vDeduct').textContent  = '-' + fmt(r.deductions);
+
+      // FIX 2 applied in view modal too
+      const netSalary = (r.netSalary != null && r.netSalary !== 0)
+              ? r.netSalary
+              : calcNet(r.basicSalary, r.allowances, r.deductions);
+      document.getElementById('vNet').textContent = fmt(netSalary);
+
+      document.getElementById('vPayDate').textContent   = r.paymentDate ? new Date(r.paymentDate).toLocaleDateString('en-LK', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
       document.getElementById('vPayMethod').textContent = (r.paymentMethod || '').replace(/_/g, ' ');
-      document.getElementById('vBank').textContent = s.bankName || '—';
-      document.getElementById('vAccount').textContent = s.accountNumber || '—';
-      document.getElementById('vPeriod').textContent = `(${months[r.payrollMonth]} ${r.payrollYear})`;
+      document.getElementById('vBank').textContent      = s.bankName || '—';
+      document.getElementById('vAccount').textContent   = s.accountNumber || '—';
+      document.getElementById('vPeriod').textContent    = `(${months[r.payrollMonth] || ''} ${r.payrollYear || ''})`;
+
       const statusEl = document.getElementById('vStatus');
       statusEl.textContent = r.status === 'PAID' ? 'Paid' : 'Pending';
-      statusEl.className = `px-2 py-0.5 rounded-full text-xs font-medium ${r.status==='PAID'?'badge-paid':'badge-pending'}`;
-      document.getElementById('vStatusDot').className = `w-3 h-3 rounded-full pulse ${r.status==='PAID'?'bg-green-500':'bg-amber-400'}`;
+      statusEl.className   = `px-2 py-0.5 rounded-full text-xs font-medium ${r.status === 'PAID' ? 'badge-paid' : 'badge-pending'}`;
+      document.getElementById('vStatusDot').className = `w-3 h-3 rounded-full pulse ${r.status === 'PAID' ? 'bg-green-500' : 'bg-amber-400'}`;
+
       const notesBox = document.getElementById('vNotesBox');
       if (r.notes) { document.getElementById('vNotes').textContent = r.notes; notesBox.classList.remove('hidden'); }
       else notesBox.classList.add('hidden');
-      document.getElementById('vDownloadBtn').onclick = () => window.open(API + '/salary-records/' + id + '/payslip', '_blank');
+
+      document.getElementById('vDownloadBtn').onclick = async () => {
+        const dlBtn = document.getElementById('vDownloadBtn');
+        dlBtn.disabled = true;
+        dlBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Downloading…';
+        try {
+          const token = localStorage.getItem('token');
+          const headers = {};
+          if (token) headers['Authorization'] = 'Bearer ' + token;
+          const resp = await fetch(API + '/salary-records/' + id + '/payslip', { headers });
+          if (!resp.ok) {
+            let errMsg = 'Server error ' + resp.status;
+            try { const e = await resp.json(); errMsg = e.message || e.error || errMsg; } catch {}
+            throw new Error(errMsg);
+          }
+          const ct = resp.headers.get('content-type') || '';
+          if (!ct.includes('pdf') && !ct.includes('octet-stream')) {
+            const txt = await resp.text();
+            console.warn('[payslip] Unexpected content-type:', ct, txt.slice(0, 300));
+            throw new Error('Backend did not return a PDF. Check console.');
+          }
+          const blob = await resp.blob();
+          const url  = URL.createObjectURL(blob);
+          const a    = document.createElement('a');
+          a.href     = url;
+          a.download = 'payslip-' + id + '.pdf';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 10000);
+          toast('Payslip downloaded', 'success');
+        } catch (e) {
+          toast('Download failed: ' + e.message, 'error');
+          console.error('[payslip]', e);
+        } finally {
+          dlBtn.disabled = false;
+          dlBtn.innerHTML = '<i class="fas fa-file-pdf"></i> Download Payslip';
+        }
+      };
     } catch (e) { toast(e.message, 'error'); }
   }
+
+  // Cache — populated by loadStaffDropdown, read by autoFillBasicSalary
+  let _staffCache  = [];
+  let _gradesCache = [];
 
   async function loadStaffDropdown() {
     try {
       const list = await api('/staff/active');
-      const sel = document.getElementById('editEmployee');
-      const cur = sel.value;
+      _staffCache = list;
+      const sel  = document.getElementById('editEmployee');
+      const cur  = sel.value;
       sel.innerHTML = '<option value="">— Select Staff —</option>' +
               list.map(s => {
-                // StaffDTO fields: staffId, fullName, designation, position, role
-                const label = escapeHtml(s.fullName || '—');
-                const id    = escapeHtml(s.staffId  || '');
-                // Show designation (job title) and position (free-text) if available
+                const label  = escapeHtml(s.fullName || '—');
+                const id     = escapeHtml(s.staffId  || '');
                 const detail = [s.designation, s.position].filter(Boolean).map(escapeHtml).join(' · ');
                 return `<option value="${id}">${label} (${id})${detail ? ' — ' + detail : ''}</option>`;
               }).join('');
       if (cur) sel.value = cur;
+      // Pre-load grades so auto-fill is instant when a staff is picked
+      if (!_gradesCache.length) {
+        try { _gradesCache = await api('/salary-settings/grades'); } catch {}
+      }
     } catch (e) { toast('Failed to load staff: ' + e.message, 'error'); }
   }
 
-  function updateNetPreview() {
-    const b = parseFloat(document.getElementById('editBasic').value) || 0;
-    const a = parseFloat(document.getElementById('editAllowances').value) || 0;
-    const d = parseFloat(document.getElementById('editDeductions').value) || 0;
-    document.getElementById('netPreview').textContent = fmt(b + a - d);
+  // Auto-fill basic salary from the salary grade that matches the staff member's role.
+  // Only fills when the basic field is currently empty (i.e. new record) so it never
+  // overwrites a value the user has already typed.
+  async function autoFillBasicSalary(staffId, forceOverwrite) {
+    if (!staffId) return;
+    const basicEl  = document.getElementById('editBasic');
+    const hintEl   = document.getElementById('gradeHint');
+    if (!forceOverwrite && basicEl.value) return; // don't overwrite existing value
+
+    // Find the staff member in the cache
+    const staff = _staffCache.find(s => s.staffId === staffId);
+    if (!staff) return;
+
+    const role = staff.role || staff.designation || '';
+    if (!role) { if (hintEl) hintEl.textContent = ''; return; }
+
+    // Find the grade whose role matches (case-insensitive)
+    const grade = _gradesCache.find(g =>
+            (g.role || g.position || '').toLowerCase() === role.toLowerCase()
+    );
+
+    if (grade) {
+      basicEl.value = grade.minSalary;
+      updateNetPreview();
+      if (hintEl) hintEl.textContent =
+              'Auto-filled from grade ' + grade.grade + ' (' + role + '): ' +
+              fmt(grade.minSalary) + ' – ' + fmt(grade.maxSalary);
+    } else {
+      if (hintEl) hintEl.textContent = 'No salary grade found for role: ' + role;
+    }
   }
-  ['editBasic','editAllowances','editDeductions'].forEach(id => document.getElementById(id).addEventListener('input', updateNetPreview));
+
+  // Wire up the employee dropdown change event
+  document.getElementById('editEmployee').addEventListener('change', function () {
+    autoFillBasicSalary(this.value, false);
+  });
+
+  // =====================================================================
+  // FIX 1 — net preview uses the shared calcNet() function
+  // =====================================================================
+  function updateNetPreview() {
+    const b = document.getElementById('editBasic').value;
+    const a = document.getElementById('editAllowances').value;
+    const d = document.getElementById('editDeductions').value;
+    document.getElementById('netPreview').textContent = fmt(calcNet(b, a, d));
+  }
+  ['editBasic', 'editAllowances', 'editDeductions'].forEach(id =>
+          document.getElementById(id).addEventListener('input', updateNetPreview)
+  );
 
   document.getElementById('addSalaryBtn').addEventListener('click', async () => {
     document.getElementById('editModalTitle').textContent = 'Add Salary Record';
     document.getElementById('editRecordId').value = '';
-    ['editBasic','editAllowances','editDeductions','editNotes'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('editPayDate').value = '';
-    document.getElementById('editMonth').value = new Date().getMonth() + 1;
-    document.getElementById('editYear').value = new Date().getFullYear();
+    ['editBasic', 'editAllowances', 'editDeductions', 'editNotes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('editPayDate').value   = '';
+    const h = document.getElementById('gradeHint'); if (h) h.textContent = '';
+    document.getElementById('editMonth').value     = new Date().getMonth() + 1;
+    document.getElementById('editYear').value      = new Date().getFullYear();
     document.getElementById('editPayMethod').value = 'BANK_TRANSFER';
-    document.getElementById('editStatus').value = 'PENDING';
+    document.getElementById('editStatus').value    = 'PENDING';
     updateNetPreview();
     await loadStaffDropdown();
     openModal('editModal');
@@ -622,64 +741,160 @@
     await loadStaffDropdown();
     try {
       const r = await api('/salary-records/' + id);
-      document.getElementById('editRecordId').value = id;
-      document.getElementById('editEmployee').value = r.staffId;
-      document.getElementById('editBasic').value = r.basicSalary;
-      document.getElementById('editAllowances').value = r.allowances;
-      document.getElementById('editDeductions').value = r.deductions;
-      document.getElementById('editPayDate').value = r.paymentDate || '';
-      document.getElementById('editMonth').value = r.payrollMonth;
-      document.getElementById('editYear').value = r.payrollYear;
-      document.getElementById('editPayMethod').value = r.paymentMethod;
-      document.getElementById('editStatus').value = r.status;
-      document.getElementById('editNotes').value = r.notes || '';
+      document.getElementById('editRecordId').value    = id;
+      document.getElementById('editEmployee').value    = r.staffId;
+      document.getElementById('editBasic').value       = r.basicSalary;
+      document.getElementById('editAllowances').value  = r.allowances;
+      document.getElementById('editDeductions').value  = r.deductions;
+      document.getElementById('editPayDate').value     = r.paymentDate || '';
+      document.getElementById('editMonth').value       = r.payrollMonth;
+      document.getElementById('editYear').value        = r.payrollYear;
+      document.getElementById('editPayMethod').value   = r.paymentMethod;
+      document.getElementById('editStatus').value      = r.status;
+      document.getElementById('editNotes').value       = r.notes || '';
       updateNetPreview();
+      // If the record has no basic salary yet, auto-fill from grade
+      if (!r.basicSalary) autoFillBasicSalary(r.staffId, true);
       openModal('editModal');
     } catch (e) { toast(e.message, 'error'); }
   }
 
   document.getElementById('saveRecordBtn').addEventListener('click', async () => {
     const staffId = document.getElementById('editEmployee').value;
-    const basic = document.getElementById('editBasic').value;
+    const basic   = document.getElementById('editBasic').value;
     if (!staffId) { toast('Please select a staff member', 'error'); return; }
     if (!basic)   { toast('Basic salary is required', 'error'); return; }
-    const id = document.getElementById('editRecordId').value;
-    const payload = {
-      staffId, basicSalary: parseFloat(basic),
-      allowances: parseFloat(document.getElementById('editAllowances').value) || 0,
-      deductions: parseFloat(document.getElementById('editDeductions').value) || 0,
-      paymentDate: document.getElementById('editPayDate').value || null,
-      payrollMonth: parseInt(document.getElementById('editMonth').value),
-      payrollYear: parseInt(document.getElementById('editYear').value),
-      paymentMethod: document.getElementById('editPayMethod').value,
-      status: document.getElementById('editStatus').value,
-      notes: document.getElementById('editNotes').value || null,
-    };
+
+    const allowances  = parseFloat(document.getElementById('editAllowances').value) || 0;
+    const deductions  = parseFloat(document.getElementById('editDeductions').value) || 0;
+    const basicSalary = parseFloat(basic);
+    const netSalary   = calcNet(basicSalary, allowances, deductions);
+
     const btn = document.getElementById('saveRecordBtn');
-    btn.disabled = true; btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px"></div> Saving…';
+    btn.disabled  = true;
+    btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px"></div> Saving…';
+
     try {
-      if (id) { await api('/salary-records/' + id, { method: 'PUT', body: JSON.stringify(payload) }); toast('Record updated', 'success'); }
-      else    { await api('/salary-records',        { method: 'POST', body: JSON.stringify(payload) }); toast('Record created', 'success'); }
-      closeModal('editModal'); loadRecords();
+      const id = document.getElementById('editRecordId').value;
+
+      // Fields from the form
+      const formFields = {
+        staffId,
+        basicSalary,
+        allowances,
+        deductions,
+        netSalary,
+        paymentDate:   document.getElementById('editPayDate').value || null,
+        payrollMonth:  parseInt(document.getElementById('editMonth').value),
+        payrollYear:   parseInt(document.getElementById('editYear').value),
+        paymentMethod: document.getElementById('editPayMethod').value,
+        status:        document.getElementById('editStatus').value,
+        notes:         document.getElementById('editNotes').value || null,
+      };
+
+      if (id) {
+        // PUT — fetch the existing record from the server first, then merge our
+        // form fields on top. This preserves any backend fields (e.g. createdAt,
+        // version, employee object, etc.) that the backend requires on update
+        // but that we don't render in the form.
+        let existing = {};
+        try { existing = await api('/salary-records/' + id); } catch {}
+        const payload = { ...existing, ...formFields, id: parseInt(id) };
+        console.log('[PUT payload]', payload);
+        await api('/salary-records/' + id, { method: 'PUT', body: JSON.stringify(payload) });
+        await Swal.fire({ icon: 'success', title: 'Record Updated', text: 'Salary record has been saved successfully.', confirmButtonColor: '#1d4ed8', customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-lg px-5' }, timer: 2000, showConfirmButton: false });
+      } else {
+        // POST — send only the form fields
+        const payload = { ...formFields };
+        console.log('[POST payload]', payload);
+        await api('/salary-records', { method: 'POST', body: JSON.stringify(payload) });
+        await Swal.fire({ icon: 'success', title: 'Record Created', text: 'New salary record has been added successfully.', confirmButtonColor: '#1d4ed8', customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-lg px-5' }, timer: 2000, showConfirmButton: false });
+      }
+
+      closeModal('editModal');
+      loadRecords();
     } catch (e) { toast(e.message, 'error'); }
-    finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Save Record'; }
+    finally {
+      btn.disabled  = false;
+      btn.innerHTML = '<i class="fas fa-save"></i> Save Record';
+    }
   });
 
   async function deleteRecord(id, name) {
-    if (!confirm(`Delete salary record for ${name}?`)) return;
-    try { await api('/salary-records/' + id, { method: 'DELETE' }); toast('Record deleted', 'success'); loadRecords(); }
-    catch (e) { toast(e.message, 'error'); }
+    const result = await Swal.fire({
+      title: 'Delete Record?',
+      html: `Remove salary record for <strong>${name}</strong>?<br><span class="text-sm text-gray-500">This action cannot be undone.</span>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#b91c1c',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: '<i class="fas fa-trash mr-1"></i> Yes, Delete',
+      cancelButtonText: 'Cancel',
+      customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-lg px-5', cancelButton: 'rounded-lg px-5' }
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await api('/salary-records/' + id, { method: 'DELETE' });
+      toast('Record deleted', 'success');
+      loadRecords();
+    } catch (e) { toast(e.message, 'error'); }
   }
 
   document.getElementById('filterBtn').addEventListener('click', () =>
-          loadRecords(document.getElementById('filterSearch').value.trim(), document.getElementById('filterStatus').value, document.getElementById('filterDept').value));
-  document.getElementById('filterSearch').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('filterBtn').click(); });
+          loadRecords(
+                  document.getElementById('filterSearch').value.trim(),
+                  document.getElementById('filterStatus').value,
+                  document.getElementById('filterDept').value
+          )
+  );
+  document.getElementById('filterSearch').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('filterBtn').click();
+  });
   document.getElementById('refreshBtn').addEventListener('click', () => loadRecords());
+  async function downloadPayrollPdf(month, year) {
+    const label = months[month] + ' ' + year;
+    toast('Generating PDF for ' + label + '…', 'info');
+    try {
+      const token = localStorage.getItem('token');
+      const headers = {};
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      const resp = await fetch(API + '/payroll/report?month=' + month + '&year=' + year, { headers });
+      if (!resp.ok) {
+        let errMsg = 'Server error ' + resp.status;
+        const ct = resp.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+          try { const e = await resp.json(); errMsg = e.message || e.error || errMsg; } catch {}
+        } else {
+          try { const txt = await resp.text(); if (txt) errMsg = txt.slice(0, 200); } catch {}
+        }
+        throw new Error(errMsg);
+      }
+      const ct = resp.headers.get('content-type') || '';
+      if (!ct.includes('pdf') && !ct.includes('octet-stream')) {
+        const txt = await resp.text();
+        console.warn('[downloadPayrollPdf] Unexpected content-type:', ct, txt.slice(0, 300));
+        throw new Error('Backend did not return a PDF (got: ' + ct + '). Check console.');
+      }
+      const blob = await resp.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'payroll-' + label.replace(' ', '-') + '.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      toast('PDF downloaded', 'success');
+    } catch (e) {
+      toast('PDF failed: ' + e.message, 'error');
+      console.error('[downloadPayrollPdf]', e);
+    }
+  }
+
   document.getElementById('exportPdfBtn').addEventListener('click', () => {
     const m = document.getElementById('payrollMonth')?.value || (new Date().getMonth() + 1);
-    const y = document.getElementById('payrollYear')?.value || new Date().getFullYear();
-    window.open(`${API}/payroll/report?month=${m}&year=${y}`, '_blank');
-    toast('Generating PDF…', 'info');
+    const y = document.getElementById('payrollYear')?.value  || new Date().getFullYear();
+    downloadPayrollPdf(m, y);
   });
 
   // ==================== SALARY SETTINGS ====================
@@ -698,9 +913,9 @@
     if (!items.length) { el.innerHTML = '<p class="text-xs text-gray-400 py-2 text-center">No items yet</p>'; return; }
     el.innerHTML = items.map(s => `
       <div class="flex items-center justify-between p-3 bg-${color}-50 rounded-lg border border-${color}-100">
-        <div><p class="text-sm font-medium text-gray-800">${escapeHtml(s.name)}</p><p class="text-xs text-gray-500">${escapeHtml(s.description||'')}</p></div>
+        <div><p class="text-sm font-medium text-gray-800">${escapeHtml(s.name)}</p><p class="text-xs text-gray-500">${escapeHtml(s.description || '')}</p></div>
         <div class="text-right">
-          <p class="text-sm font-semibold text-gray-800">${s.valueType==='PERCENTAGE'?s.value+'%':fmt(s.value)}</p>
+          <p class="text-sm font-semibold text-gray-800">${s.valueType === 'PERCENTAGE' ? s.value + '%' : fmt(s.value)}</p>
           <div class="flex gap-2 mt-1 justify-end">
             <button onclick="openEditSetting(${s.id})" class="text-blue-500 hover:text-blue-700 text-xs"><i class="fas fa-edit"></i></button>
             <button onclick="deleteSetting(${s.id},'${escapeHtml(s.name)}')" class="text-red-400 hover:text-red-600 text-xs"><i class="fas fa-trash"></i></button>
@@ -710,14 +925,14 @@
   }
 
   window.openAddSetting = function(type) {
-    document.getElementById('settingModalTitle').textContent = `Add ${type==='TAX'?'Tax Rule':type==='ALLOWANCE'?'Allowance':'Deduction'}`;
-    document.getElementById('settingId').value = '';
-    document.getElementById('settingType').value = type;
-    document.getElementById('settingName').value = '';
-    document.getElementById('settingDesc').value = '';
-    document.getElementById('settingValue').value = '';
-    document.getElementById('settingValueType').value = (type==='TAX'||type==='DEDUCTION') ? 'PERCENTAGE' : 'FIXED';
-    document.getElementById('settingActive').checked = true;
+    document.getElementById('settingModalTitle').textContent = `Add ${type === 'TAX' ? 'Tax Rule' : type === 'ALLOWANCE' ? 'Allowance' : 'Deduction'}`;
+    document.getElementById('settingId').value        = '';
+    document.getElementById('settingType').value      = type;
+    document.getElementById('settingName').value      = '';
+    document.getElementById('settingDesc').value      = '';
+    document.getElementById('settingValue').value     = '';
+    document.getElementById('settingValueType').value = (type === 'TAX' || type === 'DEDUCTION') ? 'PERCENTAGE' : 'FIXED';
+    document.getElementById('settingActive').checked  = true;
     openModal('settingModal');
   };
 
@@ -725,46 +940,57 @@
     try {
       const s = await api('/salary-settings/' + id);
       document.getElementById('settingModalTitle').textContent = 'Edit Setting';
-      document.getElementById('settingId').value = s.id;
-      document.getElementById('settingType').value = s.type;
-      document.getElementById('settingName').value = s.name;
-      document.getElementById('settingDesc').value = s.description || '';
-      document.getElementById('settingValue').value = s.value;
+      document.getElementById('settingId').value        = s.id;
+      document.getElementById('settingType').value      = s.type;
+      document.getElementById('settingName').value      = s.name;
+      document.getElementById('settingDesc').value      = s.description || '';
+      document.getElementById('settingValue').value     = s.value;
       document.getElementById('settingValueType').value = s.valueType;
-      document.getElementById('settingActive').checked = s.isActive !== undefined ? s.isActive : s.active;
+      document.getElementById('settingActive').checked  = s.isActive !== undefined ? s.isActive : s.active;
       openModal('settingModal');
     } catch (e) { toast(e.message, 'error'); }
   };
 
   document.getElementById('saveSettingBtn').addEventListener('click', async () => {
-    const id = document.getElementById('settingId').value;
+    const id   = document.getElementById('settingId').value;
     const body = {
-      name: document.getElementById('settingName').value,
+      name:        document.getElementById('settingName').value,
       description: document.getElementById('settingDesc').value,
-      type: document.getElementById('settingType').value,
-      value: parseFloat(document.getElementById('settingValue').value),
-      valueType: document.getElementById('settingValueType').value,
-      isActive: document.getElementById('settingActive').checked,
+      type:        document.getElementById('settingType').value,
+      value:       parseFloat(document.getElementById('settingValue').value),
+      valueType:   document.getElementById('settingValueType').value,
+      isActive:    document.getElementById('settingActive').checked,
     };
     if (!body.name || isNaN(body.value)) { toast('Name and value are required', 'error'); return; }
     try {
-      if (id) { body.id = parseInt(id); await api('/salary-settings', { method: 'PUT', body: JSON.stringify(body) }); }
-      else    { await api('/salary-settings', { method: 'POST', body: JSON.stringify(body) }); }
+      if (id) { body.id = parseInt(id); await api('/salary-settings',      { method: 'PUT',  body: JSON.stringify(body) }); }
+      else    {                          await api('/salary-settings',      { method: 'POST', body: JSON.stringify(body) }); }
       toast('Setting saved', 'success'); closeModal('settingModal'); loadSettings();
     } catch (e) { toast(e.message, 'error'); }
   });
 
   window.deleteSetting = async function(id, name) {
-    if (!confirm(`Delete "${name}"?`)) return;
+    const result = await Swal.fire({
+      title: 'Delete Setting?',
+      html: `Remove <strong>${name}</strong>?<br><span class="text-sm text-gray-500">This will affect payroll calculations.</span>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#b91c1c',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: '<i class="fas fa-trash mr-1"></i> Delete',
+      cancelButtonText: 'Cancel',
+      customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-lg px-5', cancelButton: 'rounded-lg px-5' }
+    });
+    if (!result.isConfirmed) return;
     try { await api('/salary-settings/' + id, { method: 'DELETE' }); toast('Deleted', 'success'); loadSettings(); }
     catch (e) { toast(e.message, 'error'); }
   };
 
-  // ==================== GRADES — fixed ====================
+  // ==================== GRADES ====================
   async function renderGrades() {
     try {
       const grades = await api('/salary-settings/grades');
-      const tbody = document.getElementById('gradesTableBody');
+      const tbody  = document.getElementById('gradesTableBody');
       if (!grades.length) {
         tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-6 text-center text-xs text-gray-400">No grades defined</td></tr>';
         return;
@@ -786,11 +1012,11 @@
 
   window.openAddGrade = function() {
     document.getElementById('gradeModalTitle').textContent = 'Add Salary Grade';
-    document.getElementById('gradeId').value = '';
+    document.getElementById('gradeId').value   = '';
     document.getElementById('gradeCode').value = '';
     document.getElementById('gradeRole').value = '';
-    document.getElementById('gradeMin').value = '';
-    document.getElementById('gradeMax').value = '';
+    document.getElementById('gradeMin').value  = '';
+    document.getElementById('gradeMax').value  = '';
     openModal('gradeModal');
   };
 
@@ -798,38 +1024,46 @@
     try {
       const g = await api('/salary-settings/grades/' + id);
       document.getElementById('gradeModalTitle').textContent = 'Edit Salary Grade';
-      document.getElementById('gradeId').value = g.id;
+      document.getElementById('gradeId').value   = g.id;
       document.getElementById('gradeCode').value = g.grade;
       document.getElementById('gradeRole').value = g.role || g.position || '';
-      document.getElementById('gradeMin').value = g.minSalary;
-      document.getElementById('gradeMax').value = g.maxSalary;
+      document.getElementById('gradeMin').value  = g.minSalary;
+      document.getElementById('gradeMax').value  = g.maxSalary;
       openModal('gradeModal');
     } catch (e) { toast(e.message, 'error'); }
   };
 
   document.getElementById('saveGradeBtn').addEventListener('click', async () => {
-    const id = document.getElementById('gradeId').value;
-    const role = document.getElementById('gradeRole').value;  // ✅ read from dropdown
-
+    const id   = document.getElementById('gradeId').value;
+    const role = document.getElementById('gradeRole').value;
     if (!document.getElementById('gradeCode').value) { toast('Grade code is required', 'error'); return; }
     if (!role) { toast('Please select a role', 'error'); return; }
-
     const body = {
-      grade: document.getElementById('gradeCode').value,
-      role: role,            // ✅ sends "ADMIN" | "MANAGER" | "SCIENTIST" | "USER" to backend
+      grade:     document.getElementById('gradeCode').value,
+      role,
       minSalary: parseFloat(document.getElementById('gradeMin').value),
       maxSalary: parseFloat(document.getElementById('gradeMax').value),
     };
-
     try {
-      if (id) { body.id = parseInt(id); await api('/salary-settings/grades/' + id, { method: 'PUT', body: JSON.stringify(body) }); }
-      else    { await api('/salary-settings/grades', { method: 'POST', body: JSON.stringify(body) }); }
+      if (id) { body.id = parseInt(id); await api('/salary-settings/grades/' + id, { method: 'PUT',  body: JSON.stringify(body) }); }
+      else    {                          await api('/salary-settings/grades',        { method: 'POST', body: JSON.stringify(body) }); }
       toast('Grade saved', 'success'); closeModal('gradeModal'); renderGrades();
     } catch (e) { toast(e.message, 'error'); }
   });
 
   window.deleteGrade = async function(id, grade) {
-    if (!confirm(`Delete grade "${grade}"?`)) return;
+    const result = await Swal.fire({
+      title: 'Delete Grade?',
+      html: `Remove salary grade <strong>${grade}</strong>?<br><span class="text-sm text-gray-500">Staff assigned to this grade may be affected.</span>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#b91c1c',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: '<i class="fas fa-trash mr-1"></i> Delete',
+      cancelButtonText: 'Cancel',
+      customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-lg px-5', cancelButton: 'rounded-lg px-5' }
+    });
+    if (!result.isConfirmed) return;
     try { await api('/salary-settings/grades/' + id, { method: 'DELETE' }); toast('Grade deleted', 'success'); renderGrades(); }
     catch (e) { toast(e.message, 'error'); }
   };
@@ -837,48 +1071,146 @@
   // ==================== PAYROLL PROCESSING ====================
   async function loadSummary() {
     const month = document.getElementById('payrollMonth').value;
-    const year = document.getElementById('payrollYear').value;
+    const year  = document.getElementById('payrollYear').value;
     document.getElementById('summaryLabel').textContent = `${months[month]} ${year}`;
     try {
       const s = await api(`/payroll/summary?month=${month}&year=${year}`);
-      document.getElementById('sumTotal').textContent = s.totalEmployees || s.totalStaff || 0;
-      document.getElementById('sumBasic').textContent = fmt(s.totalBasicSalary);
+      document.getElementById('sumTotal').textContent      = s.totalEmployees || s.totalStaff || 0;
+      document.getElementById('sumBasic').textContent      = fmt(s.totalBasicSalary);
       document.getElementById('sumDeductions').textContent = fmt(s.totalDeductions);
-      document.getElementById('sumNet').textContent = fmt(s.netPayroll);
-      document.getElementById('sumPaid').textContent = s.paidCount || 0;
-      document.getElementById('sumPending').textContent = s.pendingCount || 0;
+      document.getElementById('sumNet').textContent        = fmt(s.netPayroll);
+      document.getElementById('sumPaid').textContent       = s.paidCount    || 0;
+      document.getElementById('sumPending').textContent    = s.pendingCount || 0;
     } catch (e) { toast(e.message, 'error'); }
   }
 
   document.getElementById('loadSummaryBtn').addEventListener('click', loadSummary);
+
   document.getElementById('calculateBtn').addEventListener('click', async () => {
     const month = document.getElementById('payrollMonth').value;
     const year  = document.getElementById('payrollYear').value;
-    if (!confirm(`Calculate payroll for ${months[month]} ${year}?`)) return;
-    try { toast('Calculating…', 'info'); await api(`/payroll/calculate?month=${month}&year=${year}`, { method: 'POST' }); toast('Payroll calculated', 'success'); loadSummary(); }
-    catch (e) { toast(e.message, 'error'); }
+    const calcResult = await Swal.fire({
+      title: 'Calculate Payroll?',
+      html: `Auto-generate PENDING salary records for all active staff for <strong>${months[month]} ${year}</strong>.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#1d4ed8',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: '<i class="fas fa-calculator mr-1"></i> Calculate',
+      cancelButtonText: 'Cancel',
+      customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-lg px-5', cancelButton: 'rounded-lg px-5' }
+    });
+    if (!calcResult.isConfirmed) return;
+    const btn = document.getElementById('calculateBtn');
+    btn.disabled  = true;
+    btn.textContent = 'Calculating…';
+    try {
+      toast('Calculating…', 'info');
+      await api(`/payroll/calculate?month=${month}&year=${year}`, { method: 'POST' });
+      toast('Payroll calculated', 'success');
+      // =====================================================================
+      // FIX 3 — Reload both the summary AND the records table after calculate
+      // so the user can see the newly generated PENDING records immediately.
+      // =====================================================================
+      loadSummary();
+      loadRecords();
+    } catch (e) { toast(e.message, 'error'); }
+    finally {
+      btn.disabled    = false;
+      btn.textContent = 'Calculate';
+    }
   });
-  document.getElementById('generateBtn').addEventListener('click', () => {
-    const month = document.getElementById('payrollMonth').value;
-    const year  = document.getElementById('payrollYear').value;
-    window.open(`${API}/payroll/report?month=${month}&year=${year}`, '_blank');
-    toast('Generating PDF…', 'info');
+
+  document.getElementById('generateBtn').addEventListener('click', async () => {
+    const month  = document.getElementById('payrollMonth').value;
+    const year   = document.getElementById('payrollYear').value;
+    const btn    = document.getElementById('generateBtn');
+    const label  = months[month] + ' ' + year;
+    btn.disabled    = true;
+    btn.textContent = 'Generating…';
+    toast('Generating payslips for ' + label + '…', 'info');
+    try {
+      const token = localStorage.getItem('token');
+      const headers = {};
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+
+      const resp = await fetch(API + '/payroll/report?month=' + month + '&year=' + year, { headers });
+
+      if (!resp.ok) {
+        let errMsg = 'Server error ' + resp.status;
+        const ct = resp.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+          try { const e = await resp.json(); errMsg = e.message || e.error || errMsg; } catch {}
+        } else {
+          try { const txt = await resp.text(); if (txt) errMsg = txt.slice(0, 200); } catch {}
+        }
+        throw new Error(errMsg);
+      }
+
+      const ct = resp.headers.get('content-type') || '';
+      if (!ct.includes('pdf') && !ct.includes('octet-stream')) {
+        const txt = await resp.text();
+        console.warn('[generateBtn] Unexpected content-type:', ct, txt.slice(0, 300));
+        throw new Error('Backend did not return a PDF (got: ' + ct + '). Check console.');
+      }
+
+      const blob = await resp.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'payslips-' + label.replace(' ', '-') + '.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      toast('Payslips downloaded', 'success');
+    } catch (e) {
+      toast('Generate failed: ' + e.message, 'error');
+      console.error('[generateBtn]', e);
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = 'Generate';
+    }
   });
+
   document.getElementById('processBtn').addEventListener('click', async () => {
     const month = document.getElementById('payrollMonth').value;
     const year  = document.getElementById('payrollYear').value;
-    if (!confirm(`Process all PENDING payments for ${months[month]} ${year}?`)) return;
-    try { toast('Processing…', 'info'); await api(`/payroll/process?month=${month}&year=${year}`, { method: 'POST' }); toast('Payments processed', 'success'); loadSummary(); }
-    catch (e) { toast(e.message, 'error'); }
+    const processResult = await Swal.fire({
+      title: 'Process Payments?',
+      html: `Mark all <strong>PENDING</strong> salary records as <strong>PAID</strong> for <strong>${months[month]} ${year}</strong>.<br><span class="text-sm text-gray-500">Payment date will be set to today. This cannot be undone.</span>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#15803d',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: '<i class="fas fa-check mr-1"></i> Process Payments',
+      cancelButtonText: 'Cancel',
+      customClass: { popup: 'rounded-2xl', confirmButton: 'rounded-lg px-5', cancelButton: 'rounded-lg px-5' }
+    });
+    if (!processResult.isConfirmed) return;
+    const btn = document.getElementById('processBtn');
+    btn.disabled    = true;
+    btn.textContent = 'Processing…';
+    try {
+      toast('Processing…', 'info');
+      await api(`/payroll/process?month=${month}&year=${year}`, { method: 'POST' });
+      toast('Payments processed', 'success');
+      loadSummary();
+      loadRecords();
+    } catch (e) { toast(e.message, 'error'); }
+    finally {
+      btn.disabled    = false;
+      btn.textContent = 'Process';
+    }
   });
+
   document.getElementById('exportReportBtn').addEventListener('click', () => {
     const month = document.getElementById('payrollMonth').value;
     const year  = document.getElementById('payrollYear').value;
-    window.open(`${API}/payroll/report?month=${month}&year=${year}`, '_blank');
-    toast('Downloading report…', 'info');
+    downloadPayrollPdf(month, year);
   });
 
-
+  // Initial load
   loadRecords();
 </script>
 </body>

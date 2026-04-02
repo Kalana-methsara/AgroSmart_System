@@ -57,7 +57,9 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )
+                        // මෙතන තමයි redirect path දෙක තියෙන්නේ
                         .successHandler(oauth2SuccessHandler())
+                        .failureHandler(oauth2FailureHandler())
                 )
                 .formLogin(withDefaults())
                 .httpBasic(withDefaults())
@@ -78,17 +80,21 @@ public class SecurityConfig {
         return daoAuthenticationProvider;
     }
 
+    // Success
     @Bean
     public AuthenticationSuccessHandler oauth2SuccessHandler() {
-        return new AuthenticationSuccessHandler() {
-            @Override
-            public void onAuthenticationSuccess(HttpServletRequest request,
-                                                HttpServletResponse response,
-                                                org.springframework.security.core.Authentication authentication)
-                    throws IOException, ServletException {
-                // Redirect to frontend with success parameter
-                response.sendRedirect("http://localhost:63342/login.html?login=success");
-            }
+        return (request, response, authentication) -> {
+            String targetUrl = "http://localhost:63342/AgroSmart/AgroSmart_System-Frontend/pages/dashboard.html";
+            response.sendRedirect(targetUrl);
+        };
+    }
+
+    // Error
+    @Bean
+    public org.springframework.security.web.authentication.AuthenticationFailureHandler oauth2FailureHandler() {
+        return (request, response, exception) -> {
+            String errorUrl = "http://localhost:63342/AgroSmart/AgroSmart_System-Frontend/index.html?error=true";
+            response.sendRedirect(errorUrl);
         };
     }
 

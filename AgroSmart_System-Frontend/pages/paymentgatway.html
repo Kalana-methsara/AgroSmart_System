@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>DentalCare · Secure Payment</title>
+
+  <!-- Bootstrap 5 + Icons + Fonts -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet"/>
+  <script type="text/javascript" src="https://www.payhere.lk/lib/payhere.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #faf9f6;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    /* ===== AGROSMART INSPIRED PREMIUM REFINEMENTS ===== */
+    :root {
+      --forest-deep: #0f2c1f;
+      --forest-primary: #166534;
+      --forest-accent: #22c55e;
+      --golden-wheat: #f5b042;
+      --cream-light: #fefcf5;
+      --charcoal-soft: #1e293b;
+      --border-subtle: #e9e7df;
+    }
+
+    /* custom animated gradient background for hero (AgroSmart vibe) */
+    .hero-strip {
+      background: linear-gradient(135deg, #0a2f1f 0%, #14532d 50%, #1e4620 100%);
+      padding: 100px 32px 52px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-strip::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 900px 500px at 50% 110%, rgba(34,197,94,0.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-strip::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 48px;
+      background: #faf9f6;
+      clip-path: ellipse(60% 100% at 50% 100%);
+    }
+
+    .hero-badge {
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(34,197,94,0.5);
+      color: #e2f0e2;
+      padding: 6px 18px;
+      border-radius: 60px;
+      font-size: 12px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    .hero-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(34px, 5.5vw, 56px);
+      color: white;
+      line-height: 1.2;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: #f5c518;
+      background: linear-gradient(135deg, #f9d56e, #f5b042);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      text-shadow: none;
+    }
+
+    .hero-sub {
+      color: rgba(255,255,240,0.85);
+      font-weight: 400;
+      max-width: 520px;
+      margin: 12px auto 0;
+      font-size: 1rem;
+    }
+
+    /* navbar refined: deeper green and smooth */
+    .navbar {
+      background: #0a2c1a;
+      border-bottom: 3px solid #f5b042;
+      padding: 0;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1030;
+      transition: all 0.2s;
+    }
+
+    .navbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      height: 68px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: #f5b042;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #0a2c1a;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .brand-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 24px;
+      font-weight: 600;
+      color: white;
+      letter-spacing: -0.3px;
+    }
+
+    .nav-links a {
+      color: #e2f0da;
+      font-weight: 500;
+      margin: 0 6px;
+      transition: 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: #f5b042;
+      background: rgba(255,255,255,0.05);
+      border-radius: 30px;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: 1px solid rgba(245,176,66,0.6);
+      color: white;
+      border-radius: 40px;
+      padding: 6px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: 0.2s;
+    }
+
+    .nav-btn.primary {
+      background: #f5b042;
+      border-color: #f5b042;
+      color: #1a2a1a;
+    }
+
+    .nav-btn.primary:hover {
+      background: #e09d2c;
+      transform: translateY(-1px);
+    }
+
+    /* card styling */
+    .summary-card, .bank-card, .gateway-card {
+      background: #ffffff;
+      border-radius: 28px;
+      box-shadow: 0 15px 35px -12px rgba(0, 0, 0, 0.08);
+      transition: all 0.25s ease;
+      border: 1px solid #f0ede5;
+    }
+
+    .gateway-card {
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .gateway-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 22px 40px -14px rgba(22,101,52,0.2);
+      border-color: #cbdcc0;
+    }
+
+    .gateway-card.selected {
+      border: 2px solid #166534;
+      background: #fefcf5;
+      box-shadow: 0 12px 28px rgba(22,101,52,0.12);
+    }
+
+    .selected-gateway-pill {
+      background: #e9f5e6;
+      padding: 5px 14px;
+      border-radius: 40px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #166534;
+    }
+
+    .pay-btn {
+      background: linear-gradient(95deg, #14532d, #166534);
+      border: none;
+      padding: 14px;
+      font-weight: 700;
+      border-radius: 40px;
+      font-size: 16px;
+      transition: 0.2s;
+      box-shadow: 0 8px 18px rgba(21, 80, 40, 0.2);
+    }
+
+    .pay-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      background: linear-gradient(95deg, #166534, #1f7840);
+      box-shadow: 0 15px 28px rgba(34,197,94,0.25);
+    }
+
+    .amount-block {
+      background: linear-gradient(115deg, #0f2c1f, #166534);
+      border-radius: 24px;
+    }
+
+    .notice {
+      background: #fff7e8;
+      border-left: 5px solid #f5b042;
+      border-radius: 20px;
+    }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #166534;
+    }
+
+    .section-label i {
+      font-size: 18px;
+    }
+
+    @keyframes gentleFade {
+      0% { opacity: 0; transform: translateY(14px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-up {
+      animation: gentleFade 0.55s ease forwards;
+    }
+
+    .fade-up-1 { animation-delay: 0.05s; opacity: 0; animation-fill-mode: forwards; }
+    .fade-up-2 { animation-delay: 0.12s; opacity: 0; animation-fill-mode: forwards; }
+    .fade-up-3 { animation-delay: 0.2s; opacity: 0; animation-fill-mode: forwards; }
+    .fade-up-4 { animation-delay: 0.28s; opacity: 0; animation-fill-mode: forwards; }
+
+    @media (max-width: 768px) {
+      .navbar-inner { padding: 0 18px; }
+      .hero-strip { padding: 85px 20px 48px; }
+      .two-col { gap: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+
+<!-- Hero Section (elevated like AgroSmart) -->
+<div class="hero-strip">
+  <div class="hero-badge"><i class="bi bi-shield-check-fill"></i> 256-bit SSL · secure checkout</div>
+  <h1 class="hero-title">Complete Your <em>Smile</em> Payment</h1>
+  <p class="hero-sub">Choose a payment method — fast, encrypted & trusted by Sri Lankan dental patients.</p>
+</div>
+
+<!-- Main layout -->
+<div class="container " style="max-width: 1200px;">
+  <div class="row g-4">
+    <!-- LEFT COLUMN -->
+    <div class="col-lg-7">
+      <!-- Gateway selection -->
+      <div class="section-label d-flex align-items-center gap-2 mb-3 fade-up fade-up-1">
+        <i class="bi bi-credit-card-2-front-fill"></i> <span>SECURE PAYMENT GATEWAY</span>
+      </div>
+      <div class="row g-3 mb-4 fade-up fade-up-2">
+        <div class="col-md-6">
+          <div class="gateway-card p-4" id="gateway-payhere" onclick="selectGateway('payhere')">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="gateway-logo bg-light rounded-3 p-2" style="width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; background: #eef4ea;">
+                <i class="fas fa-credit-card fa-2x text-success"></i>
+              </div>
+              <div class="check-mark text-success"><i class="fas fa-check-circle fa-lg" style="opacity: 0;"></i></div>
+            </div>
+            <h5 class="fw-bold mt-3">PayHere</h5>
+            <p class="small text-muted">Visa, Mastercard, Amex, eZ Cash, mCash &amp; FriMi</p>
+            <div class="d-flex flex-wrap gap-1 mt-2">
+              <span class="badge bg-light text-dark border">Visa</span>
+              <span class="badge bg-light text-dark border">Mastercard</span>
+              <span class="badge bg-light text-dark border">eZ Cash</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="gateway-card p-4" id="gateway-hnb" onclick="selectGateway('hnb')">
+            <div class="d-flex justify-content-between">
+              <div class="gateway-logo bg-light rounded-3 p-2" style="width: 52px; height: 52px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-university fa-2x text-primary"></i>
+              </div>
+              <div class="check-mark text-success"><i class="fas fa-check-circle fa-lg" style="opacity: 0;"></i></div>
+            </div>
+            <h5 class="fw-bold mt-3">HNB Online</h5>
+            <p class="small text-muted">Direct bank transfer from any HNB account</p>
+            <div class="mt-2"><span class="badge bg-light text-dark border">HNB Current/Savings</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notice -->
+      <div class="notice p-3 mb-4 fade-up fade-up-3 d-flex gap-3 align-items-start">
+        <i class="fas fa-shield-alt fs-4" style="color:#e68a2e;"></i>
+        <div class="small"><strong>Secure transaction reminder</strong> — Enable online payments before checkout. For any issues, contact 0704242333.</div>
+      </div>
+
+      <!-- Bank Transfer Section (alternative) -->
+      <div class="bank-card p-4 fade-up fade-up-4">
+        <div class="d-flex gap-3 align-items-center mb-3">
+          <div class="rounded-3 p-2" style="background: #0a2c1a; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-landmark text-white fs-5"></i>
+          </div>
+          <div><h5 class="fw-bold mb-0">People's Bank</h5><small class="text-muted">Dharmapala Mawatha, Matara</small></div>
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-12 col-sm-6">
+            <div class="bg-light p-2 rounded-3"><small class="text-secondary">Account name</small><br/><strong>AgroSmart</strong></div>
+          </div>
+          <div class="col-12 col-sm-6">
+            <div class="bg-light p-2 rounded-3"><small class="text-secondary">Branch</small><br/><strong>Galle — Hapugala</strong></div>
+          </div>
+          <div class="col-12">
+            <div class="bg-success bg-opacity-10 p-3 rounded-3 border-start border-4 border-success"><small class="text-secondary">Account Number</small><br/><h5 class="fw-bold text-success mb-0">152 100 120 073 662</h5></div>
+          </div>
+        </div>
+        <a href="https://wa.me/94704242333?text=Payment%20Slip%20-%20Dental%20Appointment" target="_blank" class="btn btn-success w-100 rounded-pill py-2"><i class="fab fa-whatsapp me-2"></i> Send Payment Slip via WhatsApp</a>
+        <div class="text-center mt-2"><small class="text-muted"><i class="bi bi-phone"></i> Also Viber: 0704242333</small></div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN (Summary) -->
+    <div class="col-lg-5">
+      <div class="summary-card p-4 sticky-lg-top" style="top: 90px;">
+        <h4 class="fw-bold" style="font-family: 'DM Serif Display';">Payment Summary</h4>
+        <p class="text-muted small">Dental appointment booking fee</p>
+        <div class="amount-block text-white p-4 rounded-4 text-center mb-4">
+          <div class="small text-white-50">Total Due</div>
+          <div class="display-5 fw-bold" id="paymentAmount">LKR 2,500</div>
+          <div class="small text-white-50">incl. all taxes</div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <span class="text-secondary">Appointment Type</span><span class="fw-medium">General Checkup</span>
+          </div>
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <span class="text-secondary">Consultation Fee</span><span class="fw-medium">LKR 2,500.00</span>
+          </div>
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <span class="text-secondary">Gateway</span>
+            <span id="selectedGatewayText" class="selected-gateway-pill"><i class="fas fa-circle-info me-1"></i> Not selected</span>
+          </div>
+        </div>
+        <button class="pay-btn w-100 text-white fw-bold py-3 rounded-pill" id="payButton" disabled><i class="bi bi-lock-fill me-2"></i> Proceed to Pay</button>
+        <a href="#" class="text-decoration-none d-block text-center mt-3 small text-muted"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+        <div class="text-center mt-3 pt-2 border-top"><small class="text-muted"><i class="fas fa-shield-alt text-success"></i> 256-bit SSL encrypted</small></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+<script>
+  // ========== PAYHERE CONFIGURATION ==========
+  const PAYHERE_CONFIG = {
+    merchant_id: "1234435",
+    merchant_secret: "MzU4NTk2MzAxMzE4NzM1Njk5ODUxMTg1ODIwODU5ODM0NDY5MTUz",
+    sandbox: false,
+    return_url: window.location.origin + "/pages/succsess.html",
+    cancel_url: window.location.origin + "/pages/succsess.html",
+    // notify_url: "https://jaxson-callow-amya.ngrok-free.dev/api/v1/dentalcare/auth/payhere-notify",
+  };
+
+  let selectedGateway = null;
+
+  // UI: update selection styles and pill
+  window.selectGateway = function(gateway) {
+    selectedGateway = gateway;
+
+    const payhereCard = document.getElementById('gateway-payhere');
+    const hnbCard = document.getElementById('gateway-hnb');
+    const payBtn = document.getElementById('payButton');
+    const gatewayPill = document.getElementById('selectedGatewayText');
+
+    payhereCard.classList.remove('selected');
+    hnbCard.classList.remove('selected');
+
+    if (gateway === 'payhere') {
+      payhereCard.classList.add('selected');
+      gatewayPill.innerHTML = '<i class="fas fa-credit-card me-1"></i> PayHere (Cards/Digital wallets)';
+      payBtn.disabled = false;
+    } else {
+      hnbCard.classList.add('selected');
+      gatewayPill.innerHTML = '<i class="fas fa-university me-1"></i> HNB Online (Direct Transfer)';
+      payBtn.disabled = false;
+    }
+
+    // visual checkmark toggles
+    document.querySelectorAll('.check-mark i').forEach(icon => icon.style.opacity = '0');
+    const activeCheck = gateway === 'payhere' ? payhereCard.querySelector('.check-mark i') : hnbCard.querySelector('.check-mark i');
+    if(activeCheck) activeCheck.style.opacity = '1';
+  };
+
+  // generate payhere hash
+  function generatePayHereHash(orderId, amount) {
+    try {
+      const secretMd5 = CryptoJS.MD5(PAYHERE_CONFIG.merchant_secret).toString().toUpperCase();
+      const formattedAmount = parseFloat(amount).toFixed(2);
+      const rawString = PAYHERE_CONFIG.merchant_id + orderId + formattedAmount + "LKR" + secretMd5;
+      const finalHash = CryptoJS.MD5(rawString).toString().toUpperCase();
+      return finalHash;
+    } catch(e) { console.error(e); return null; }
+  }
+
+  // load appointment temporary data (matching backend endpoint)
+  function loadCustomerAppointmentDetails() {
+    $.ajax({
+      url: "http://localhost:8080/api/v1/dentalcare/auth/getTemporarydata",
+      method: "GET",
+      contentType: "application/json",
+      success: function(response) {
+        if(response && response.data) {
+          const details = response.data;
+          const appointmentObj = {
+            appointmentDate: details.pationEmail || new Date(),
+            email: details.pationEmail || "patient@dentalcare.com",
+            status: details.status || "pending",
+            description: details.description || "General Checkup",
+            doctorId: details.doctorId || 1,
+            paymentAmount: "2500"
+          };
+          localStorage.setItem("appointmentObject", JSON.stringify(appointmentObj));
+        } else {
+          // fallback default
+          const fallback = { paymentAmount: "2500", email: "guest@dentalcare.com" };
+          localStorage.setItem("appointmentObject", JSON.stringify(fallback));
+        }
+      },
+      error: function() {
+        console.warn("Using fallback appointment data");
+        const fallback = { paymentAmount: "2500", email: "guest@dentalcare.com", description: "Checkup" };
+        localStorage.setItem("appointmentObject", JSON.stringify(fallback));
+      }
+    });
+  }
+
+  // PayHere payment flow
+  function processPayHerePayment() {
+    const appointmentRaw = localStorage.getItem("appointmentObject");
+    let patientEmail = "patient@dentalcare.com";
+    let patientName = "Dental Patient";
+    try {
+      if(appointmentRaw) {
+        const apt = JSON.parse(appointmentRaw);
+        if(apt.email) patientEmail = apt.email;
+      }
+    } catch(e) {}
+
+    const orderId = "DEN_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+    const amount = "2500.00";
+    const hash = generatePayHereHash(orderId, amount);
+    if(!hash) {
+      Swal.fire({ icon: 'error', title: 'Hash Error', text: 'Could not generate secure hash. Try again.' });
+      return;
+    }
+
+    // PayHere event handlers
+    payhere.onCompleted = function onCompleted(orderId) {
+      Swal.fire({ icon: 'success', title: 'Payment Successful!', text: `Order ID: ${orderId}`, confirmButtonColor: '#166534' })
+              .then(() => { window.location.href = PAYHERE_CONFIG.return_url + "?order_id=" + orderId + "&status=success"; });
+    };
+    payhere.onDismissed = function() {
+      Swal.fire({ title: 'Cancelled', text: 'You cancelled the payment.', icon: 'info', confirmButtonColor: '#166534' });
+    };
+    payhere.onError = function(error) {
+      Swal.fire({ icon: 'error', title: 'Payment Error', text: error || 'Something went wrong' });
+    };
+
+    const payment = {
+      sandbox: PAYHERE_CONFIG.sandbox,
+      merchant_id: PAYHERE_CONFIG.merchant_id,
+      return_url: PAYHERE_CONFIG.return_url,
+      cancel_url: PAYHERE_CONFIG.cancel_url,
+      notify_url: PAYHERE_CONFIG.notify_url,
+      order_id: orderId,
+      items: "Dental Appointment Booking",
+      amount: amount,
+      currency: "LKR",
+      hash: hash,
+      first_name: "Dental",
+      last_name: "Patient",
+      email: patientEmail,
+      phone: "0771234567",
+      address: "Colombo, Sri Lanka",
+      city: "Colombo",
+      country: "Sri Lanka",
+      delivery_address: "Colombo, Sri Lanka",
+      delivery_city: "Colombo",
+      delivery_country: "Sri Lanka"
+    };
+
+    Swal.fire({ title: 'Redirecting', text: 'Opening PayHere secure gateway...', icon: 'info', showConfirmButton: false, timer: 1200 });
+    setTimeout(() => { payhere.startPayment(payment); }, 800);
+  }
+
+  // HNB demo handler (polished)
+  function handleHNB() {
+    Swal.fire({
+      title: 'HNB Online Transfer',
+      html: `<div class="text-start">Use your HNB Internet Banking credentials.<br/><strong>Beneficiary:</strong> DentalCare (Pvt) Ltd<br/><strong>Account:</strong> 152100120073662 (People's Bank)<br/><strong>Amount:</strong> LKR 2,500</div>`,
+      icon: 'info',
+      confirmButtonText: 'I understand',
+      confirmButtonColor: '#166534'
+    }).then(() => {
+      Swal.fire('Demo flow', 'After bank transfer, please upload the receipt via WhatsApp to 0704242333', 'success');
+    });
+  }
+
+  // main process payment dispatcher
+  function processPayment() {
+    if (!selectedGateway) {
+      Swal.fire({ title: 'Gateway required', text: 'Please select PayHere or HNB Online', icon: 'warning', confirmButtonColor: '#166534' });
+      return;
+    }
+    if (selectedGateway === 'payhere') {
+      processPayHerePayment();
+    } else if (selectedGateway === 'hnb') {
+      handleHNB();
+    }
+  }
+
+  // DOM ready and event binding (agrosmart style but fully functional)
+  $(document).ready(function() {
+    loadCustomerAppointmentDetails();
+    // Attach payment button event
+    $('#payButton').on('click', processPayment);
+    // navbar sign in/up alerts (polished)
+    $('#signInBtn').on('click', () => Swal.fire({ title: 'Sign In', text: 'Demo version — full authentication coming soon.', icon: 'info', confirmButtonColor: '#166534' }));
+    $('#signUpBtn').on('click', () => Swal.fire({ title: 'Sign Up', text: 'Create your DentalCare account for appointment history.', icon: 'info', confirmButtonColor: '#166534' }));
+    // initial selection reset visuals
+    document.querySelectorAll('.gateway-card').forEach(card => {
+      card.addEventListener('click', function() {
+        const isPayHere = this.id === 'gateway-payhere';
+        selectGateway(isPayHere ? 'payhere' : 'hnb');
+      });
+    });
+    // ensure default disabled button state
+    document.getElementById('payButton').disabled = true;
+  });
+</script>
+</body>
+</html>

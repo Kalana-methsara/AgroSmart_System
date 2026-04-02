@@ -152,7 +152,12 @@
                                 onclick="handleGoogleLogin()">
                             <i class="fa-brands fa-google text-red-500"></i> Google
                         </button>
-                        <button type="button" class="flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition text-gray-700"><i class="fa-brands fa-apple text-gray-900"></i> Apple ID</button>
+
+                        <button type="button"
+                                class="flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition text-gray-700"
+                                onclick="handleGitHubLogin()">
+                            <i class="fa-brands fa-github text-gray-900"></i> GitHub
+                        </button>
                     </div>
                 </form>
 
@@ -183,7 +188,10 @@
         // Redirect to Google OAuth endpoint
         window.location.href = 'http://localhost:8080/oauth2/authorization/google';
     }
-
+    function handleGitHubLogin() {
+        // Redirect to Spring Boot GitHub OAuth endpoint
+        window.location.href = 'http://localhost:8080/oauth2/authorization/github';
+    }
     $(document).ready(function() {
         const urlParams = new URLSearchParams(window.location.search);
         localStorage.setItem('urlParams', urlParams);
