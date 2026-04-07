@@ -12,125 +12,245 @@
   <style>
     @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     .animate-fade-up { animation: fadeSlideUp 0.4s ease-out; }
-    .health-gauge { transition: all 0.2s; }
     .stat-card:hover { transform: translateY(-3px); box-shadow: 0 20px 25px -12px rgba(0,0,0,0.1); transition: 0.2s; }
-    .harvest-badge { background: linear-gradient(135deg, #fef9e3, #fff7e6); border-left: 4px solid #f59e0b; }
-    .trend-up { color: #16a34a; background: #dcfce7; border-radius: 20px; padding: 2px 8px; font-size: 0.7rem; }
-    .trend-down { color: #dc2626; background: #fee2e2; border-radius: 20px; padding: 2px 8px; font-size: 0.7rem; }
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: #eef2f0; }
     ::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 10px; }
+    /* Ensure the chart containers don't collapse */
+    .chart-container { position: relative; width: 100%; height: 320px; }
+    .pie-container { position: relative; width: 100%; height: 380px; }
   </style>
 </head>
 <body class="bg-gray-50 font-sans antialiased">
 
-<!-- Loading Overlay -->
-
-<!-- Main Layout: Sidebar (compact) + Content -->
 <div class="flex h-screen overflow-hidden">
-  <!-- Sidebar -->
-
-  <!-- Mobile top bar -->
-
-  <!-- Main Content -->
   <main class="flex-1 overflow-y-auto bg-gray-50 pt-16 md:pt-0">
-
     <div class="p-6 md:p-8 space-y-8">
-      <!-- ==================== OVERVIEW SECTION ==================== -->
+
       <div id="overview-section" class="section-content animate-fade-up">
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div class="bg-white rounded-2xl shadow-md p-5 stat-card border-l-8 border-green-500"><div class="flex justify-between"><div><p class="text-gray-500 text-sm">Total Active Crops</p><h3 class="text-3xl font-bold" id="totalCropsStat">8</h3><p class="text-xs text-green-600 mt-1"><i class="fa-regular fa-chart-line"></i> +2 this season</p></div><i class="fa-solid fa-seedling text-4xl text-green-200"></i></div></div>
-          <div class="bg-white rounded-2xl shadow-md p-5 stat-card border-l-8 border-amber-500"><div class="flex justify-between"><div><p class="text-gray-500 text-sm">Avg. Crop Health</p><h3 class="text-3xl font-bold" id="avgHealthStat">86<span class="text-lg">%</span></h3><p class="text-xs text-green-600">↑ 4% vs last month</p></div><i class="fa-solid fa-heartbeat text-4xl text-amber-200"></i></div></div>
-          <div class="bg-white rounded-2xl shadow-md p-5 stat-card border-l-8 border-blue-500"><div class="flex justify-between"><div><p class="text-gray-500 text-sm">Est. Season Revenue</p><h3 class="text-3xl font-bold" id="totalRevenueStat">$214.5K</h3><p class="text-xs text-blue-600">↑ 12.3% target</p></div><i class="fa-solid fa-dollar-sign text-4xl text-blue-200"></i></div></div>
+          <div class="bg-white rounded-2xl shadow-md p-5 stat-card border-l-8 border-green-500">
+            <div class="flex justify-between">
+              <div>
+                <p class="text-gray-500 text-sm">Total Active Crops</p>
+                <h3 class="text-3xl font-bold" id="totalCropsStat">0</h3>
+                <p class="text-xs text-green-600 mt-1" id="cropTrendStat">Live crop count</p>
+              </div>
+              <i class="fa-solid fa-seedling text-4xl text-green-200"></i>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl shadow-md p-5 stat-card border-l-8 border-amber-500">
+            <div class="flex justify-between">
+              <div>
+                <p class="text-gray-500 text-sm">Average Yield</p>
+                <h3 class="text-3xl font-bold" id="avgHealthStat">0.0<span class="text-lg"> t</span></h3>
+                <p class="text-xs text-amber-600" id="yieldTrendStat">Across all crops</p>
+              </div>
+              <i class="fa-solid fa-chart-line text-4xl text-amber-200"></i>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl shadow-md p-5 stat-card border-l-8 border-blue-500">
+            <div class="flex justify-between">
+              <div>
+                <p class="text-gray-500 text-sm">Monthly Salary Cost</p>
+                <h3 class="text-3xl font-bold" id="totalRevenueStat">LKR 0</h3>
+                <p class="text-xs text-blue-600" id="payrollTrendStat">Current month payroll</p>
+              </div>
+              <i class="fa-solid fa-dollar-sign text-4xl text-blue-200"></i>
+            </div>
+          </div>
         </div>
-        <div class="grid md:grid-cols-2 gap-6">
-          <div class="bg-white p-5 rounded-xl shadow-md"><h3 class="font-semibold mb-3"><i class="fa-solid fa-chart-scatter text-green-600 mr-2"></i> Yield vs Target (t/ha)</h3><canvas id="yieldTargetChart" height="200"></canvas></div>
-          <div class="bg-white p-5 rounded-xl shadow-md"><h3 class="font-semibold mb-3"><i class="fa-solid fa-chart-line text-amber-600 mr-2"></i> Weekly Crop Health Trend</h3><canvas id="healthTrendChart" height="200"></canvas></div>
+
+        <div class="grid md:grid-cols-2 gap-6 mb-6">
+          <div class="bg-white p-5 rounded-xl shadow-md">
+            <h3 class="font-semibold mb-3"><i class="fa-solid fa-chart-column text-green-600 mr-2"></i> Crop Yield by Type</h3>
+            <div class="chart-container">
+              <canvas id="yieldTargetChart"></canvas>
+            </div>
+          </div>
+          <div class="bg-white p-5 rounded-xl shadow-md">
+            <h3 class="font-semibold mb-3"><i class="fa-solid fa-chart-line text-amber-600 mr-2"></i> Payroll Trend (Last 6 Months)</h3>
+            <div class="chart-container">
+              <canvas id="healthTrendChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-1 gap-6">
+          <div class="bg-white p-5 rounded-xl shadow-md">
+            <h3 class="font-semibold mb-3"><i class="fa-solid fa-chart-pie text-blue-600 mr-2"></i> Inventory Category Distribution</h3>
+            <div class="pie-container">
+              <canvas id="inventoryPieChart"></canvas>
+            </div>
+          </div>
         </div>
       </div>
 
     </div>
   </main>
 </div>
-<script>$(document).ready(function(){
-  const token = localStorage.getItem('token');
-  if (!token) {
-    window.location.replace("../index.html");
-    return;
-  }
 
-  // Data
-  let cropHealthData = {
-    Wheat: { health:92 },
-    Corn: { health:78 },
-    Soybean: { health:88 }
-  };
+<script>
+  $(document).ready(function(){
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.replace("../index.html");
+      return;
+    }
 
-  // Harvest table
-  let harvestSchedule = [
-    { crop:"Wheat", field:"North Field", planted:"Mar 12, 2026", harvest:"Jun 18, 2026", left:48, maturity:72 },
-    { crop:"Corn", field:"South Field", planted:"Apr 05, 2026", harvest:"Jul 22, 2026", left:82, maturity:45 },
-    { crop:"Soybean", field:"East Field", planted:"May 20, 2026", harvest:"Aug 05, 2026", left:96, maturity:30 }
-  ];
+    const API = {
+      crop: 'http://localhost:8080/api/v1/crop/all',
+      field: 'http://localhost:8080/api/v1/field/all',
+      inventory: 'http://localhost:8080/api/v1/inventory/all',
+      staff: 'http://localhost:8080/api/v1/staff/all',
+      salary: 'http://localhost:8080/api/v1/salary-records'
+    };
 
-  function renderHarvestTable() {
-    let rows = '';
-    harvestSchedule.forEach(h => {
-      rows += `
-        <tr class="border-b">
-          <td class="p-3 font-medium">${h.crop}</td>
-          <td class="p-3">${h.field}</td>
-          <td class="p-3">${h.planted}</td>
-          <td class="p-3 font-bold">${h.harvest}</td>
-          <td class="p-3">${h.left} days</td>
-          <td class="p-3">
-            <div class="w-24 bg-gray-200 rounded-full">
-              <div class="bg-green-600 text-xs text-white text-center rounded-full" style="width:${h.maturity}%">
-                ${h.maturity}%
-              </div>
-            </div>
-          </td>
-        </tr>`;
-    });
-    $('#harvestTableBody').html(rows);
-  }
+    const REFRESH_INTERVAL_MS = 60000;
+    let yieldBarChart, payrollLineChart, inventoryPieChart;
 
-  // Charts (ONLY used ones)
-  let yieldTargetCtx, healthTrendCtx;
+    function authHeaders() { return { 'Authorization': `Bearer ${token}` }; }
 
-  function initCharts() {
-    yieldTargetCtx = new Chart(document.getElementById('yieldTargetChart'), {
-      type:'bar',
-      data:{
-        labels:['Wheat','Corn','Soybean'],
-        datasets:[
-          { label:'Current Yield', data:[5.2,8.1,3.4], backgroundColor:'#22c55e' },
-          { label:'Target Yield', data:[6.0,9.2,4.0], backgroundColor:'#f59e0b' }
-        ]
+    async function fetchData(url) {
+      const response = await fetch(url, { headers: authHeaders() });
+      if (!response.ok) throw new Error(`Failed request: ${url}`);
+      const payload = await response.json();
+      return payload?.data || [];
+    }
+
+    function toNumber(value) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function resolvePayrollKey(row) {
+      const month = toNumber(row.payrollMonth);
+      const year = toNumber(row.payrollYear);
+      if (month >= 1 && month <= 12 && year >= 2000) {
+        return `${year}-${String(month).padStart(2, '0')}`;
       }
-    });
-
-    healthTrendCtx = new Chart(document.getElementById('healthTrendChart'), {
-      type:'line',
-      data:{
-        labels:['Wk1','Wk2','Wk3','Wk4','Wk5','Wk6'],
-        datasets:[
-          { label:'Crop Health %', data:[78,81,84,86,88,86], borderColor:'#16a34a' }
-        ]
+      if (row.paymentDate) {
+        const d = new Date(row.paymentDate);
+        if (!Number.isNaN(d.getTime())) {
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        }
       }
-    });
-  }
+      return null;
+    }
 
-  // Stats
-  let cropsTotal = Object.keys(cropHealthData).length;
-  let avgHealth = Math.round((92 + 78 + 88)/3);
+    function buildPayrollSeries(records) {
+      const now = new Date();
+      const buckets = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        buckets.push({ key, label: d.toLocaleString('en-US', { month: 'short' }), total: 0 });
+      }
 
-  $('#totalCropsStat').text(cropsTotal);
-  $('#avgHealthStat').html(avgHealth + '<span class="text-lg">%</span>');
-  $('#totalRevenueStat').text('$214.5K');
+      records.forEach((row) => {
+        const key = resolvePayrollKey(row);
+        if (!key) return;
+        const gross = toNumber(row.basicSalary) + toNumber(row.allowances) - toNumber(row.deductions);
+        const target = buckets.find((b) => b.key === key);
+        if (target) target.total += Math.max(0, gross);
+      });
+      return buckets;
+    }
 
-  renderHarvestTable();
-  initCharts();
-});</script>
+    function upsertCharts(analytics) {
+      const commonOptions = { responsive: true, maintainAspectRatio: false };
+
+      // Yield Bar Chart
+      if (!yieldBarChart) {
+        yieldBarChart = new Chart(document.getElementById('yieldTargetChart'), {
+          type: 'bar',
+          data: { labels: analytics.cropLabels, datasets: [{ label: 'Yield (t)', data: analytics.cropYields, backgroundColor: '#22c55e', borderRadius: 8 }] },
+          options: commonOptions
+        });
+      } else {
+        yieldBarChart.data.labels = analytics.cropLabels;
+        yieldBarChart.data.datasets[0].data = analytics.cropYields;
+        yieldBarChart.update();
+      }
+
+      // Payroll Line Chart
+      if (!payrollLineChart) {
+        payrollLineChart = new Chart(document.getElementById('healthTrendChart'), {
+          type: 'line',
+          data: { labels: analytics.payrollMonths, datasets: [{ label: 'Payroll (LKR)', data: analytics.payrollTotals, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.15)', fill: true, tension: 0.35 }] },
+          options: commonOptions
+        });
+      } else {
+        payrollLineChart.data.labels = analytics.payrollMonths;
+        payrollLineChart.data.datasets[0].data = analytics.payrollTotals;
+        payrollLineChart.update();
+      }
+
+      // Inventory Pie Chart
+      if (!inventoryPieChart) {
+        inventoryPieChart = new Chart(document.getElementById('inventoryPieChart'), {
+          type: 'pie',
+          data: { labels: analytics.inventoryLabels, datasets: [{ data: analytics.inventoryValues, backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'] }] },
+          options: { ...commonOptions, plugins: { legend: { position: 'bottom' } } }
+        });
+      } else {
+        inventoryPieChart.data.labels = analytics.inventoryLabels;
+        inventoryPieChart.data.datasets[0].data = analytics.inventoryValues;
+        inventoryPieChart.update();
+      }
+    }
+
+    function updateStatCards(data) {
+      $('#totalCropsStat').text(data.totalCrops);
+      $('#avgHealthStat').html(`${data.avgYield.toFixed(1)}<span class="text-lg"> t</span>`);
+      $('#totalRevenueStat').text(`LKR ${Math.round(data.currentPayroll).toLocaleString()}`);
+      $('#cropTrendStat').text(`${data.totalFields} fields mapped`);
+      $('#yieldTrendStat').text(`${data.totalStaff} staff supporting`);
+      $('#payrollTrendStat').text(`Uses payroll month or payment date`);
+    }
+
+    async function refreshAnalytics() {
+      try {
+        const [crops, fields, inventories, staff, salaries] = await Promise.all([
+          fetchData(API.crop), fetchData(API.field), fetchData(API.inventory), fetchData(API.staff), fetchData(API.salary)
+        ]);
+
+        const cropYields = crops.map(c => toNumber(c.expectedYieldPerUnit));
+        const payrollSeries = buildPayrollSeries(salaries);
+
+        const categoryTotals = {};
+        inventories.forEach(item => {
+          const key = item.category || 'OTHER';
+          categoryTotals[key] = (categoryTotals[key] || 0) + toNumber(item.quantity);
+        });
+
+        const latestNonZeroPayroll = [...payrollSeries].reverse().find((x) => x.total > 0)?.total || 0;
+
+        const analytics = {
+          totalCrops: crops.length,
+          totalFields: fields.length,
+          totalStaff: staff.length,
+          avgYield: cropYields.length ? cropYields.reduce((a, b) => a + b, 0) / cropYields.length : 0,
+          currentPayroll: latestNonZeroPayroll,
+          cropLabels: crops.map(c => c.commonName || 'Unknown'),
+          cropYields,
+          payrollMonths: payrollSeries.map(x => x.label),
+          payrollTotals: payrollSeries.map(x => x.total),
+          inventoryLabels: Object.keys(categoryTotals),
+          inventoryValues: Object.values(categoryTotals)
+        };
+
+        updateStatCards(analytics);
+        upsertCharts(analytics);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    refreshAnalytics();
+    setInterval(refreshAnalytics, REFRESH_INTERVAL_MS);
+  });
+</script>
 </body>
 </html>
