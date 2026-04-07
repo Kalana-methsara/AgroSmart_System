@@ -269,7 +269,63 @@
   window.deleteGrade = async function(id, grade) { const result = await Swal.fire({ title: 'Delete Grade?', html: `Remove salary grade <strong>${grade}</strong>?`, icon: 'warning', showCancelButton: true }); if (!result.isConfirmed) return; try { await api('/salary-settings/grades/' + id, { method: 'DELETE' }); toast('Grade deleted', 'success'); renderGrades(); } catch (e) { toast(e.message, 'error'); } };
   async function loadSummary() { const month = document.getElementById('payrollMonth').value; const year = document.getElementById('payrollYear').value; document.getElementById('summaryLabel').textContent = `${months[month]} ${year}`; try { const s = await api(`/payroll/summary?month=${month}&year=${year}`); document.getElementById('sumTotal').textContent = s.totalEmployees || s.totalStaff || 0; document.getElementById('sumBasic').textContent = fmt(s.totalBasicSalary); document.getElementById('sumDeductions').textContent = fmt(s.totalDeductions); document.getElementById('sumNet').textContent = fmt(s.netPayroll); document.getElementById('sumPaid').textContent = s.paidCount || 0; document.getElementById('sumPending').textContent = s.pendingCount || 0; } catch (e) { toast(e.message, 'error'); } }
   document.getElementById('loadSummaryBtn').addEventListener('click', loadSummary);
-  document.getElementById('calculateBtn').addEventListener('click', async () => { const month = document.getElementById('payrollMonth').value; const year = document.getElementById('payrollYear').value; const calcResult = await Swal.fire({ title: 'Calculate Payroll?', html: `Auto-generate PENDING salary records for <strong>${months[month]} ${year}</strong>.`, icon: 'question', showCancelButton: true, confirmButtonColor: '#1d4ed8' }); if (!calcResult.isConfirmed) return; const btn = document.getElementById('calculateBtn'); btn.disabled = true; btn.textContent = 'Calculating…'; try { await api(`/payroll/calculate?month=${month}&year=${year}`, { method: 'POST' }); toast('Payroll calculated', 'success'); loadSummary(); loadRecords(); } catch (e) { toast(e.message, 'error'); } finally { btn.disabled = false; btn.textContent = 'Calculate'; } });
+  function computeDeductionsFromSettings(basicSalary, deductionSettings) {
+    return deductionSettings.reduce((total, rule) => {
+      const val = Number(rule.value || 0);
+      if (val <= 0) return total;
+      if (rule.valueType === 'PERCENTAGE') return total + (basicSalary * val / 100);
+      return total + val;
+    }, 0);
+  }
+  async function applyGradeBasedBasicSalaries(month, year) {
+    const targetMonth = parseInt(month);
+    const targetYear = parseInt(year);
+    const [records, staffList, grades, settings] = await Promise.all([
+      api('/salary-records'),
+      api('/staff/active'),
+      api('/salary-settings/grades'),
+      api('/salary-settings')
+    ]);
+    const staffById = new Map(staffList.map(s => [String(s.staffId), s]));
+    const gradeByRole = new Map(grades.map(g => [String(g.role || g.position || '').trim().toLowerCase(), g]).filter(([k]) => k));
+    const deductionSettings = settings.filter(s => s.type === 'DEDUCTION' && (s.isActive !== false && s.active !== false));
+
+    let updated = 0;
+    for (const record of records) {
+      if (parseInt(record.payrollMonth) !== targetMonth || parseInt(record.payrollYear) !== targetYear) continue;
+
+      const staff = staffById.get(String(record.staffId));
+      if (!staff) continue;
+
+      const role = String(staff.role || staff.designation || '').trim().toLowerCase();
+      const grade = gradeByRole.get(role);
+      if (!grade) continue;
+
+      const shouldFillBasic = Number(record.basicSalary || 0) <= 0;
+      const basicSalary = shouldFillBasic ? Number(grade.minSalary || 0) : Number(record.basicSalary || 0);
+      if (basicSalary <= 0) continue;
+
+      const allowances = Number(record.allowances || 0);
+      const shouldFillDeductions = Number(record.deductions || 0) <= 0;
+      const deductions = shouldFillDeductions
+        ? Number(computeDeductionsFromSettings(basicSalary, deductionSettings).toFixed(2))
+        : Number(record.deductions || 0);
+
+      if (!shouldFillBasic && !shouldFillDeductions) continue;
+
+      const payload = {
+        ...record,
+        id: parseInt(record.id),
+        basicSalary,
+        deductions,
+        netSalary: calcNet(basicSalary, allowances, deductions)
+      };
+      await api('/salary-records/' + record.id, { method: 'PUT', body: JSON.stringify(payload) });
+      updated += 1;
+    }
+    return updated;
+  }
+  document.getElementById('calculateBtn').addEventListener('click', async () => { const month = document.getElementById('payrollMonth').value; const year = document.getElementById('payrollYear').value; const calcResult = await Swal.fire({ title: 'Calculate Payroll?', html: `Auto-generate PENDING salary records for <strong>${months[month]} ${year}</strong>.`, icon: 'question', showCancelButton: true, confirmButtonColor: '#1d4ed8' }); if (!calcResult.isConfirmed) return; const btn = document.getElementById('calculateBtn'); btn.disabled = true; btn.textContent = 'Calculating…'; try { await api(`/payroll/calculate?month=${month}&year=${year}`, { method: 'POST' }); const updatedCount = await applyGradeBasedBasicSalaries(month, year); toast(updatedCount > 0 ? `Payroll calculated. Auto-filled Basic Salary and Deductions for ${updatedCount} record${updatedCount === 1 ? '' : 's'} from salary grade rules.` : 'Payroll calculated', 'success'); loadSummary(); loadRecords(); } catch (e) { toast(e.message, 'error'); } finally { btn.disabled = false; btn.textContent = 'Calculate'; } });
   document.getElementById('generateBtn').addEventListener('click', async () => { const month = document.getElementById('payrollMonth').value; const year = document.getElementById('payrollYear').value; await downloadPayrollPdf(month, year); });
   document.getElementById('processBtn').addEventListener('click', async () => { const month = document.getElementById('payrollMonth').value; const year = document.getElementById('payrollYear').value; const processResult = await Swal.fire({ title: 'Process Payments?', html: `Mark all PENDING records as PAID for ${months[month]} ${year}.`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#15803d' }); if (!processResult.isConfirmed) return; const btn = document.getElementById('processBtn'); btn.disabled = true; btn.textContent = 'Processing…'; try { await api(`/payroll/process?month=${month}&year=${year}`, { method: 'POST' }); toast('Payments processed', 'success'); loadSummary(); loadRecords(); } catch (e) { toast(e.message, 'error'); } finally { btn.disabled = false; btn.textContent = 'Process'; } });
   document.getElementById('exportReportBtn').addEventListener('click', () => { const month = document.getElementById('payrollMonth').value; const year = document.getElementById('payrollYear').value; downloadPayrollPdf(month, year); });
