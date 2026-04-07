@@ -188,13 +188,13 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <div class="bg-white rounded-xl shadow-md p-5 card-hover border-l-4 border-green-500">
                         <div class="flex items-center justify-between">
-                            <div><p class="text-gray-500 text-sm">Active Fields</p><h3 class="text-3xl font-bold text-gray-800">3</h3><p class="text-xs text-gray-400 mt-1">Total 245 acres</p></div>
+                            <div><p class="text-gray-500 text-sm">Active Fields</p><h3 class="text-3xl font-bold text-gray-800" id="overviewActiveFields">—</h3><p class="text-xs text-gray-400 mt-1" id="overviewFieldArea">Loading...</p></div>
                             <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><i class="fa-solid fa-map text-green-600 text-xl"></i></div>
                         </div>
                     </div>
                     <div class="bg-white rounded-xl shadow-md p-5 card-hover border-l-4 border-amber-500">
                         <div class="flex items-center justify-between">
-                            <div><p class="text-gray-500 text-sm">Active Crops</p><h3 class="text-3xl font-bold text-gray-800">8</h3><p class="text-xs text-gray-400 mt-1">Wheat, Corn, Soybeans</p></div>
+                            <div><p class="text-gray-500 text-sm">Active Crops</p><h3 class="text-3xl font-bold text-gray-800" id="overviewActiveCrops">—</h3><p class="text-xs text-gray-400 mt-1" id="overviewCropNames">Loading...</p></div>
                             <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center"><i class="fa-solid fa-seedling text-amber-600 text-xl"></i></div>
                         </div>
                     </div>
@@ -206,7 +206,7 @@
                     </div>
                     <div class="bg-white rounded-xl shadow-md p-5 card-hover border-l-4 border-purple-500">
                         <div class="flex items-center justify-between">
-                            <div><p class="text-gray-500 text-sm">Equipment Ready</p><h3 class="text-3xl font-bold text-gray-800">5</h3><p class="text-xs text-gray-400 mt-1">2 need maintenance</p></div>
+                            <div><p class="text-gray-500 text-sm">Equipment Ready</p><h3 class="text-3xl font-bold text-gray-800" id="overviewEquipmentReady">—</h3><p class="text-xs text-gray-400 mt-1" id="overviewEquipmentStatus">Loading...</p></div>
                             <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center"><i class="fa-solid fa-tractor text-purple-600 text-xl"></i></div>
                         </div>
                     </div>
@@ -655,6 +655,7 @@
     const EQUIPMENT_API      = 'http://localhost:8080/api/v1/equipment';
     const FIELD_API          = 'http://localhost:8080/api/v1/field';
     const STAFF_API          = 'http://localhost:8080/api/v1/staff';
+    const CROP_API           = 'http://localhost:8080/api/v1/crop';
     const VEHICLE_API        = 'http://localhost:8080/api/v1/vehicle';
     const USER_API           = 'http://localhost:8080/api/v1/user';
 
@@ -778,6 +779,63 @@
         const d = new Date(dateStr);
         if (isNaN(d)) return '—';
         return d.toLocaleString('en-US', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    }
+
+    function getNumericFieldArea(field) {
+        const candidates = [field?.extentSize, field?.fieldSize, field?.area, field?.acreage];
+        for (const value of candidates) {
+            const num = Number(value);
+            if (Number.isFinite(num)) return num;
+        }
+        return 0;
+    }
+
+    async function loadOverviewStats() {
+        const req = (url) => fetch(url, { headers: authHeaders() }).then(r => r.json());
+        const [fieldsRes, cropsRes, equipmentRes, weatherRes] = await Promise.allSettled([
+            req(`${FIELD_API}/all`),
+            req(`${CROP_API}/all`),
+            req(`${EQUIPMENT_API}/all`),
+            req(API_BASE_WEATHER)
+        ]);
+
+        if (fieldsRes.status === 'fulfilled' && fieldsRes.value?.code === 200 && Array.isArray(fieldsRes.value.data)) {
+            const fields = fieldsRes.value.data;
+            const totalArea = fields.reduce((sum, field) => sum + getNumericFieldArea(field), 0);
+            $('#overviewActiveFields').text(fields.length);
+            $('#overviewFieldArea').text(totalArea > 0 ? `Total ${totalArea.toFixed(1)} acres` : 'Area not available');
+        } else {
+            $('#overviewActiveFields').text('0');
+            $('#overviewFieldArea').text('Could not load fields');
+        }
+
+        if (cropsRes.status === 'fulfilled' && cropsRes.value?.code === 200 && Array.isArray(cropsRes.value.data)) {
+            const crops = cropsRes.value.data;
+            const cropNames = [...new Set(crops.map(c => c.cropName || c.name || c.variety).filter(Boolean))];
+            $('#overviewActiveCrops').text(crops.length);
+            $('#overviewCropNames').text(cropNames.length ? cropNames.slice(0, 3).join(', ') : 'Crop names unavailable');
+        } else {
+            $('#overviewActiveCrops').text('0');
+            $('#overviewCropNames').text('Could not load crops');
+        }
+
+        if (equipmentRes.status === 'fulfilled' && equipmentRes.value?.code === 200 && Array.isArray(equipmentRes.value.data)) {
+            const equipment = equipmentRes.value.data;
+            const ready = equipment.filter(e => (e.status || '').toUpperCase() === 'AVAILABLE').length;
+            const maintenance = equipment.filter(e => ['UNDER_REPAIR', 'OUT_OF_SERVICE'].includes((e.status || '').toUpperCase())).length;
+            $('#overviewEquipmentReady').text(ready);
+            $('#overviewEquipmentStatus').text(maintenance ? `${maintenance} need maintenance` : 'All systems operational');
+        } else {
+            $('#overviewEquipmentReady').text('0');
+            $('#overviewEquipmentStatus').text('Could not load equipment');
+        }
+
+        if (weatherRes.status === 'fulfilled' && weatherRes.value?.code === 200 && weatherRes.value?.data) {
+            const humidity = weatherRes.value.data.humidity;
+            if (humidity !== undefined && humidity !== null && humidity !== '') {
+                $('#soilMoistureValue').text(`${humidity}%`);
+            }
+        }
     }
 
     // ============================================================
@@ -1241,7 +1299,7 @@
         if (section === 'equipment')    fetchEquipment();
         if (section === 'vehicle')      fetchVehicles();
         if (section === 'user')         fetchUsers();
-        if (section === 'overview')     loadWeatherAndInsights();
+        if (section === 'overview')     { loadWeatherAndInsights(); loadOverviewStats(); }
 
         // Apply hidden actions after section loads
         setTimeout(applyHiddenActions, 100);
@@ -1284,7 +1342,9 @@
 
         // Load initial weather
         await loadWeatherAndInsights();
+        await loadOverviewStats();
         setInterval(loadWeatherAndInsights, 30 * 60 * 1000);
+        setInterval(loadOverviewStats, 60 * 1000);
 
         // Soil moisture ticker
         setInterval(() => { $('#soilMoistureValue').text(Math.floor(65 + Math.random() * 25) + '%'); }, 45000);
